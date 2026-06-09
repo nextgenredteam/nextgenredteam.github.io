@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rescuing Abandoned IoT: How I Built JoeBro to Control My Smart Table | NextGenRedTeam Blog</title>
+  <meta name="description" content="When manufacturers abandon their mobile apps, expensive smart hardware turns into a brick. Here is how I reverse-engineered the Ayla Networks API to build a zero-backend PWA.">
+  <link rel="stylesheet" href="../index.css">
+  <link rel="icon" href="../favicon.ico" type="image/x-icon">
+  <!-- Open Graph -->
+  <meta property="og:title" content="Rescuing Abandoned IoT: How I Built JoeBro to Control My Smart Table | NextGenRedTeam Blog">
+  <meta property="og:description" content="When manufacturers abandon their mobile apps, expensive smart hardware turns into a brick. Here is how I reverse-engineered the Ayla Networks API to build a zero-backend PWA.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://nextgenredteam.com/blog/">
+  <meta name="twitter:card" content="summary_large_image">
+</head>
+<body class="blog-post-page">
+  <div class="scanlines"></div>
+  <div class="noise-overlay"></div>
+
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="../index.html" class="logo-container" id="logo-link">
+        <img src="../assets/logos/logo2.png" id="ngrt-logo" alt="NGRT Logo" class="logo-img">
+      </a>
+      <div class="nav-links">
+        <a href="../index.html#services" class="nav-link">[01] Services</a>
+        <a href="../index.html#tools" class="nav-link">[02] Tools</a>
+        <a href="index.html" class="nav-link active">[03] Blog</a>
+        <a href="../index.html#engage" class="nav-link-btn button">[Book Demo]</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Article Hero -->
+  <header class="post-hero">
+    <div class="cyber-container">
+      <div class="post-meta">
+        <span class="meta-date">// PUBLISHED: 2026-06-09</span>
+        <span class="meta-author">// AUTHOR: Joe Brinkley</span>
+      </div>
+      <h1 class="post-title">Rescuing Abandoned IoT: How I Built JoeBro to Control My Smart Table</h1>
+      <div class="cyber-divider-cyan"></div>
+    </div>
+  </header>
+
+  <!-- Article Content -->
+  <main class="post-content-section">
+    <article class="cyber-container markdown-body">
+      <h1>Rescuing Abandoned IoT: How I Built JoeBro to Control My Smart Table</h1>
+<p>There is a growing crisis in modern consumer electronics: <strong>orphaned smart hardware.</strong> </p>
+<p>You buy a premium, high-tech device—a smart refrigerator, an automated light system, or in my case, a Sobro Smart Coffee Table. A few years pass, the manufacturer shifts focus, and their official mobile app gets abandoned. Suddenly, the app crashes on modern iOS or Android versions, and you are left with a thousand-dollar piece of hardware that you can no longer control.</p>
+<p>I refuse to let my technology be taken away from me by bad app updates. So when my Sobro table&#39;s official app completely stopped working, I decided to build my own interface: <strong>JoeBro Web Controller.</strong></p>
+<p>Here is the story of how I rescued my smart table, reverse-engineered its cloud connectivity, and how you can use my open-source tools to connect your table to the internet today.</p>
+<hr>
+<h2>The Problem: The Bricked Smart Table</h2>
+<p>The Sobro Smart Coffee Table is a great piece of furniture. It features a built-in refrigerator drawer, Bluetooth speakers, charging ports, drawer locks, and customizable RGB LED lights. </p>
+<p>However, all of the table&#39;s &quot;smart&quot; features—the lights, the drawer locks, the fridge temp controls—rely on a mobile app to function. Unfortunately, the official Sobro app is notoriously buggy and fails to run on modern Android versions. Furthermore, the local connection protocol on the table is locked behind AES encryption keys that are unique to each device, making local network control nearly impossible without extracting the key from the official app.</p>
+<p>Instead of trying to patch a broken Android APK, I looked at the network traffic.</p>
+<hr>
+<h2>Reverse Engineering the Cloud: The Ayla Networks API</h2>
+<p>Under the hood, the Sobro table&#39;s smart chip is powered by <strong>Ayla Networks</strong>, a popular IoT cloud platform. The table connects to your Wi-Fi, logs into the Ayla Cloud, and waits for commands. The mobile app doesn&#39;t actually talk to the table directly; it sends REST commands to Ayla, which relays them to the table.</p>
+<p>By sniffing the traffic of a legacy device connected to the app, I mapped out the entire Ayla Cloud REST API used by the table. Because it uses standard JSON payloads and simple HTTP requests, I realized we don&#39;t need a mobile app at all. We can control the table directly from a static web page!</p>
+<p>I built <strong>JoeBro</strong>—a zero-backend Progressive Web App (PWA) written in vanilla HTML, CSS, and Javascript. It runs 100% in your browser, communicates directly with Ayla&#39;s servers, and unlocks hidden features (like forcing Bluetooth pairing mode or fine-tuning backlight brightness) that were never exposed in the official app.</p>
+<hr>
+<h2>Guide: Connecting Your Sobro Table to the Web</h2>
+<p>To use the JoeBro controller, your table must be connected to your local Wi-Fi. If you changed your Wi-Fi router or bought a new table, you cannot use the official app to connect it. </p>
+<p>I wrote two custom scripts, <code>provision.ps1</code> (Windows PowerShell) and <code>provision.sh</code> (Mac/Linux), which emulate the initial configuration handshake. Here is how to use them:</p>
+<h3>1. Wi-Fi Chip Network Constraints (CRITICAL)</h3>
+<p>The Wi-Fi chip inside the Sobro table is old and highly sensitive. If your network does not meet these requirements, the chip will crash or refuse to connect:</p>
+<ul>
+<li><strong>2.4 GHz Band Only:</strong> The table does not support 5 GHz networks. Ensure your router broadcasts a separate 2.4 GHz SSID.</li>
+<li><strong>WPA2-Personal Security:</strong> You must use WPA2-Personal (AES) encryption. <strong>Do not use WPA3 or WPA2/WPA3 Mixed mode.</strong> If the table detects a WPA3 transition element in the beacon, the chip will crash and revert to AP setup mode.</li>
+</ul>
+<h3>2. Running the Provisioning Script</h3>
+<ol>
+<li>Press and hold the physical power button on the back/underside of your Sobro table until the lights flash. This puts the table into Access Point (AP) mode.</li>
+<li>Open your computer&#39;s Wi-Fi menu and connect to the unsecured network broadcasted by the table (usually named <code>Sobro_XXXX</code>).</li>
+<li>Download the JoeBro setup files from our <a href="https://github.com/nextgenredteam">GitHub Tools Repository</a>.</li>
+<li>Open a terminal, navigate to the folder, and run:<pre><code class="language-powershell"># Windows
+.\provision.ps1
+</code></pre>
+or<pre><code class="language-bash"># Mac/Linux
+chmod +x provision.sh
+./provision.sh
+</code></pre>
+</li>
+<li>The script will perform a <strong>2-Step Handshake</strong>:<ul>
+<li><strong>Step 1:</strong> It injects your home Wi-Fi SSID and password directly into the table&#39;s local setup server. The table will reboot and connect to your home Wi-Fi.</li>
+<li><strong>Step 2:</strong> The script will pause and ask you to reconnect your computer to your home Wi-Fi. It will then prompt you for your Ayla Cloud credentials, log into your account, and bind the table&#39;s unique Serial Number (DSN) to your Ayla account.</li>
+</ul>
+</li>
+<li>Open your JoeBro controller interface, log in, and take control of your smart table!</li>
+</ol>
+<hr>
+<h2>Reclaiming Our Hardware</h2>
+<p>The success of the JoeBro app shows that we don&#39;t have to accept the planned obsolescence of smart devices. If a cloud service is active, we can reverse-engineer it. And if the cloud service ever shuts down completely, we can use local DNS redirection to fake the cloud server and run the table offline.</p>
+<p>The JoeBro app code is fully open-source and hosted in our prominent repo spot. Check it out and run it yourself!</p>
+<p><em>Get the code and scripts on the <a href="https://github.com/nextgenredteam">NextGenRedTeam GitHub</a> or access the controller at <a href="file:///f:/OneDrive/NGRT/Website/tools/joebro/index.html">/tools/joebro/</a>.</em></p>
+
+      
+      <div class="post-footer-cta">
+        <div class="cyber-divider-purple"></div>
+        <h3>Need Professional Security Validation?</h3>
+        <p>At NextGenRedTeam, we validate defenses, expose blind spots, and secure critical infrastructure. Let's work together to secure your organization.</p>
+        <div class="cta-actions">
+          <a href="https://calendar.proton.me/bookings#HVEHryH4oOT8O4hzE1WTkx71-bIihVp1FCAnLpSB-dM=" target="_blank" class="button border-purple">Book an Engagement</a>
+          <a href="index.html" class="button border-cyan">Back to Blog</a>
+        </div>
+      </div>
+    </article>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="cyber-container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <span class="cyber-glitch-text font-mono">NGRT</span>
+          <p class="footer-desc">Human-in-the-Loop, AI-Powered Offensive Security.</p>
+        </div>
+        <div class="footer-links">
+          <a href="../index.html#services">Services</a>
+          <a href="../index.html#tools">GitHub Tools</a>
+          <a href="index.html">Threat Lab Blog</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 NextGenRedTeam LLC. All rights reserved. Obfuscated communications active.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="../app.js"></script>
+</body>
+</html>

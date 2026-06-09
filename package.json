@@ -1,0 +1,15 @@
+{
+  "name": "nextgenredteam-website",
+  "version": "1.0.0",
+  "description": "NextGenRedTeam static website and blog builder",
+  "main": "index.html",
+  "scripts": {
+    "build": "node scripts/build-blog.js",
+    "new-post": "node scripts/new-post.js"
+  },
+  "dependencies": {
+    "marked": "^9.1.6"
+  },
+  "author": "Joe Brinkley",
+  "license": "MIT"
+}
