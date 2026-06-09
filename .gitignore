@@ -1,0 +1,10 @@
+# Dependencies
+node_modules/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Sub-tool secrets & configs
+tools/joebro/.env
+tools/joebro/config.json
