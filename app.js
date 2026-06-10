@@ -69,14 +69,18 @@ document.addEventListener('DOMContentLoaded', () => {
     ];
 
     let lineIndex = 0;
+    let terminalTimeoutId = null;
+    let isTabVisible = true;
 
     const renderNextLine = () => {
+      if (!isTabVisible) return; // Pause updates if tab is backgrounded
+
       if (lineIndex >= scanLines.length) {
         // Clear and loop after a delay
-        setTimeout(() => {
+        terminalTimeoutId = setTimeout(() => {
           terminalBody.innerHTML = '<div class="terminal-line"><span class="text-cyan">guest@ngrt-threat-lab:~$</span><span class="cursor-blink"></span></div>';
           lineIndex = 0;
-          setTimeout(renderNextLine, 1000);
+          if (isTabVisible) terminalTimeoutId = setTimeout(renderNextLine, 1000);
         }, 5000);
         return;
       }
@@ -93,7 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
         lineDiv.innerHTML = `<span class="text-cyan">guest@ngrt-threat-lab:~$</span> <span class="text-primary">${current.text}</span><span class="cursor-blink"></span>`;
         terminalBody.appendChild(lineDiv);
         lineIndex++;
-        setTimeout(renderNextLine, 1200); // commands take longer
+        terminalTimeoutId = setTimeout(renderNextLine, 1200); // commands take longer
       } else {
         let textSpan = '';
         if (current.type === 'success') textSpan = `<span class="text-cyan">${current.text}</span>`;
@@ -103,11 +107,24 @@ document.addEventListener('DOMContentLoaded', () => {
         lineDiv.innerHTML = textSpan + '<span class="cursor-blink"></span>';
         terminalBody.appendChild(lineDiv);
         lineIndex++;
-        setTimeout(renderNextLine, 600); // outputs render fast
+        terminalTimeoutId = setTimeout(renderNextLine, 600); // outputs render fast
       }
 
       terminalBody.scrollTop = terminalBody.scrollHeight;
     };
+
+    // Page Visibility State Handler
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        isTabVisible = false;
+        clearTimeout(terminalTimeoutId);
+      } else {
+        if (!isTabVisible) {
+          isTabVisible = true;
+          renderNextLine();
+        }
+      }
+    });
 
     // Kick off terminal animation
     setTimeout(renderNextLine, 1000);
@@ -118,11 +135,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const contactTrigger = document.getElementById('contact-trigger');
   const closeModalBtn = document.getElementById('modal-close');
   
-  // Base64 Obfuscated Contact Data
-  // Phone: 703-357-3388 -> NzAzLTM1Ny0zMzg4
-  // Email: Joe.Brinkley@nextgenredteam.com -> Sm9lLkJyaW5rbGV5QG5leHRnZW5yZWR0ZWFtLmNvbQ==
-  const encodedPhone = 'NzAzLTM1Ny0zMzg4';
-  const encodedEmail = 'Sm9lLkJyaW5rbGV5QG5leHRnZW5yZWR0ZWFtLmNvbQ==';
+  // Obfuscated Contact Data via +5 char-code shift
+  const encodedPhone = '<5828:<288=='; // Decrypts to: 703-357-3388
+  const encodedEmail = 'Otj3Gwnspqj~Esj}yljswjiyjfr3htr'; // Decrypts to: Joe.Brinkley@nextgenredteam.com
+
+  const decrypt = (str, shift = 5) => {
+    return str.split('').map(c => String.fromCharCode(c.charCodeAt(0) - shift)).join('');
+  };
 
   if (contactTrigger && contactModal && closeModalBtn) {
     
@@ -130,8 +149,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const openModal = (e) => {
       e.preventDefault();
       
-      const phoneDecrypted = atob(encodedPhone);
-      const emailDecrypted = atob(encodedEmail);
+      const phoneDecrypted = decrypt(encodedPhone);
+      const emailDecrypted = decrypt(encodedEmail);
       
       // Populate elements dynamically
       const emailVal = document.getElementById('modal-email-val');

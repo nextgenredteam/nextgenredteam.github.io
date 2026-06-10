@@ -246,11 +246,11 @@ function buildBlog() {
   posts.sort((a, b) => new Date(b.date) - new Date(a.date));
 
   // Generate cards for the index page
-  const postsCardsHtml = posts.map(post => {
-    // Alternate card border color accents
+  const postsCardsHtml = posts.map((post, postIndex) => {
+    // Alternate card border color accents deterministically
     const borderClasses = ['border-pink', 'border-purple', 'border-cyan'];
     const textClasses = ['text-pink', 'text-purple', 'text-cyan'];
-    const index = Math.floor(Math.random() * 3);
+    const index = postIndex % 3;
     const accentClass = borderClasses[index];
     const textClass = textClasses[index];
 
