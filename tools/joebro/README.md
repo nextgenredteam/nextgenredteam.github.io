@@ -298,18 +298,14 @@ If Ayla Networks ever shuts down their servers, the Sobro table will lose all cl
 
 ## 🛠️ Deployment and Local Run
 
-The NextGenRedTeam website and JoeBro PWA are built as standard static files with a Node.js-based static compiler for blog articles.
+The JoeBro PWA is built as standard static files.
 
 ### Build and Run Locally
 1. Install dependencies:
    ```bash
    npm install
    ```
-2. Compile the static site and blog posts:
-   ```bash
-   npm run build
-   ```
-3. Run the development web server:
+2. Run the development web server:
    ```bash
    npm run dev
    ```
@@ -319,9 +315,9 @@ The NextGenRedTeam website and JoeBro PWA are built as standard static files wit
 2. Log into the Cloudflare Dashboard and navigate to **Workers & Pages**.
 3. Create a project, connect your GitHub repository, and select:
    - **Framework preset:** None (Static site)
-   - **Build command:** `npm run build`
+   - **Build command:** (Leave empty / none)
    - **Build output directory:** `./`
-4. Deploy! Cloudflare will compile and host the controller securely for free.
+4. Deploy! Cloudflare will host the controller securely for free.
 
 ---
 
