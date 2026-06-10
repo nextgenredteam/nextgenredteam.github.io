@@ -28,19 +28,19 @@ Read the full reverse-engineering and recovery guide on the [NextGenRedTeam Blog
 
 ```mermaid
 flowchart TD
-    subgraph Mode_1["Mode 1: Cloud Control (Ayla Networks)"]
-        A["JoeBro PWA Client"] -->|HTTP REST| B["Ayla Networks Cloud API"]
-        B -->|Cloud MQTT/REST| C["Sobro Smart Table"]
+    subgraph "Mode 1: Cloud Control (Ayla Networks)"
+        A[JoeBro PWA Client] -->|HTTP REST| B[Ayla Networks Cloud API]
+        B -->|Cloud MQTT/REST| C[Sobro Smart Table]
     end
 
-    subgraph Mode_2["Mode 2: Offline Control (Mock Local Server)"]
-        D["JoeBro PWA Client"] -->|Spoofed DNS| E["Mock API Server (Node.js Docker)"]
+    subgraph "Mode 2: Offline Control (Mock Local Server)"
+        D[JoeBro PWA Client] -->|Spoofed DNS| E[Mock API Server - Node.js Docker]
         C -->|Spoofed DNS| E
         E -->|Local Broadcast| C
     end
 
-    subgraph Provisioning["Provisioning (AP Mode)"]
-        F["Local PC"] -->|Local Connection (192.168.0.1)| G["Sobro AP (Sobro_XXXX)"]
+    subgraph "Provisioning (AP Mode)"
+        F[Local PC] -->|Local Connection 192.168.0.1| G[Sobro AP - Sobro_XXXX]
         F -->|Injects Wi-Fi & Setup Token| G
     end
 ```

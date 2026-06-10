@@ -31,6 +31,9 @@
 body {
     font-family: var(--font-sans);
     background-color: var(--bg-color);
+    background-image: 
+        radial-gradient(at 0% 0%, rgba(0, 240, 255, 0.12) 0px, transparent 55%),
+        radial-gradient(at 100% 100%, rgba(177, 76, 255, 0.12) 0px, transparent 55%);
     color: var(--text-main);
     min-height: 100vh;
     display: flex;
