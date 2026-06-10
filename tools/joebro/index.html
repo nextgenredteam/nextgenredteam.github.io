@@ -8,31 +8,37 @@
     <meta name="author" content="Joe Brinkley (NextGenRedTeam)">
     <title>Sobro App Crash Fix & Smart Coffee Table Web Controller - JoeBro</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#3b82f6">
+    <meta name="theme-color" content="#00f0ff">
 </head>
 <body>
+    <!-- Cyber Background Elements -->
+    <div class="scanlines"></div>
+    <div class="noise-overlay"></div>
+    <div class="grid-bg"></div>
+
     <div id="login-overlay" class="login-overlay">
         <div class="login-box card">
+            <div class="glow-box"></div>
             <img src="logo.png" alt="JoeBro Logo" class="login-logo">
             <h2>JoeBro Cloud Login</h2>
-            <p>Sign in to connect directly to the table via the internet.</p>
+            <p class="subtitle">Securely connect directly to your Sobro Smart Table.</p>
             
             <div id="login-form">
                 <div class="input-group">
-                    <label>Email</label>
+                    <label><i class="icon-label">⚡</i> Email Address</label>
                     <input type="email" id="login-email" placeholder="email@example.com">
                 </div>
                 <div class="input-group">
-                    <label>Password</label>
+                    <label><i class="icon-label">🔒</i> Password</label>
                     <input type="password" id="login-password" placeholder="Password">
                 </div>
-                <button id="btn-login" class="btn">Login</button>
+                <button id="btn-login" class="btn">Login Securely</button>
                 <div class="divider">OR</div>
                 <button id="btn-facebook" class="btn btn-facebook">Login with Facebook</button>
                 <div class="divider">OR</div>
-                <button id="btn-token-login-toggle" class="btn btn-secondary">Use Existing Auth Token</button>
+                <button id="btn-token-login-toggle" class="btn btn-secondary">Use Active Session Token</button>
             </div>
 
             <!-- Facebook Verification Code Input Container (Initially Hidden) -->
@@ -42,7 +48,7 @@
                     <label>Facebook Code / Redirect URL</label>
                     <input type="text" id="fb-code-input" placeholder="Paste code=... or full URL here">
                 </div>
-                <div style="display: flex; gap: 10px; margin-top: 1rem;">
+                <div style="display: flex; gap: 10px; margin-top: 1.5rem;">
                     <button id="btn-facebook-cancel" class="btn btn-secondary" style="flex: 1;">Cancel</button>
                     <button id="btn-facebook-submit" class="btn" style="flex: 1;">Complete Login</button>
                 </div>
@@ -55,7 +61,7 @@
                     <label>Ayla Auth Token</label>
                     <input type="text" id="token-login-input" placeholder="Paste auth_token value here">
                 </div>
-                <div style="display: flex; gap: 10px; margin-top: 1rem;">
+                <div style="display: flex; gap: 10px; margin-top: 1.5rem;">
                     <button id="btn-token-cancel" class="btn btn-secondary" style="flex: 1;">Cancel</button>
                     <button id="btn-token-submit" class="btn" style="flex: 1;">Authenticate</button>
                 </div>
@@ -65,7 +71,7 @@
 
             <!-- Help Section Toggle Button -->
             <button id="btn-login-help-toggle" class="btn btn-secondary" style="margin-top: 1rem; width: 100%; font-size: 0.85rem; padding: 0.6rem 1rem;">
-                ❓ Help: How to get your Token or Facebook Code
+                ❓ How to retrieve your Token or Facebook Code
             </button>
 
             <!-- Interactive Guide Accordion (Initially Hidden) -->
@@ -103,13 +109,13 @@
                     <button class="accordion-header" id="acc-cli-btn">3. Generate Token via Command Line (API Trick)</button>
                     <div class="accordion-content" id="acc-cli-content" style="display: none;">
                         <p class="fb-instructions" style="margin-bottom: 0.5rem !important;">Run this command in your computer's terminal to get your token directly from the API without submitting your password to the PWA:</p>
-                        <strong style="font-size: 0.8rem; margin-top: 0.5rem; display: block;">Windows (PowerShell):</strong>
-                        <pre style="background: rgba(0,0,0,0.3); padding: 0.5rem; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; font-size: 0.75rem; white-space: pre-wrap; word-break: break-all; margin-top: 0.25rem; user-select: all; cursor: pointer; color: #a5f3fc;" title="Click to copy" onclick="navigator.clipboard.writeText(this.innerText)">$body = @{ user = @{ email = 'YOUR_EMAIL'; password = 'YOUR_PASSWORD'; application = @{ app_id = 'sobro-ag-id'; app_secret = 'sobro-mDM8M4JEe7IJFwiKvbs956XqX_s' } } }
+                        <strong style="font-size: 0.8rem; margin-top: 0.5rem; display: block; color: var(--accent);">Windows (PowerShell):</strong>
+                        <pre style="background: rgba(0,0,0,0.4); padding: 0.5rem; border: 1px solid rgba(0,240,255,0.15); border-radius: 6px; font-size: 0.75rem; white-space: pre-wrap; word-break: break-all; margin-top: 0.25rem; user-select: all; cursor: pointer; color: #a5f3fc;" title="Click to copy" onclick="navigator.clipboard.writeText(this.innerText)">$body = @{ user = @{ email = 'YOUR_EMAIL'; password = 'YOUR_PASSWORD'; application = @{ app_id = 'sobro-ag-id'; app_secret = 'sobro-mDM8M4JEe7IJFwiKvbs956XqX_s' } } }
 $res = Invoke-RestMethod -Uri "https://user-field.aylanetworks.com/users/sign_in.json" -Method Post -Body ($body | ConvertTo-Json) -ContentType "application/json"
 $res.access_token</pre>
                         
-                        <strong style="font-size: 0.8rem; margin-top: 0.5rem; display: block;">Mac / Linux / WSL (curl):</strong>
-                        <pre style="background: rgba(0,0,0,0.3); padding: 0.5rem; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; font-size: 0.75rem; white-space: pre-wrap; word-break: break-all; margin-top: 0.25rem; user-select: all; cursor: pointer; color: #a5f3fc;" title="Click to copy" onclick="navigator.clipboard.writeText(this.innerText)">curl -X POST -H "Content-Type: application/json" -d '{"user":{"email":"YOUR_EMAIL","password":"YOUR_PASSWORD","application":{"app_id":"sobro-ag-id","app_secret":"sobro-mDM8M4JEe7IJFwiKvbs956XqX_s"}}}' https://user-field.aylanetworks.com/users/sign_in.json | grep -o '"access_token":"[^"]*' | grep -o '[^"]*$'</pre>
+                        <strong style="font-size: 0.8rem; margin-top: 0.5rem; display: block; color: var(--accent);">Mac / Linux / WSL (curl):</strong>
+                        <pre style="background: rgba(0,0,0,0.4); padding: 0.5rem; border: 1px solid rgba(0,240,255,0.15); border-radius: 6px; font-size: 0.75rem; white-space: pre-wrap; word-break: break-all; margin-top: 0.25rem; user-select: all; cursor: pointer; color: #a5f3fc;" title="Click to copy" onclick="navigator.clipboard.writeText(this.innerText)">curl -X POST -H "Content-Type: application/json" -d '{"user":{"email":"YOUR_EMAIL","password":"YOUR_PASSWORD","application":{"app_id":"sobro-ag-id","app_secret":"sobro-mDM8M4JEe7IJFwiKvbs956XqX_s"}}}' https://user-field.aylanetworks.com/users/sign_in.json | grep -o '"access_token":"[^"]*' | grep -o '[^"]*$'</pre>
                         <p class="fb-instructions" style="margin-top: 0.5rem !important;">Replace <code>YOUR_EMAIL</code> and <code>YOUR_PASSWORD</code> with your credentials, run the command, then copy the output token into the <strong>Ayla Auth Token</strong> box.</p>
                     </div>
                 </div>
@@ -121,21 +127,101 @@ $res.access_token</pre>
         <header>
             <div class="header-brand">
                 <img src="logo.png" alt="JoeBro Logo" class="header-logo">
-                <h1>JoeBro Controller</h1>
+                <h1>JoeBro Web Controller</h1>
             </div>
             <div class="device-selector">
                 <select id="table-select">
                     <option value="">No tables found</option>
                 </select>
-                <button id="btn-rename" class="btn btn-secondary">✏️ Rename</button>
-                <button id="btn-add-table" class="btn btn-secondary">➕ Bind Table</button>
-                <button id="btn-refresh" class="btn">↻ Refresh</button>
+                <div class="header-button-group">
+                    <button id="btn-rename" class="btn btn-secondary">✏️ Rename</button>
+                    <button id="btn-add-table" class="btn btn-secondary">➕ Bind Table</button>
+                    <button id="btn-refresh" class="btn">↻ Refresh</button>
+                </div>
             </div>
-            <p class="status" id="dashboard-status">Connected to Ayla Cloud.</p>
+            <p class="status" id="dashboard-status">Connecting to Ayla Cloud...</p>
         </header>
         
         <main class="grid">
-            
+            <!-- Interactive Table Visualizer Card (NEW) -->
+            <div class="card visualizer-card" id="card-visualizer">
+                <div class="card-header">
+                    <div class="card-icon">⚡</div>
+                    <div class="card-content">
+                        <h2>Sobro Visualizer</h2>
+                        <p>Live Hardware State representation</p>
+                    </div>
+                </div>
+                <div class="card-body visualizer-body">
+                    <div class="table-mockup-wrapper">
+                        <!-- Backlight Glow Wall casting -->
+                        <div class="backlight-glow" id="vis-backlight-glow"></div>
+                        
+                        <!-- Table SVG structure -->
+                        <svg class="table-svg" viewBox="0 0 400 220" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Bluetooth Waves -->
+                            <g class="ble-waves" id="vis-ble-waves">
+                                <circle cx="200" cy="110" r="130" class="wave wave-1" />
+                                <circle cx="200" cy="110" r="150" class="wave wave-2" />
+                                <circle cx="200" cy="110" r="170" class="wave wave-3" />
+                            </g>
+                            
+                            <!-- Main table shadow -->
+                            <ellipse cx="200" cy="190" rx="150" ry="20" fill="rgba(0,0,0,0.5)" filter="blur(8px)" />
+                            
+                            <!-- Table Body (Chassis) -->
+                            <path d="M 60,110 Q 60,90 80,90 L 320,90 Q 340,90 340,110 L 340,150 Q 340,170 320,170 L 80,170 Q 60,170 60,150 Z" fill="#1e293b" stroke="#334155" stroke-width="3" />
+                            
+                            <!-- Left Drawer (Fridge Compartment) -->
+                            <path d="M 75,100 L 190,100 L 190,160 L 75,160 Z" fill="#0f172a" stroke="#475569" stroke-width="2" class="drawer" id="vis-drawer-fridge" />
+                            <!-- Fridge cooling mist effect -->
+                            <rect x="80" y="105" width="105" height="50" fill="url(#fridge-cool-grad)" class="fridge-mist" id="vis-fridge-mist" />
+                            <!-- Left drawer handle -->
+                            <rect x="175" y="125" width="6" height="20" rx="3" fill="#94a3b8" />
+                            
+                            <!-- Right Drawer (Lock/Storage Compartment) -->
+                            <path d="M 210,100 L 325,100 L 325,160 L 210,160 Z" fill="#0f172a" stroke="#475569" stroke-width="2" class="drawer" id="vis-drawer-lock" />
+                            <!-- Drawer Lock Padlock Overlay -->
+                            <g class="lock-indicator" id="vis-lock-indicator" opacity="0">
+                                <circle cx="267" cy="130" r="15" fill="rgba(255, 45, 85, 0.2)" stroke="#ff2d55" stroke-width="1.5" />
+                                <path d="M 261,127 h 12 v 8 h -12 z M 264,127 v -3 a 3,3 0 0,1 6,0 v 3" fill="none" stroke="#ff2d55" stroke-width="2" stroke-linecap="round" />
+                            </g>
+                            <!-- Right drawer handle -->
+                            <rect x="219" y="125" width="6" height="20" rx="3" fill="#94a3b8" />
+                            
+                            <!-- Front light sensor bar -->
+                            <rect x="180" y="90" width="40" height="6" fill="#475569" />
+                            
+                            <!-- Front Motion LED Bar (Underneath/Front) -->
+                            <path d="M 80,170 L 320,170" stroke="#334155" stroke-width="4" stroke-linecap="round" />
+                            <!-- Front light beam casting downwards -->
+                            <polygon points="80,172 320,172 350,212 50,212" fill="url(#front-light-grad)" class="front-light-beam" id="vis-front-light-beam" opacity="0" />
+                            <path d="M 80,170 L 320,170" stroke="#fffbeb" stroke-width="4" stroke-linecap="round" class="front-light-led" id="vis-front-light-led" opacity="0" />
+                            
+                            <!-- Table Legs -->
+                            <path d="M 80,170 L 70,198 L 85,198 L 95,170 Z" fill="#334155" />
+                            <path d="M 320,170 L 330,198 L 315,198 L 305,170 Z" fill="#334155" />
+                            
+                            <!-- Top Glass Surface Overlay -->
+                            <ellipse cx="200" cy="90" rx="140" ry="12" fill="#0f172a" stroke="#475569" stroke-width="2.5" />
+                            <ellipse cx="200" cy="90" rx="136" ry="9" fill="rgba(0, 240, 255, 0.05)" />
+                            
+                            <!-- Gradients -->
+                            <defs>
+                                <linearGradient id="fridge-cool-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                    <stop offset="0%" stop-color="#00f0ff" stop-opacity="0.5" />
+                                    <stop offset="100%" stop-color="#00f0ff" stop-opacity="0.0" />
+                                </linearGradient>
+                                <linearGradient id="front-light-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                    <stop offset="0%" stop-color="#ffedd5" stop-opacity="0.7" id="vis-front-grad-start" />
+                                    <stop offset="100%" stop-color="#ffedd5" stop-opacity="0.0" />
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
             <!-- Fridge Card -->
             <div class="card interactive" id="card-fridge">
                 <div class="card-header">
@@ -211,7 +297,10 @@ $res.access_token</pre>
                     </div>
                     <div class="slider-container">
                         <label>Color</label>
-                        <input type="color" id="rgb-picker" value="#00ffff">
+                        <div class="color-picker-wrapper">
+                            <input type="color" id="rgb-picker" value="#00ffff">
+                            <span class="color-indicator" id="color-picker-glow"></span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -238,7 +327,7 @@ $res.access_token</pre>
     <div id="add-table-modal" class="login-overlay" style="display: none;">
         <div class="login-box card">
             <h2>Bind Sobro Smart Table</h2>
-            <p style="margin-bottom: 1.5rem;">Enter the registration token (from regtoken.json or fallback setup token) to bind it to your account.</p>
+            <p style="margin-bottom: 1.5rem; color: var(--text-muted);">Enter the registration token (from regtoken.json or fallback setup token) to bind it to your account.</p>
             <div class="input-group" style="text-align: left; margin-bottom: 1rem;">
                 <label>Registration Token / Setup Token</label>
                 <input type="text" id="reg-token-input" placeholder="e.g. 12345678">
@@ -250,7 +339,8 @@ $res.access_token</pre>
             <p id="add-table-status" class="status" style="margin-top: 1rem;"></p>
         </div>
     </div>
-    <footer style="margin-top: 3rem; margin-bottom: 2rem; text-align: center; font-size: 0.8rem; color: var(--text-muted); opacity: 0.7; width: 100%;">
+    
+    <footer style="margin-top: 3rem; margin-bottom: 2rem; text-align: center; font-size: 0.8rem; color: var(--text-muted); opacity: 0.7; width: 100%; z-index: 10;">
         <p>JoeBro Web Controller is open-source. Read the reverse-engineering write-up on the <a href="https://nextgenredteam.com/blog/rescuing-abandoned-iot-joebro-sobro.html" target="_blank" style="color: var(--accent); text-decoration: none;">NextGenRedTeam Blog</a>.</p>
     </footer>
 

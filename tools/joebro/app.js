@@ -1,6 +1,6 @@
 /* 
  * JoeBro Web Controller
- * Written by Joe B. The Blind Hacker
+ * Redesigned for NextGenRedTeam Visual System
  */
 document.addEventListener('DOMContentLoaded', () => {
     // UI Elements
@@ -22,6 +22,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const brightnessVal = document.getElementById('brightness-val');
     const rgbPicker = document.getElementById('rgb-picker');
 
+    // Visualizer Elements
+    const visBacklightGlow = document.getElementById('vis-backlight-glow');
+    const visBleWaves = document.getElementById('vis-ble-waves');
+    const visFridgeMist = document.getElementById('vis-fridge-mist');
+    const visLockIndicator = document.getElementById('vis-lock-indicator');
+    const visFrontLightBeam = document.getElementById('vis-front-light-beam');
+    const visFrontLightLed = document.getElementById('vis-front-light-led');
+    const visFrontGradStart = document.getElementById('vis-front-grad-start');
+    const colorPickerGlow = document.getElementById('color-picker-glow');
+
     // Ayla Cloud Settings
     let APP_ID = 'sobro-ag-id';
     let APP_SECRET = 'sobro-mDM8M4JEe7IJFwiKvbs956XqX_s';
@@ -32,6 +42,78 @@ document.addEventListener('DOMContentLoaded', () => {
     const USER_URL = useProxy ? '/api/proxy' : 'https://user-field.aylanetworks.com';
     const ADS_URL = useProxy ? '/api/proxy' : 'https://ads-field.aylanetworks.com';
     let authToken = localStorage.getItem('ayla_auth_token') || null;
+
+    // Kelvin to Hex Color Interpolator for front motion light
+    function kelvinToHex(k) {
+        const startK = 2000, endK = 6500;
+        const ratio = Math.max(0, Math.min(1, (k - startK) / (endK - startK)));
+        // Interpolate between warm orange-yellow (255, 153, 51) and cool daylight white (204, 224, 255)
+        const r = Math.round(255 * (1 - ratio) + 204 * ratio);
+        const g = Math.round(153 * (1 - ratio) + 224 * ratio);
+        const b = Math.round(51 * (1 - ratio) + 255 * ratio);
+        return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+    }
+
+    // Dynamic Visualizer Updates
+    function updateVisualizer() {
+        // 1. Backlight accent glow
+        const backLightOn = document.getElementById('toggle-back-light').checked;
+        const brightness = brightnessSlider.value;
+        const rgbColor = rgbPicker.value;
+        
+        if (colorPickerGlow) {
+            colorPickerGlow.style.backgroundColor = rgbColor;
+        }
+
+        if (visBacklightGlow) {
+            if (backLightOn) {
+                visBacklightGlow.style.opacity = (brightness / 100) * 0.8;
+                visBacklightGlow.style.backgroundColor = rgbColor;
+                visBacklightGlow.style.boxShadow = `0 0 40px ${rgbColor}, 0 0 80px ${rgbColor}`;
+            } else {
+                visBacklightGlow.style.opacity = 0;
+            }
+        }
+
+        // 2. Front Motion Light
+        const frontLightOn = document.getElementById('toggle-front-light').checked;
+        const tempK = tempSlider.value;
+        const frontColor = kelvinToHex(tempK);
+
+        if (visFrontLightBeam && visFrontLightLed && visFrontGradStart) {
+            if (frontLightOn) {
+                visFrontGradStart.setAttribute('stop-color', frontColor);
+                visFrontLightLed.setAttribute('stroke', frontColor);
+                visFrontLightBeam.style.opacity = 0.65;
+                visFrontLightLed.style.opacity = 1.0;
+            } else {
+                visFrontLightBeam.style.opacity = 0;
+                visFrontLightLed.style.opacity = 0;
+            }
+        }
+
+        // 3. Fridge Cooling Mist
+        const fridgeOn = document.getElementById('toggle-fridge').checked;
+        if (visFridgeMist) {
+            visFridgeMist.style.opacity = fridgeOn ? 0.8 : 0;
+        }
+
+        // 4. Drawer Lock padlock
+        const lockOn = document.getElementById('toggle-lock').checked;
+        if (visLockIndicator) {
+            visLockIndicator.style.opacity = lockOn ? 1.0 : 0;
+        }
+
+        // 5. Bluetooth waves
+        const bleOn = document.getElementById('toggle-ble').checked;
+        if (visBleWaves) {
+            if (bleOn) {
+                visBleWaves.classList.add('active');
+            } else {
+                visBleWaves.classList.remove('active');
+            }
+        }
+    }
 
     // Throttle helper for live-updating sliders (avoids DDoS'ing Ayla API)
     function throttle(func, limit) {
@@ -254,6 +336,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
 
+                // Synchronize visualizer state
+                updateVisualizer();
+
                 dashboardStatus.textContent = 'Hardware state synchronized. Ready.';
             } else {
                 dashboardStatus.textContent = 'Error syncing hardware state.';
@@ -302,13 +387,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Toggle Listeners (No throttle needed for checkboxes)
+    // Toggle Listeners (Immediate visualizer feedback, then call API)
     Object.keys(controls).forEach(id => {
         const checkbox = document.getElementById(id);
         if(checkbox) {
             checkbox.addEventListener('change', async (e) => {
+                updateVisualizer(); // Update mockup instantly
                 const success = await sendCommand(controls[id], e.target.checked ? 1 : 0);
-                if (!success) e.target.checked = !e.target.checked;
+                if (!success) {
+                    e.target.checked = !e.target.checked;
+                    updateVisualizer(); // Revert mockup on API failure
+                }
             });
         }
     });
@@ -323,11 +412,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     durationSlider.addEventListener('input', (e) => {
         durationVal.textContent = e.target.value;
+        updateVisualizer();
         updateFlightStatus();
     });
     
     tempSlider.addEventListener('input', (e) => {
         tempVal.textContent = e.target.value + "K";
+        updateVisualizer();
         updateFlightStatus();
     });
 
@@ -338,6 +429,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     brightnessSlider.addEventListener('input', (e) => {
         brightnessVal.textContent = e.target.value + "%";
+        updateVisualizer();
         updateBrightness();
     });
 
@@ -356,6 +448,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 500);
 
     rgbPicker.addEventListener('input', (e) => {
+        updateVisualizer();
         updateRgb(e.target.value.replace('#', ''));
     });
 
