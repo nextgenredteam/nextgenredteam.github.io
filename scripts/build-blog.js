@@ -78,7 +78,7 @@ function getBlogPostTemplate(title, date, author, description, contentHtml) {
       <div class="footer-grid">
         <div class="footer-brand">
           <span class="cyber-glitch-text font-mono">NGRT</span>
-          <p class="footer-desc">Human-in-the-Loop, AI-Powered Offensive Security.</p>
+          <p class="footer-desc">Human-in-the-Loop, AI-Powered Threat Emulation &amp; Collaborative Defense.</p>
         </div>
         <div class="footer-links">
           <a href="../index.html#services">Services</a>
@@ -138,7 +138,7 @@ function getBlogIndexTemplate(postsCardsHtml) {
     <div class="cyber-container">
       <div class="tag">// THREAT LAB RESEARCH</div>
       <h1 class="glitch-title">Intel & Writeups</h1>
-      <p class="section-subtitle">Tactical guides, vulnerability deep dives, and thoughts on AI-driven offensive security operations.</p>
+      <p class="section-subtitle">Tactical guides, vulnerability deep dives, and thoughts on AI-driven threat emulation operations.</p>
       <div class="cyber-divider-pink"></div>
     </div>
   </section>
@@ -158,7 +158,7 @@ function getBlogIndexTemplate(postsCardsHtml) {
       <div class="footer-grid">
         <div class="footer-brand">
           <span class="cyber-glitch-text font-mono">NGRT</span>
-          <p class="footer-desc">Human-in-the-Loop, AI-Powered Offensive Security.</p>
+          <p class="footer-desc">Human-in-the-Loop, AI-Powered Threat Emulation &amp; Collaborative Defense.</p>
         </div>
         <div class="footer-links">
           <a href="../index.html#services">Services</a>

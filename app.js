@@ -52,10 +52,10 @@ document.addEventListener('DOMContentLoaded', () => {
   if (terminalBody) {
     const scanLines = [
       { text: 'ngrt --engage --target nextgenredteam.com', type: 'command' },
-      { text: '[*] Initializing NextGenRedTeam OffSec Framework v3.0...', type: 'info' },
-      { text: '[+] Loading modules: [Pentesting] [RedTeaming] [PurpleTeaming]', type: 'success' },
+      { text: '[*] Initializing NextGenRedTeam Emulation Framework v3.0...', type: 'info' },
+      { text: '[+] Loading modules: [ThreatEmulation] [PurpleTeaming] [Research]', type: 'success' },
       { text: '[+] Threat Simulation Node: ACTIVE', type: 'success' },
-      { text: '[*] Scanning external perimeter for vulnerabilities...', type: 'info' },
+      { text: '[*] Checking external perimeter for security controls...', type: 'info' },
       { text: '[+] Discovery: 80/tcp, 443/tcp, 22/tcp [Filtered]', type: 'success' },
       { text: '[+] Analyzing threat intelligence vectors...', type: 'info' },
       { text: '[!] IDENTIFIED: Smart Table hardware detected (SoBro Table)', type: 'warning' },
