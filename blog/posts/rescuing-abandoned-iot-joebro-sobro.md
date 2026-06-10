@@ -66,7 +66,8 @@ The Wi-Fi chip inside the Sobro table is old and highly sensitive. If your netwo
 5. The script will perform a **2-Step Handshake**:
    * **Step 1:** It injects your home Wi-Fi SSID and password directly into the table's local setup server. The table will reboot and connect to your home Wi-Fi.
    * **Step 2:** The script will pause and ask you to reconnect your computer to your home Wi-Fi. It will then prompt you for your Ayla Cloud credentials, log into your account, and bind the table's unique Serial Number (DSN) to your Ayla account.
-6. Open your JoeBro controller interface, log in, and take control of your smart table!
+ 6. Open your JoeBro controller interface, log in, and take control of your smart table!
+    * *Tip: If your account uses Facebook Login, or if you don't want to enter your password into the PWA, look for the **"Help: How to get your Token or Facebook Code"** button on the JoeBro login overlay. It details all the Facebook callback URL, browser DevTools, and CLI terminal API tricks to get you authenticated easily.*
 
 ---
 

@@ -1,99 +1,87 @@
-# JoeBro Web Controller (PWA) - Sobro Smart Table Client
+# JoeBro Web Controller (Sobro Smart Table Rescue App)
+      _            ____             
+     | | ___   ___| __ ) _ __ ___   
+  _  | |/ _ \ / _ \  _ \| '__/ _ \  
+ | |_| | (_) |  __/ |_) | | | (_) | 
+  \___/ \___/ \___|____/|_|  \___/  
+```
+**Written by Joe B. The Blind Hacker**
 
-![JoeBro Web Controller Screenshot](screenshot.png)
+A completely standalone, client-side Progressive Web App (PWA) to control the **Sobro Smart Table** directly over the Ayla Networks Cloud API, bypassing the broken and crashing **official Sobro mobile app**.
 
-## Why This Exists: Fixing the Broken Sobro App
-If you own a **Sobro Smart Coffee Table** or a **Sobro Smart End Table**, you have likely experienced the frustration of the **broken Sobro app**. The manufacturer's official mobile application frequently suffers from a **Sobro App crash** or fails to open altogether on modern versions of Android and iOS. This **Sobro app crash** issue turns a premium, high-tech piece of furniture into an offline, uncontrollable brick. 
+## Project Features
+- **Zero Backend**: Operates 100% in your browser. No Docker, no Python, no web servers required.
+- **Real-Time Control**: Employs a custom API throttler to safely allow real-time color and brightness dragging without hitting API rate limits.
+- **Mobile First**: Built with responsive CSS and touch-action protections for a flawless mobile experience.
+- **Hidden Features Unlocked**: Access to undocumented capabilities like forcing Bluetooth Pairing mode and fine-tuning backlight brightness.
 
-Because the table's local network communication requires AES encryption keys that are hidden inside the official mobile database, local integration is incredibly complex. 
+## Why this exists: Solving the Sobro App Crash
+The **official Sobro App** has been abandoned and **crashes constantly** on modern Android and iOS devices, leaving table owners locked out of their mini-fridge cooling, drawer locks, and RGB backlighting. Because the table's local network communication protocol relies on proprietary device-specific AES encryption keys that are hard to sniff, direct local control is blocked. 
 
-**JoeBro Web Controller** was created to solve this. It is a completely open-source, client-side **Progressive Web App (PWA)** that bypasses the broken Sobro app entirely by communicating directly with the underlying **Ayla Networks Cloud API** used by the table. With this PWA, you can regain control of your smart table's fridge, locks, and lighting from any web browser on any device.
-
----
-
-## Key Features
-- **Zero Backend**: Runs 100% in your browser. No server setup, Docker container, or databases required.
-- **PWA Compliance**: Features a Web App Manifest and Service Worker (`sw.js`) so it can be installed on your phone's home screen and run offline.
-- **Undocumented Features**: Access capabilities not exposed in the official app, such as forcing Bluetooth pairing mode and fine-tuning backlight brightness.
-- **Safe API Throttling**: Implements custom throttlers to handle live color-picking and brightness-dragging without getting rate-limited by the cloud API.
-
----
+This PWA acts as a replacement **Sobro app**, authenticating directly with the Ayla Cloud API to push commands to the table. Learn more about the reverse-engineering details on the [NextGenRedTeam Blog: Rescuing Abandoned IoT (Sobro Smart Coffee Table Rescue)](https://nextgenredteam.com/blog/rescuing-abandoned-iot-joebro-sobro.html).
 
 ## Network Requirements
-The Wi-Fi chip inside the Sobro table is old and highly sensitive. To ensure your table connects properly and doesn't trigger a crash loop, your network must meet these constraints:
-1. **2.4 GHz Band Only**: The table does not support 5 GHz Wi-Fi networks. Ensure you have a dedicated 2.4 GHz SSID.
-2. **WPA2-Personal Security**: Use WPA2-Personal (AES) encryption. **Do not use WPA3 or WPA2/WPA3 Mixed mode.** The security chip inside the table will crash and disconnect if WPA3 transition elements are present in the router's beacon.
+For the Sobro Table to communicate with the Ayla Cloud, it must be connected to a Wi-Fi network. The internal Wi-Fi chip is very old and strictly requires:
+- **2.4 GHz Band Only** (It cannot see or connect to 5GHz networks).
+- **WPA2-Personal Security** (Mixed WPA2/WPA3 mode will cause the chip to crash and revert to AP mode).
 
----
+## Initial Setup (Adding a New Table)
+If you buy a new table or change your Wi-Fi password, you must use the included provisioning scripts. The official app is broken, so these scripts emulate the Ayla Device Registration Handshake.
 
-## Initial Setup & Cloud Provisioning Guide
-If you get a new table or change your Wi-Fi credentials, you cannot configure it using the official app due to the constant **Sobro App crash** problems. Use the provisioning scripts in this folder instead:
+1. Hold the table's power button until the lights flash (AP Mode).
+2. Connect your computer to the unsecured `Sobro_XXXX` Wi-Fi hotspot broadcasted by the table.
+3. Run `.\provision.ps1` (Windows) or `./provision.sh` (Mac/Linux).
+4. The script will perform a **2-Step Handshake**:
+   - **Step 1:** It generates a random `setup_token` and injects your Wi-Fi credentials into the table's hardware via its local web server. The table will immediately reboot and connect to your home router.
+   - **Step 2:** The script will pause and ask you to connect your computer back to your home Wi-Fi. It will then ask for your Ayla Email and Password, log into the Ayla Cloud, and submit the `setup_token` to permanently bind the table to your account.
+5. Once complete, open the JoeBro Web Controller and your new table will appear!
 
-### Step 1: Put the Table into AP Mode
-1. Ensure the table is plugged in.
-2. Press and hold the physical power button on the back/underside of the table until the built-in lights start flashing.
-3. Open your computer's Wi-Fi menu and connect to the unsecured network broadcasted by the table (usually named `Sobro_XXXX`).
+## How to use the PWA
+Because this app relies entirely on standard HTTP REST calls with CORS support, **no backend server is required**.
+1. Double-click `index.html` to open it in any modern web browser.
+2. Modify `app.js` and input your Ayla `APP_ID` and `APP_SECRET`.
+3. Host the directory on any basic web server, or simply open `index.html` locally in your browser.
 
-### Step 2: Run the Setup Script
-1. Clone this repository or download the files.
-2. Open a terminal (PowerShell for Windows, Bash for macOS/Linux) in the `/tools/joebro/` directory.
-3. Run the script:
-   - **Windows (PowerShell)**:
-     ```powershell
-     .\provision.ps1
-     ```
-   - **Mac/Linux (Terminal)**:
-     ```bash
-     chmod +x provision.sh
-     ./provision.sh
-     ```
+### Cloud and Facebook Authentication Bypasses (Tricks)
+Since browser security policies (CORS) block direct authentication requests to the Ayla API from some domains, or if you use Facebook to log in, you can bypass standard login using these methods (documented step-by-step in the PWA's built-in **Help Guide** on the login screen):
 
-### Step 3: Complete the Handshake
-1. The script will ask you for your home Wi-Fi SSID and password. It will push these credentials to the table via its local setup server. The table will reboot and join your home router.
-2. The script will pause. Reconnect your computer back to your home Wi-Fi.
-3. Press enter in the terminal. The script will prompt you for your Ayla Networks account email and password, log in, and register the table's DSN (Device Serial Number) to your account.
-4. Once completed, your table is fully bound and ready to be controlled!
+- **Facebook Redirect Trick**: When using "Login with Facebook", the OAuth flow opens in a new browser tab. Complete the login, copy the full redirect URL (starting with `mobile.aylanetworks.com/?code=...`) from the address bar, and paste it back into the PWA to authenticate.
+- **CLI API Token Trick**: Run a simple PowerShell (Windows) or `curl` (macOS/Linux) command on your computer to log in directly via Ayla's authentication server API and print the active session token. You can then copy and paste this token into the PWA.
+- **DevTools Sniffing Trick**: Open browser developer tools (F12) on an active session in the Ayla dashboard, filter the **Network** tab for requests to `devices.json`, and extract the `Authorization: auth_token MC1_...` header string.
 
----
+## Ayla Cloud API Architecture
+To bypass the broken Android app, the PWA communicates directly with the Ayla Cloud using the following REST endpoints:
 
-## How to Run the Web Controller
-1. Open the [JoeBro Web Controller](https://nextgenredteam.com/tools/joebro/index.html) or host the `/tools/joebro/` directory on any web server.
-2. Log in using the same Ayla account email and password you used in the provisioning step.
-3. Select your discovered table and start controlling it!
-4. **To Install as an App**: Click the install icon in your browser's address bar (Chrome/Edge) or select "Add to Home Screen" (Safari on iOS) to run it like a native app.
+1. **Authentication:**
+   - `POST https://user-field.aylanetworks.com/users/sign_in.json`
+   - Payload: Email, Password, App ID, App Secret
+   - Returns: A 12-hour `access_token` required for all subsequent calls.
 
----
+2. **Device Discovery:**
+   - `GET https://ads-field.aylanetworks.com/apiv1/devices.json`
+   - Headers: `Authorization: auth_token <token>`
+   - Returns: A list of hardware devices bound to the user's account, including their unique `dsn` (Device Serial Number).
 
-## Ayla Networks Cloud API Architecture
-The PWA interacts with the Ayla Cloud using the following reverse-engineered REST endpoints:
+3. **State Synchronization:**
+   - `GET https://ads-field.aylanetworks.com/apiv1/dsns/<dsn>/properties.json`
+   - Returns: A massive JSON array containing the current live state of every hardware component on the table.
 
-- **Authentication**:
-  - `POST https://user-field.aylanetworks.com/users/sign_in.json`
-  - Body: Email, Password, App ID, App Secret
-  - Returns: `access_token` (valid for 12 hours)
+4. **Command Execution:**
+   - `POST https://ads-field.aylanetworks.com/apiv1/dsns/<dsn>/properties/<property_name>/datapoints.json`
+   - Payload: `{"datapoint": {"value": <data>}}`
+   - Pushes a new state value to the table. Returns `201 Created` on success.
 
-- **Device Discovery**:
-  - `GET https://ads-field.aylanetworks.com/apiv1/devices.json`
-  - Header: `Authorization: auth_token <token>`
-  - Returns: Array of devices bound to your account and their unique `dsn`
+## Future-Proofing: What if Ayla Networks Shuts Down?
+The JoeBro table relies entirely on the Ayla Networks Cloud infrastructure (`user-field.aylanetworks.com` and `ads-field.aylanetworks.com`) to receive commands. If Ayla Networks goes bankrupt or drops support for the table, the hardware will lose all smart functionality. 
 
-- **State Sync**:
-  - `GET https://ads-field.aylanetworks.com/apiv1/dsns/<dsn>/properties.json`
-  - Returns: Full JSON array of hardware property states.
+To prepare for this, I have stubbed out a **Mock API architecture** in the `mock-api` folder. 
+If the cloud ever dies, we will use a "DNS Sinkhole" (like Pi-hole) to intercept the table's requests to `aylanetworks.com` and route them to a local Docker container running the Mock API. This local server will emulate the Ayla API handshake, ensuring the JoeBro table functions perfectly offline, forever.
 
-- **Command Delivery**:
-  - `POST https://ads-field.aylanetworks.com/apiv1/dsns/<dsn>/properties/<property_name>/datapoints.json`
-  - Payload: `{"datapoint": {"value": <data>}}`
-
----
-
-## Reverse Engineered Datapoints
-We control the table by sending updates to these specific Ayla property paths:
-- `Cooling_switch` (Boolean): Fridge compressor toggle (`1` = On, `0` = Off).
+## API Datapoints (Reverse Engineered)
+The PWA controls the table by sending values to specific `properties` on the Ayla Cloud:
+- `F_key` (Boolean): Front motion light toggle.
+- `B_key` (Boolean): Back LED accent lights toggle.
+- `Cooling_switch` (Boolean): Mini-fridge compressor toggle.
 - `Drawer_lock` (Boolean): Electronic drawer locks.
-- `F_key` (Boolean): Front motion LED light toggle.
-- `B_key` (Boolean): Back LED accent strip toggle.
-- `ble_switch` (Boolean): Force Bluetooth pairing mode.
-- `brightness` (Integer, 0-100): Brightness control for the back LED strip.
-- `flight_status` (String): Controls the front light's configuration. Format: `Mode:Brightness:Duration:Temperature` (e.g. `5:100:50:4000` sets 50s duration, 4000K warm white).
+- `flight_status` (String): Controls the front light's duration and brightness. Format is `Mode:Brightness:Duration:Temperature`.
 - `mode_status` (Integer): Controls the RGB color of the backlights. The hex RGB color is packed into a 32-bit integer alongside the active scene mode using bitwise shifting.

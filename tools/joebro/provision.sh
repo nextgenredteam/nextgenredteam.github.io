@@ -17,8 +17,11 @@ echo ""
 
 echo -e "\033[0;32mProvisioning table to $ssid...\033[0m"
 
-# Send to table via query string (URL encoding the variables is best practice but usually raw works for basic SSIDs)
-curl -s -X POST -d "" "http://192.168.0.1/wifi_connect.json?ssid=${ssid}&key=${password}" --max-time 10
+# Send to table via query string, safely urlencoded
+curl -s -G -X POST \
+  --data-urlencode "ssid=${ssid}" \
+  --data-urlencode "key=${password}" \
+  "http://192.168.0.1/wifi_connect.json" --max-time 10
 
 if [ $? -eq 0 ]; then
     echo ""

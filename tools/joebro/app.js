@@ -25,8 +25,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Ayla Cloud Settings
     let APP_ID = 'sobro-ag-id';
     let APP_SECRET = 'sobro-mDM8M4JEe7IJFwiKvbs956XqX_s';
-    const USER_URL = 'https://user-field.aylanetworks.com';
-    const ADS_URL = 'https://ads-field.aylanetworks.com';
+
+    // Detect if we should use the local Proxy Gateway (secures APP_SECRET and credentials)
+    const useProxy = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.port !== '');
+    
+    const USER_URL = useProxy ? '/api/proxy' : 'https://user-field.aylanetworks.com';
+    const ADS_URL = useProxy ? '/api/proxy' : 'https://ads-field.aylanetworks.com';
     let authToken = localStorage.getItem('ayla_auth_token') || null;
 
     // Throttle helper for live-updating sliders (avoids DDoS'ing Ayla API)
@@ -55,6 +59,11 @@ document.addEventListener('DOMContentLoaded', () => {
     async function loadConfigAndLogin() {
         if (authToken) {
             showDashboard();
+            return;
+        }
+
+        if (useProxy) {
+            console.log("Using secure server-side credentials proxy.");
             return;
         }
 
@@ -349,6 +358,281 @@ document.addEventListener('DOMContentLoaded', () => {
     rgbPicker.addEventListener('input', (e) => {
         updateRgb(e.target.value.replace('#', ''));
     });
+
+    // ====================================================
+    // Facebook Login Flow
+    // ====================================================
+    const btnFacebook = document.getElementById('btn-facebook');
+    const loginForm = document.getElementById('login-form');
+    const facebookCodeContainer = document.getElementById('facebook-code-container');
+    const fbCodeInput = document.getElementById('fb-code-input');
+    const btnFacebookCancel = document.getElementById('btn-facebook-cancel');
+    const btnFacebookSubmit = document.getElementById('btn-facebook-submit');
+
+    if (btnFacebook) {
+        btnFacebook.addEventListener('click', async () => {
+            loginStatus.textContent = "Requesting Facebook Auth URL...";
+            try {
+                const res = await fetch(`${USER_URL}/users/sign_in.json`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user: {
+                            auth_method: "facebook_provider",
+                            application: {
+                                app_id: APP_ID,
+                                app_secret: APP_SECRET
+                            }
+                        }
+                    })
+                });
+
+                const data = await res.json();
+                if (res.ok && data.url) {
+                    // Open Facebook OAuth page in a new tab so the address bar is fully visible
+                    window.open(data.url, '_blank');
+                    
+                    // Switch UI view to Code Input
+                    loginForm.style.display = 'none';
+                    facebookCodeContainer.style.display = 'block';
+                    loginStatus.textContent = "Facebook OAuth tab opened. Please log in, copy the redirect URL from the address bar, and paste it below.";
+                } else {
+                    loginStatus.textContent = `Error: ${data.error || 'Failed to start Facebook auth'}`;
+                }
+            } catch (err) {
+                loginStatus.textContent = "Network error starting Facebook auth.";
+            }
+        });
+    }
+
+    if (btnFacebookCancel) {
+        btnFacebookCancel.addEventListener('click', () => {
+            facebookCodeContainer.style.display = 'none';
+            loginForm.style.display = 'block';
+            loginStatus.textContent = "";
+            fbCodeInput.value = "";
+        });
+    }
+
+    if (btnFacebookSubmit) {
+        btnFacebookSubmit.addEventListener('click', async () => {
+            const rawVal = fbCodeInput.value.trim();
+            if (!rawVal) {
+                loginStatus.textContent = "Please enter the authorization code or redirect URL.";
+                return;
+            }
+
+            // Extract code parameter if a full URL was pasted
+            let code = rawVal;
+            if (rawVal.includes('code=')) {
+                try {
+                    const urlObj = new URL(rawVal.startsWith('http') ? rawVal : 'http://localhost' + rawVal);
+                    code = urlObj.searchParams.get('code') || rawVal;
+                } catch(e) {
+                    const match = rawVal.match(/[?&]code=([^&]+)/);
+                    if (match) code = match[1];
+                }
+            }
+
+            loginStatus.textContent = "Exchanging code for credentials...";
+            try {
+                const res = await fetch(`${USER_URL}/users/provider_auth.json`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        code: code,
+                        provider: "facebook_provider",
+                        redirect_url: "https://mobile.aylanetworks.com/"
+                    })
+                });
+
+                const data = await res.json();
+                if (res.ok && data.access_token) {
+                    authToken = data.access_token;
+                    localStorage.setItem('ayla_auth_token', authToken);
+                    loginStatus.textContent = "Facebook Auth Success!";
+                    
+                    // Reset UI
+                    facebookCodeContainer.style.display = 'none';
+                    loginForm.style.display = 'block';
+                    
+                    showDashboard();
+                } else {
+                    loginStatus.textContent = `Error: ${data.error || 'Facebook verification failed'}`;
+                }
+            } catch (err) {
+                loginStatus.textContent = "Network error verifying Facebook code.";
+            }
+        });
+    }
+
+    // ====================================================
+    // Bind Device (Add Table) Flow
+    // ====================================================
+    const btnAddTable = document.getElementById('btn-add-table');
+    const addTableModal = document.getElementById('add-table-modal');
+    const btnAddTableCancel = document.getElementById('btn-add-table-cancel');
+    const btnAddTableSubmit = document.getElementById('btn-add-table-submit');
+    const regTokenInput = document.getElementById('reg-token-input');
+    const addTableStatus = document.getElementById('add-table-status');
+
+    if (btnAddTable) {
+        btnAddTable.addEventListener('click', () => {
+            addTableModal.style.display = 'flex';
+            addTableStatus.textContent = "";
+            regTokenInput.value = "";
+        });
+    }
+
+    if (btnAddTableCancel) {
+        btnAddTableCancel.addEventListener('click', () => {
+            addTableModal.style.display = 'none';
+        });
+    }
+
+    if (btnAddTableSubmit) {
+        btnAddTableSubmit.addEventListener('click', async () => {
+            const token = regTokenInput.value.trim();
+            if (!token) {
+                addTableStatus.textContent = "Please enter a token.";
+                return;
+            }
+
+            addTableStatus.textContent = "Binding table to account...";
+            
+            // Format body based on token type (setup_token is typically 8 numeric digits)
+            let body = { device: { regtoken: token } };
+            if (/^\d{8}$/.test(token)) {
+                body = { device: { setup_token: token } };
+            }
+
+            try {
+                const res = await fetch(`${ADS_URL}/apiv1/devices.json`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `auth_token ${authToken}`
+                    },
+                    body: JSON.stringify(body)
+                });
+
+                const data = await res.json();
+                if (res.status === 201 || res.status === 200) {
+                    addTableStatus.textContent = "SUCCESS! Table bound to your account.";
+                    setTimeout(() => {
+                        addTableModal.style.display = 'none';
+                        discoverTables();
+                    }, 1500);
+                } else {
+                    addTableStatus.textContent = `Error: ${data.error || 'Binding failed. Double check your token.'}`;
+                }
+            } catch (err) {
+                addTableStatus.textContent = "Network error binding table.";
+            }
+        });
+    }
+
+    // ====================================================
+    // Token Bypass Login Flow
+    // ====================================================
+    const btnTokenToggle = document.getElementById('btn-token-login-toggle');
+    const tokenLoginContainer = document.getElementById('token-login-container');
+    const tokenLoginInput = document.getElementById('token-login-input');
+    const btnTokenCancel = document.getElementById('btn-token-cancel');
+    const btnTokenSubmit = document.getElementById('btn-token-submit');
+
+    if (btnTokenToggle) {
+        btnTokenToggle.addEventListener('click', () => {
+            loginForm.style.display = 'none';
+            tokenLoginContainer.style.display = 'block';
+            loginStatus.textContent = "";
+            tokenLoginInput.value = "";
+        });
+    }
+
+    if (btnTokenCancel) {
+        btnTokenCancel.addEventListener('click', () => {
+            tokenLoginContainer.style.display = 'none';
+            loginForm.style.display = 'block';
+            loginStatus.textContent = "";
+            tokenLoginInput.value = "";
+        });
+    }
+
+    if (btnTokenSubmit) {
+        btnTokenSubmit.addEventListener('click', async () => {
+            const token = tokenLoginInput.value.trim();
+            if (!token) {
+                loginStatus.textContent = "Please enter an auth token.";
+                return;
+            }
+
+            loginStatus.textContent = "Validating auth token with Ayla Cloud...";
+            try {
+                // Test token validity by requesting devices list
+                const res = await fetch(`${ADS_URL}/apiv1/devices.json`, {
+                    headers: { 'Authorization': `auth_token ${token}` }
+                });
+
+                if (res.ok) {
+                    authToken = token;
+                    localStorage.setItem('ayla_auth_token', authToken);
+                    loginStatus.textContent = "Token authentication successful!";
+                    
+                    // Reset UI
+                    tokenLoginContainer.style.display = 'none';
+                    loginForm.style.display = 'block';
+                    
+                    showDashboard();
+                } else {
+                    loginStatus.textContent = "Error: Invalid or expired auth token.";
+                }
+            } catch (err) {
+                loginStatus.textContent = "Network error validating token.";
+            }
+        });
+    }
+
+    // ====================================================
+    // Login Help & Extraction Guide Accordion
+    // ====================================================
+    const btnHelpToggle = document.getElementById('btn-login-help-toggle');
+    const helpContainer = document.getElementById('login-help-container');
+
+    if (btnHelpToggle && helpContainer) {
+        btnHelpToggle.addEventListener('click', () => {
+            const isHidden = helpContainer.style.display === 'none';
+            helpContainer.style.display = isHidden ? 'block' : 'none';
+            btnHelpToggle.classList.toggle('active', isHidden);
+        });
+    }
+
+    // Accordion Items
+    const setupAccordionItem = (btnId, contentId) => {
+        const btn = document.getElementById(btnId);
+        const content = document.getElementById(contentId);
+        if (btn && content) {
+            btn.addEventListener('click', () => {
+                const isHidden = content.style.display === 'none';
+                
+                // Hide all other contents
+                document.querySelectorAll('.accordion-content').forEach(el => {
+                    el.style.display = 'none';
+                });
+                document.querySelectorAll('.accordion-header').forEach(el => {
+                    el.classList.remove('active');
+                });
+
+                // Toggle current
+                content.style.display = isHidden ? 'block' : 'none';
+                btn.classList.toggle('active', isHidden);
+            });
+        }
+    };
+
+    setupAccordionItem('acc-fb-btn', 'acc-fb-content');
+    setupAccordionItem('acc-devtools-btn', 'acc-devtools-content');
+    setupAccordionItem('acc-cli-btn', 'acc-cli-content');
 });
 
 // Register Service Worker for PWA offline capabilities

@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="description" content="JoeBro Web Controller - A powerful, open-source Progressive Web App for controlling your smart table.">
-    <meta name="keywords" content="JoeBro, Sobro, smart table, controller, PWA, IoT">
-    <meta name="author" content="Joe B. The Blind Hacker">
-    <title>JoeBro Web Controller</title>
+    <meta name="description" content="Fix the Sobro App crash! JoeBro is a standalone, client-side Progressive Web App (PWA) to control your Sobro Smart Coffee Table directly via the cloud or offline.">
+    <meta name="keywords" content="Sobro, Sobro Smart Table, Sobro App, Sobro App Crash, Sobro Smart Coffee Table, Ayla Networks, JoeBro, IoT rescue, smart table controller, PWA">
+    <meta name="author" content="Joe Brinkley (NextGenRedTeam)">
+    <title>Sobro App Crash Fix & Smart Coffee Table Web Controller - JoeBro</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
     <link rel="manifest" href="manifest.json">
@@ -18,18 +18,101 @@
             <img src="logo.png" alt="JoeBro Logo" class="login-logo">
             <h2>JoeBro Cloud Login</h2>
             <p>Sign in to connect directly to the table via the internet.</p>
-            <div class="input-group">
-                <label>Email</label>
-                <input type="email" id="login-email" placeholder="email@example.com">
+            
+            <div id="login-form">
+                <div class="input-group">
+                    <label>Email</label>
+                    <input type="email" id="login-email" placeholder="email@example.com">
+                </div>
+                <div class="input-group">
+                    <label>Password</label>
+                    <input type="password" id="login-password" placeholder="Password">
+                </div>
+                <button id="btn-login" class="btn">Login</button>
+                <div class="divider">OR</div>
+                <button id="btn-facebook" class="btn btn-facebook">Login with Facebook</button>
+                <div class="divider">OR</div>
+                <button id="btn-token-login-toggle" class="btn btn-secondary">Use Existing Auth Token</button>
             </div>
-            <div class="input-group">
-                <label>Password</label>
-                <input type="password" id="login-password" placeholder="Password">
+
+            <!-- Facebook Verification Code Input Container (Initially Hidden) -->
+            <div id="facebook-code-container" style="display: none; margin-top: 1rem;">
+                <p class="fb-instructions">Log in in the popup window. When finished, copy the code or the full redirect URL from the address bar and paste it below:</p>
+                <div class="input-group">
+                    <label>Facebook Code / Redirect URL</label>
+                    <input type="text" id="fb-code-input" placeholder="Paste code=... or full URL here">
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 1rem;">
+                    <button id="btn-facebook-cancel" class="btn btn-secondary" style="flex: 1;">Cancel</button>
+                    <button id="btn-facebook-submit" class="btn" style="flex: 1;">Complete Login</button>
+                </div>
             </div>
-            <button id="btn-login" class="btn">Login</button>
-            <p id="login-status" class="status"></p>
-            <div class="login-footer">
-                <p>Build v1.2.6-stable &bull; <a href="https://github.com/nextgenredteam/nextgenredteam.github.io/tree/main/tools/joebro" target="_blank" rel="noopener noreferrer">Setup Instructions (GitHub)</a></p>
+
+            <!-- Token Login Container (Initially Hidden) -->
+            <div id="token-login-container" style="display: none; margin-top: 1rem;">
+                <p class="fb-instructions">If you intercepted your Ayla auth token (e.g. from mobile app traffic), paste it directly below to authenticate:</p>
+                <div class="input-group">
+                    <label>Ayla Auth Token</label>
+                    <input type="text" id="token-login-input" placeholder="Paste auth_token value here">
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 1rem;">
+                    <button id="btn-token-cancel" class="btn btn-secondary" style="flex: 1;">Cancel</button>
+                    <button id="btn-token-submit" class="btn" style="flex: 1;">Authenticate</button>
+                </div>
+            </div>
+
+            <p id="login-status" class="status" style="margin-top: 1rem;"></p>
+
+            <!-- Help Section Toggle Button -->
+            <button id="btn-login-help-toggle" class="btn btn-secondary" style="margin-top: 1rem; width: 100%; font-size: 0.85rem; padding: 0.6rem 1rem;">
+                ❓ Help: How to get your Token or Facebook Code
+            </button>
+
+            <!-- Interactive Guide Accordion (Initially Hidden) -->
+            <div id="login-help-container" class="help-accordion" style="display: none; margin-top: 1rem; text-align: left;">
+                <div class="accordion-item">
+                    <button class="accordion-header" id="acc-fb-btn">1. Facebook Redirect Trick</button>
+                    <div class="accordion-content" id="acc-fb-content" style="display: none;">
+                        <p class="fb-instructions" style="margin-bottom: 0.5rem !important;">If you log in with Facebook, Ayla redirects to a webpage that our PWA cannot read directly due to browser security policies.</p>
+                        <ol style="margin-left: 1.25rem; font-size: 0.85rem; color: var(--text-muted); line-height: 1.4;">
+                            <li>Click <strong>Login with Facebook</strong>. A new browser tab will open.</li>
+                            <li>Log into Facebook and grant permission if prompted.</li>
+                            <li>You will be redirected to a page that may fail to load, starting with <code>mobile.aylanetworks.com/?code=...</code>.</li>
+                            <li><strong>Copy the entire URL</strong> from the browser address bar.</li>
+                            <li>Paste the copied URL in the box here and click <strong>Complete Login</strong>.</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div class="accordion-item" style="margin-top: 0.5rem;">
+                    <button class="accordion-header" id="acc-devtools-btn">2. Sniff Active Session Token (DevTools)</button>
+                    <div class="accordion-content" id="acc-devtools-content" style="display: none;">
+                        <p class="fb-instructions" style="margin-bottom: 0.5rem !important;">You can extract your session token from your active browser session if you are logged in to the Ayla Developer Portal or your table's cloud.</p>
+                        <ol style="margin-left: 1.25rem; font-size: 0.85rem; color: var(--text-muted); line-height: 1.4;">
+                            <li>Log in to the Ayla Networks developer dashboard or account portal.</li>
+                            <li>Press <code>F12</code> (or right-click -> <strong>Inspect</strong>) to open Developer Tools.</li>
+                            <li>Go to the <strong>Network</strong> tab and search/filter for <code>aylanetworks</code> or <code>devices.json</code>.</li>
+                            <li>Click on a request, and check the <strong>Request Headers</strong>.</li>
+                            <li>Look for <code>Authorization: auth_token MC1_...</code>.</li>
+                            <li>Copy the token string (starting with <code>MC1_</code>) and paste it into the <strong>Ayla Auth Token</strong> box.</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div class="accordion-item" style="margin-top: 0.5rem;">
+                    <button class="accordion-header" id="acc-cli-btn">3. Generate Token via Command Line (API Trick)</button>
+                    <div class="accordion-content" id="acc-cli-content" style="display: none;">
+                        <p class="fb-instructions" style="margin-bottom: 0.5rem !important;">Run this command in your computer's terminal to get your token directly from the API without submitting your password to the PWA:</p>
+                        <strong style="font-size: 0.8rem; margin-top: 0.5rem; display: block;">Windows (PowerShell):</strong>
+                        <pre style="background: rgba(0,0,0,0.3); padding: 0.5rem; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; font-size: 0.75rem; white-space: pre-wrap; word-break: break-all; margin-top: 0.25rem; user-select: all; cursor: pointer; color: #a5f3fc;" title="Click to copy" onclick="navigator.clipboard.writeText(this.innerText)">$body = @{ user = @{ email = 'YOUR_EMAIL'; password = 'YOUR_PASSWORD'; application = @{ app_id = 'sobro-ag-id'; app_secret = 'sobro-mDM8M4JEe7IJFwiKvbs956XqX_s' } } }
+$res = Invoke-RestMethod -Uri "https://user-field.aylanetworks.com/users/sign_in.json" -Method Post -Body ($body | ConvertTo-Json) -ContentType "application/json"
+$res.access_token</pre>
+                        
+                        <strong style="font-size: 0.8rem; margin-top: 0.5rem; display: block;">Mac / Linux / WSL (curl):</strong>
+                        <pre style="background: rgba(0,0,0,0.3); padding: 0.5rem; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; font-size: 0.75rem; white-space: pre-wrap; word-break: break-all; margin-top: 0.25rem; user-select: all; cursor: pointer; color: #a5f3fc;" title="Click to copy" onclick="navigator.clipboard.writeText(this.innerText)">curl -X POST -H "Content-Type: application/json" -d '{"user":{"email":"YOUR_EMAIL","password":"YOUR_PASSWORD","application":{"app_id":"sobro-ag-id","app_secret":"sobro-mDM8M4JEe7IJFwiKvbs956XqX_s"}}}' https://user-field.aylanetworks.com/users/sign_in.json | grep -o '"access_token":"[^"]*' | grep -o '[^"]*$'</pre>
+                        <p class="fb-instructions" style="margin-top: 0.5rem !important;">Replace <code>YOUR_EMAIL</code> and <code>YOUR_PASSWORD</code> with your credentials, run the command, then copy the output token into the <strong>Ayla Auth Token</strong> box.</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -45,6 +128,7 @@
                     <option value="">No tables found</option>
                 </select>
                 <button id="btn-rename" class="btn btn-secondary">✏️ Rename</button>
+                <button id="btn-add-table" class="btn btn-secondary">➕ Bind Table</button>
                 <button id="btn-refresh" class="btn">↻ Refresh</button>
             </div>
             <p class="status" id="dashboard-status">Connected to Ayla Cloud.</p>
@@ -148,10 +232,28 @@
             </div>
             
         </main>
-        <footer class="pwa-footer">
-            <p>JoeBro Web Controller &bull; Build v1.2.6-stable &bull; <a href="https://github.com/nextgenredteam/nextgenredteam.github.io/tree/main/tools/joebro" target="_blank" rel="noopener noreferrer">Setup Instructions (GitHub)</a></p>
-        </footer>
     </div>
+
+    <!-- Add Device / Bind Table Modal -->
+    <div id="add-table-modal" class="login-overlay" style="display: none;">
+        <div class="login-box card">
+            <h2>Bind Sobro Smart Table</h2>
+            <p style="margin-bottom: 1.5rem;">Enter the registration token (from regtoken.json or fallback setup token) to bind it to your account.</p>
+            <div class="input-group" style="text-align: left; margin-bottom: 1rem;">
+                <label>Registration Token / Setup Token</label>
+                <input type="text" id="reg-token-input" placeholder="e.g. 12345678">
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 1.5rem;">
+                <button id="btn-add-table-cancel" class="btn btn-secondary" style="flex: 1;">Cancel</button>
+                <button id="btn-add-table-submit" class="btn" style="flex: 1;">Register Device</button>
+            </div>
+            <p id="add-table-status" class="status" style="margin-top: 1rem;"></p>
+        </div>
+    </div>
+    <footer style="margin-top: 3rem; margin-bottom: 2rem; text-align: center; font-size: 0.8rem; color: var(--text-muted); opacity: 0.7; width: 100%;">
+        <p>JoeBro Web Controller is open-source. Read the reverse-engineering write-up on the <a href="https://nextgenredteam.com/blog/rescuing-abandoned-iot-joebro-sobro.html" target="_blank" style="color: var(--accent); text-decoration: none;">NextGenRedTeam Blog</a>.</p>
+    </footer>
+
     <script src="app.js"></script>
 </body>
 </html>
