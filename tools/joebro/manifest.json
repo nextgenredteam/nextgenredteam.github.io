@@ -1,0 +1,17 @@
+{
+  "short_name": "JoeBro",
+  "name": "JoeBro Web Controller",
+  "description": "Zero-backend Progressive Web App to control the Sobro Coffee Table.",
+  "icons": [
+    {
+      "src": "logo.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "index.html",
+  "background_color": "#0f172a",
+  "theme_color": "#3b82f6",
+  "display": "standalone",
+  "orientation": "portrait"
+}
