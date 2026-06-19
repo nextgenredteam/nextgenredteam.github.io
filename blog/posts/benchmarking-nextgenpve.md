@@ -7,6 +7,8 @@ description: "How we tested, why we tested, and what we learned benchmarking loc
 
 # Benchmarking NextGenPVE: Running Local Offensive AI Agents on Proxmox
 
+![NextGenPVE AI Benchmarking Banner](../assets/nextgenpve_benchmark.png)
+
 In modern offensive security operations, AI is no longer a futuristic concept—it’s an active member of the red team. However, relying on commercial cloud LLMs (like GPT-4 or Claude) presents two massive blockers for professional red teaming:
 1. **Safety Refusal Loops**: Cloud providers enforce strict, broad-brush alignment guardrails. Asking a cloud model to analyze an IDOR chain or generate a PoC HTTP exploit request often triggers a generic refusal: *"As an AI, I cannot assist with hacking..."*
 2. **Data Privacy & OpSec**: Feeding client network layouts, custom exploitation code, or proprietary vulnerability details into external third-party APIs is a compliance and confidentiality nightmare.
