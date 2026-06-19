@@ -38,7 +38,7 @@ function getBlogPostTemplate(title, date, author, description, contentHtml) {
         <a href="../index.html#services" class="nav-link">[01] Services</a>
         <a href="../index.html#tools" class="nav-link">[02] Tools</a>
         <a href="index.html" class="nav-link active">[03] Blog</a>
-        <a href="../index.html#engage" class="nav-link-btn button">[Book Demo]</a>
+        <a href="../index.html#engage" class="nav-link-btn button">[Collab &amp; Media]</a>
       </div>
     </div>
   </nav>
@@ -62,10 +62,10 @@ function getBlogPostTemplate(title, date, author, description, contentHtml) {
       
       <div class="post-footer-cta">
         <div class="cyber-divider-purple"></div>
-        <h3>Need Professional Security Validation?</h3>
-        <p>At NextGenRedTeam, we validate defenses, expose blind spots, and secure critical infrastructure. Let's work together to secure your organization.</p>
+        <h3>Collaborate on Security Research</h3>
+        <p>At NextGenRedTeam, we study adversary TTPs and build open-source tools to help defenders. Let's collaborate on research, media projects, or community initiatives.</p>
         <div class="cta-actions">
-          <a href="https://calendar.proton.me/bookings#HVEHryH4oOT8O4hzE1WTkx71-bIihVp1FCAnLpSB-dM=" target="_blank" class="button border-purple">Book an Engagement</a>
+          <a href="https://calendar.proton.me/bookings#HVEHryH4oOT8O4hzE1WTkx71-bIihVp1FCAnLpSB-dM=" target="_blank" class="button border-purple">Schedule Collab &amp; Media</a>
           <a href="index.html" class="button border-cyan">Back to Blog</a>
         </div>
       </div>
@@ -78,7 +78,7 @@ function getBlogPostTemplate(title, date, author, description, contentHtml) {
       <div class="footer-grid">
         <div class="footer-brand">
           <span class="cyber-glitch-text font-mono">NGRT</span>
-          <p class="footer-desc">Human-in-the-Loop, AI-Powered Threat Emulation &amp; Collaborative Defense.</p>
+          <p class="footer-desc">Independent Threat Emulation Research &amp; Collaborative Defense.</p>
         </div>
         <div class="footer-links">
           <a href="../index.html#services">Services</a>
@@ -128,7 +128,7 @@ function getBlogIndexTemplate(postsCardsHtml) {
         <a href="../index.html#services" class="nav-link">[01] Services</a>
         <a href="../index.html#tools" class="nav-link">[02] Tools</a>
         <a href="index.html" class="nav-link active">[03] Blog</a>
-        <a href="../index.html#engage" class="nav-link-btn button">[Book Demo]</a>
+        <a href="../index.html#engage" class="nav-link-btn button">[Collab &amp; Media]</a>
       </div>
     </div>
   </nav>
@@ -158,7 +158,7 @@ function getBlogIndexTemplate(postsCardsHtml) {
       <div class="footer-grid">
         <div class="footer-brand">
           <span class="cyber-glitch-text font-mono">NGRT</span>
-          <p class="footer-desc">Human-in-the-Loop, AI-Powered Threat Emulation &amp; Collaborative Defense.</p>
+          <p class="footer-desc">Independent Threat Emulation Research &amp; Collaborative Defense.</p>
         </div>
         <div class="footer-links">
           <a href="../index.html#services">Services</a>
