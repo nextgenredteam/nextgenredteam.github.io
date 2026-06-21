@@ -166,7 +166,7 @@ While the model's responses are direct and the generation speed on the M1 NPU is
 
 ## Deployment & Tooling Suite
 
-To automate and streamline these deployment steps, we've developed and packaged a unified Python toolkit for NPU guest provisioning, model compiling, and testing. It is available under our public repositories as **NextGenRedPVE-edge**.
+To automate and streamline these deployment steps, we've developed and packaged a unified Python toolkit for NPU guest provisioning, model compiling, and testing. It is available under our public repositories as [NextGenRedPVE-edge](https://github.com/nextgenredteam/nextgenredteam.github.io/tree/main/tools/NextGenRedPVE-edge).
 
 ### The Tooling Toolkit
 

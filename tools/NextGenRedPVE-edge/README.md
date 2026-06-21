@@ -2,6 +2,8 @@
 
 This repository contains Python deployment, configuration, and benchmarking utilities to automate running Large Language Models (LLMs) on the **Axera AX8850 (LAMBERT)** Edge Neural Processing Unit (NPU).
 
+For a detailed walkthrough on how we reverse-engineered the compiler, resolved SRAM tiler faults, and spoofed AX650 binaries, read our full writeup: **[Taming the Edge: Bypassing Axera AX8850 NPU Compiler Constraints](https://nextgenredteam.com/blog/taming-ax8850-edge-npu.html)**.
+
 ## Overview
 
 Deploying LLMs onto hardware accelerators often involves navigating rigid compiler boundaries. During deployment research for the AX8850 NPU, we identified two main compiler/hardware hurdles and engineered pathways to solve them:

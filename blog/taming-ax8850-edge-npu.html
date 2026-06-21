@@ -217,7 +217,7 @@ axllm serve /opt/axera/models/gemma-4-E2B --host 0.0.0.0 --port 8000
 <p>While the model&#39;s responses are direct and the generation speed on the M1 NPU is fast, we did notice minor output repetition on longer tokens (e.g., repeating the CSP header sentence in P4), which is typical of smaller 0.5B parameter models. However, the raw execution speed and the fact that it loads into memory and streams tokens in under a second validates that AX650 spoofing is a viable deployment pipeline.</p>
 <hr>
 <h2>Deployment &amp; Tooling Suite</h2>
-<p>To automate and streamline these deployment steps, we&#39;ve developed and packaged a unified Python toolkit for NPU guest provisioning, model compiling, and testing. It is available under our public repositories as <strong>NextGenRedPVE-edge</strong>.</p>
+<p>To automate and streamline these deployment steps, we&#39;ve developed and packaged a unified Python toolkit for NPU guest provisioning, model compiling, and testing. It is available under our public repositories as <a href="https://github.com/nextgenredteam/nextgenredteam.github.io/tree/main/tools/NextGenRedPVE-edge">NextGenRedPVE-edge</a>.</p>
 <h3>The Tooling Toolkit</h3>
 <ol>
 <li><strong><code>proxmox_create_vm.py</code></strong><ul>
