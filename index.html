@@ -159,41 +159,57 @@
         <div class="cyber-divider-purple"></div>
       </div>
 
-      <div class="tools-layout">
-        <!-- Left: Prominent Tool Card (JoeBro) -->
-        <div class="tool-card-featured">
-          <span class="tool-tag">HARDWARE RESCUE // ACTIVE</span>
-          <h3>JoeBro Web Controller</h3>
+      <div class="tools-grid">
+        <!-- Card 1: JoeBro -->
+        <div class="tool-card active-border-cyan">
+          <span class="tool-card-tag cyan">HARDWARE RESCUE // ACTIVE</span>
+          <h3>JoeBro Controller</h3>
           <p>
-            An open-source, zero-backend Progressive Web App (PWA) built to control the smart features of the Sobro Coffee Table. Bypasses the broken, crashing manufacturer app by authenticating directly with the Ayla Cloud API.
+            An open-source, zero-backend Progressive Web App (PWA) designed to control the smart features of Sobro Smart Coffee Tables. Bypasses the broken vendor application via direct Ayla Cloud API queries.
           </p>
-          <div class="tool-stats">
-            <div class="tool-stat-item">Platform: <span>HTML5/PWA</span></div>
-            <div class="tool-stat-item">API: <span>Ayla networks</span></div>
-            <div class="tool-stat-item">License: <span>MIT</span></div>
+          <div class="tool-card-stats">
+            <div>Platform: <span>HTML5 / PWA</span></div>
+            <div>Target Protocol: <span>Ayla IoT Cloud</span></div>
+            <div>License: <span>MIT</span></div>
           </div>
-          <div class="tool-actions">
+          <div class="tool-card-actions">
             <a href="tools/joebro/index.html" target="_blank" class="button border-cyan">Launch PWA</a>
-            <a href="https://github.com/nextgenredteam/nextgenredteam.github.io/tree/main/tools/joebro" target="_blank" class="button border-purple">GitHub Setup</a>
             <a href="blog/rescuing-abandoned-iot-joebro-sobro.html" class="button border-pink">Read Writeup</a>
           </div>
         </div>
 
-        <!-- Right: Terminal Showcase details -->
-        <div class="tools-terminal">
-          <div class="terminal-prompt">guest@ngrt-threat-lab:~$ cat /etc/ngrt/featured-repos.json</div>
-          <div class="terminal-output">
-            {<br>
-            &nbsp;&nbsp;"prome_spot": {<br>
-            &nbsp;&nbsp;&nbsp;&nbsp;"name": "JoeBro-Controller",<br>
-            &nbsp;&nbsp;&nbsp;&nbsp;"desc": "Ayla networks smart-table reverse engineering client",<br>
-            &nbsp;&nbsp;&nbsp;&nbsp;"status": "online",<br>
-            &nbsp;&nbsp;&nbsp;&nbsp;"codebase_path": "/tools/joebro/"<br>
-            &nbsp;&nbsp;},<br>
-            &nbsp;&nbsp;"org_url": "<a href="https://github.com/nextgenredteam" target="_blank" class="text-cyan">https://github.com/nextgenredteam</a>",<br>
-            &nbsp;&nbsp;"security_level": "public",<br>
-            &nbsp;&nbsp;"active_engagements": ["emulation-runner", "recon-ao-tool"]<br>
-            }
+        <!-- Card 2: NextGenRedPVE -->
+        <div class="tool-card active-border-purple">
+          <span class="tool-card-tag purple">THREAT EMULATION // RUNNING</span>
+          <h3>NextGenRedPVE</h3>
+          <p>
+            A local threat emulation environment running on custom Proxmox VE nodes. Orchestrates local VM and LXC endpoints to run continuous pentesting loops using uncensored, abliterated local LLMs.
+          </p>
+          <div class="tool-card-stats">
+            <div>Target Platform: <span>Proxmox VE / LXC</span></div>
+            <div>Local Inference: <span>Ollama / vLLM</span></div>
+            <div>Core Models: <span>Gemma-4-26B / DeepSeek-Lite</span></div>
+          </div>
+          <div class="tool-card-actions">
+            <a href="blog/benchmarking-nextgenredpve.html" class="button border-purple">Read Benchmark</a>
+            <a href="blog/taming-ax8850-edge-npu.html" class="button border-pink">NPU Writeup</a>
+          </div>
+        </div>
+
+        <!-- Card 3: Swarm-AI -->
+        <div class="tool-card active-border-pink">
+          <span class="tool-card-tag pink">INTELLIGENCE AGENTS // STAGED</span>
+          <h3>Swarm-AI Engine</h3>
+          <p>
+            A distributed agentic orchestration platform that decouples cognitive models from execution environments. Manages lightweight, ephemeral workers running MITRE and OWASP validation rules.
+          </p>
+          <div class="tool-card-stats">
+            <div>Architecture: <span>Distributed Agents</span></div>
+            <div>Execution Node: <span>Cloudflare Workers / Subprocesses</span></div>
+            <div>Reporting DB: <span>Central SQL Intelligence</span></div>
+          </div>
+          <div class="tool-card-actions">
+            <a href="https://github.com/nextgenredteam" target="_blank" class="button border-pink">GitHub Org</a>
           </div>
         </div>
       </div>
