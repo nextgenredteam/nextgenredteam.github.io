@@ -216,6 +216,30 @@ axllm serve /opt/axera/models/gemma-4-E2B --host 0.0.0.0 --port 8000
 </tbody></table>
 <p>While the model&#39;s responses are direct and the generation speed on the M1 NPU is fast, we did notice minor output repetition on longer tokens (e.g., repeating the CSP header sentence in P4), which is typical of smaller 0.5B parameter models. However, the raw execution speed and the fact that it loads into memory and streams tokens in under a second validates that AX650 spoofing is a viable deployment pipeline.</p>
 <hr>
+<h2>Multi-Model Co-Existence: Running Concurrent Models on a Single NPU</h2>
+<p>Deploying local AI at the edge often hits a hard resource wall. While most edge deployments dedicate a single NPU board to a single running model, the <strong>Radxa AI Core AX-M1</strong> provides <strong>7040 MiB of CMM (Contiguous Memory Allocation)</strong>. This memory layout allows us to partition the physical NPU allocation and run multiple models concurrently on a single silicon board.</p>
+<p>By launching multiple instances of the <code>axllm</code> inference gateway on different network ports, we successfully served two independent models on the same NPU without memory overlap or graph compilation conflicts:</p>
+<ol>
+<li><strong>Qwen 2B (INT4 AX650 Compiled)</strong> serving completions on port <code>8000</code></li>
+<li><strong>Gemma 2B (INT4 AX650 Compiled)</strong> serving completions on port <code>8002</code></li>
+</ol>
+<h3>Concurrent Serving Execution</h3>
+<p>To start both models concurrently, we spin up two background <code>axllm</code> daemons. The NPU runtime automatically registers the model graphs into separate CMM memory blocks:</p>
+<pre><code class="language-bash"># Boot the Qwen 2B model on Port 8000
+sudo sh -c &#39;nohup axllm serve /opt/axera/models/Qwen3.5-2B-AX650-GPTQ-Int4-C128-P1152-CTX2047 \
+  --host 0.0.0.0 --port 8000 &gt; /opt/axera/models/axllm_qwen_8000.log 2&gt;&amp;1 &amp;&#39;
+
+# Boot the Gemma 2B model on Port 8002
+sudo sh -c &#39;nohup axllm serve /opt/axera/models/gemma-4-E2B \
+  --host 0.0.0.0 --port 8002 &gt; /opt/axera/models/axllm_gemma_8002.log 2&gt;&amp;1 &amp;&#39;
+</code></pre>
+<p>Verifying the active processes inside the LXC container confirms that both compiler runtimes are active and handling context concurrently:</p>
+<pre><code class="language-bash">$ ps aux | grep axllm
+root     29290  0.8  1.0 2034400 174232 ?  Sl   21:58   0:07 axllm serve /opt/axera/models/Qwen3.5-2B... --port 8000
+root     29915  0.0  0.7  651252 127736 ?  Sl   22:14   0:00 axllm serve /opt/axera/models/gemma-4-E2B ... --port 8002
+</code></pre>
+<p>This multi-tenant NPU setup allows edge routers or localized offensive security hardware to route classification and analysis tasks to different specialized local models simultaneously, maximizing hardware utilization.</p>
+<hr>
 <h2>Deployment &amp; Tooling Suite</h2>
 <p>To automate and streamline these deployment steps, we&#39;ve developed and packaged a unified Python toolkit for NPU guest provisioning, model compiling, and testing. It is available under our public repositories as <a href="https://github.com/nextgenredteam/nextgenredteam.github.io/tree/main/tools/NextGenRedPVE-edge">NextGenRedPVE-edge</a>.</p>
 <h3>The Tooling Toolkit</h3>
