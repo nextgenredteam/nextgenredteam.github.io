@@ -2,7 +2,7 @@
 title: "Taming the Edge: Bypassing Axera AX8850 NPU Compiler Constraints"
 date: "2026-06-21"
 author: "Joe Brinkley"
-description: "A technical deep-dive into reverse-engineering the Pulsar2 compiler, patching PyArmor memory classes in-flight, and executing local LLMs on the RTaxda AX M1 NPU."
+description: "A technical deep-dive into reverse-engineering the Pulsar2 compiler, patching PyArmor memory classes in-flight, and executing local LLMs on the Radxa AX-M1 NPU."
 ---
 
 # Taming the Edge: Bypassing Axera AX8850 NPU Compiler Constraints
@@ -11,7 +11,7 @@ description: "A technical deep-dive into reverse-engineering the Pulsar2 compile
 
 Edge Neural Processing Units (NPUs) represent a massive leap in deploying local, air-gapped LLMs for tactical offensive security operations. However, navigating the closed-source, highly rigid vendor compilers required to run models on bare silicon can feel like hacking a black box.
 
-Recently, our team targeted the **RTaxda AI Core AX M1** board, which features the **Axera AX8850 (LAMBERT)** architecture. While the chip has hardware parity with recent edge modules, its vendor software stack remains outdated. Attempting to compile dense and Mixture-of-Experts (MoE) transformer models onto its Contiguous Memory (CMM) blocks using the proprietary `pulsar2` compiler suite led us directly into the weeds of reverse-engineering closed-source Python binaries.
+Recently, our team targeted the **Radxa AI Core AX-M1** board, which features the **Axera AX8850 (LAMBERT)** architecture. While the chip has hardware parity with recent edge modules, its vendor software stack remains outdated. Attempting to compile dense and Mixture-of-Experts (MoE) transformer models onto its Contiguous Memory (CMM) blocks using the proprietary `pulsar2` compiler suite led us directly into the weeds of reverse-engineering closed-source Python binaries.
 
 Here is the technical breakdown of the compiler bugs we faced, the PyArmor runtime intercept we engineered, and how we bypassed silicon limits to achieve native inference.
 
@@ -22,7 +22,7 @@ Here is the technical breakdown of the compiler bugs we faced, the PyArmor runti
 Our hardware testbed consists of:
 * **Host:** Proxmox VE server (`192.168.40.250`)
 * **Workload Container:** A privileged LXC container (`LXC 102`) passing through the PCIe NPU interface
-* **NPU Hardware:** RTaxda AI Core AX M1 (AX8850 LAMBERT architecture)
+* **NPU Hardware:** Radxa AI Core AX-M1 (AX8850 LAMBERT architecture)
 * **Compiler:** `pulsar2` (distributed inside the `ax_pulsar2_6.0_package` compiler suite)
 
 ---
