@@ -7,6 +7,14 @@
   <meta name="description" content="A technical deep-dive into reverse-engineering the Pulsar2 compiler, patching PyArmor memory classes in-flight, and executing local LLMs on the Radxa AX-M1 NPU.">
   <link rel="stylesheet" href="../index.css">
   <link rel="icon" href="../favicon.ico" type="image/x-icon">
+  
+  <!-- MathJax Math Rendering Support -->
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  
+  <!-- Prism.js Tomorrow Night Syntax Highlighting Theme -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  
   <!-- Open Graph -->
   <meta property="og:title" content="Taming the Edge: Bypassing Axera AX8850 NPU Compiler Constraints | NextGenRedTeam Blog">
   <meta property="og:description" content="A technical deep-dive into reverse-engineering the Pulsar2 compiler, patching PyArmor memory classes in-flight, and executing local LLMs on the Radxa AX-M1 NPU.">
@@ -204,5 +212,8 @@ axllm serve /opt/axera/models/gemma-4-E2B --host 0.0.0.0 --port 8000
   </footer>
 
   <script src="../app.js"></script>
+  <!-- PrismJS Core and Autoloader Scripts -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
 </body>
 </html>

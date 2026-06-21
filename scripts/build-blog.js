@@ -17,6 +17,14 @@ function getBlogPostTemplate(title, date, author, description, contentHtml) {
   <meta name="description" content="${description}">
   <link rel="stylesheet" href="../index.css">
   <link rel="icon" href="../favicon.ico" type="image/x-icon">
+  
+  <!-- MathJax Math Rendering Support -->
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  
+  <!-- Prism.js Tomorrow Night Syntax Highlighting Theme -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  
   <!-- Open Graph -->
   <meta property="og:title" content="${title} | NextGenRedTeam Blog">
   <meta property="og:description" content="${description}">
@@ -93,6 +101,9 @@ function getBlogPostTemplate(title, date, author, description, contentHtml) {
   </footer>
 
   <script src="../app.js"></script>
+  <!-- PrismJS Core and Autoloader Scripts -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
 </body>
 </html>`;
 }

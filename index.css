@@ -793,6 +793,16 @@ body {
   padding: 0;
 }
 
+.markdown-body img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  border: 1px solid var(--border-cyber);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  margin: 2rem 0;
+  display: block;
+}
+
 .post-footer-cta {
   margin-top: 60px;
   background: rgba(12, 14, 18, 0.5);
