@@ -211,6 +211,37 @@ axllm serve /opt/axera/models/gemma-4-E2B --host 0.0.0.0 --port 8000
 </tbody></table>
 <p>While the model&#39;s responses are direct and the generation speed on the M1 NPU is fast, we did notice minor output repetition on longer tokens (e.g., repeating the CSP header sentence in P4), which is typical of smaller 0.5B parameter models. However, the raw execution speed and the fact that it loads into memory and streams tokens in under a second validates that AX650 spoofing is a viable deployment pipeline.</p>
 <hr>
+<h2>Deployment &amp; Tooling Suite</h2>
+<p>To automate and streamline these deployment steps, we&#39;ve developed and packaged a unified Python toolkit for NPU guest provisioning, model compiling, and testing. It is available under our public repositories as <strong>NextGenRedPVE-edge</strong>.</p>
+<h3>The Tooling Toolkit</h3>
+<ol>
+<li><strong><code>proxmox_create_vm.py</code></strong><ul>
+<li><em>When to use:</em> To spin up a clean Ubuntu template environment on a Proxmox cluster configured with proper storage drivers and QEMU guest agents.</li>
+<li><em>What it does:</em> Connects to Proxmox via SSH and automates VM templates generation.</li>
+</ul>
+</li>
+<li><strong><code>proxmox_configure_vm.py</code></strong><ul>
+<li><em>When to use:</em> Immediately after VM generation.</li>
+<li><em>What it does:</em> Auto-resolves dynamic guest IPs from the guest agent, adds restricted developer users, installs build dependencies, compilers, and dependencies.</li>
+</ul>
+</li>
+<li><strong><code>deploy_precompiled.py</code></strong><ul>
+<li><em>When to use:</em> The recommended path. Deploying a high-speed pre-compiled model from Hugging Face.</li>
+<li><em>What it does:</em> Connects to the guest container, downloads pre-compiled models (e.g., Qwen3.5 or Gemma), provisions cache folders, and launches the <code>axllm serve</code> gateway.</li>
+</ul>
+</li>
+<li><strong><code>deploy_golden_combo.py</code></strong><ul>
+<li><em>When to use:</em> Compiling custom standard RoPE models from raw HF quantized sources.</li>
+<li><em>What it does:</em> Automates the local compilation loop targeting the AX650 fallback architecture.</li>
+</ul>
+</li>
+<li><strong><code>benchmark_npu.py</code></strong><ul>
+<li><em>When to use:</em> After model boot to evaluate efficiency.</li>
+<li><em>What it does:</em> Queries evaluation prompt sequences and metrics CPU, memory, and tokens/sec throughput during inference execution.</li>
+</ul>
+</li>
+</ol>
+<hr>
 <h2>Next Steps</h2>
 <p>By leveraging the AX650 cross-compatibility spoof, we successfully booted a <strong>Gemma 2.6B</strong> model in under two minutes, running natively on the AX8850 edge NPU. </p>
 <p>Now that we are chest-deep in the firmware of this board, we are going to dive deeper to see what else we can extract—and find out if we can manually update the core firmware and system software to the latest versions.</p>

@@ -164,6 +164,30 @@ While the model's responses are direct and the generation speed on the M1 NPU is
 
 ---
 
+## Deployment & Tooling Suite
+
+To automate and streamline these deployment steps, we've developed and packaged a unified Python toolkit for NPU guest provisioning, model compiling, and testing. It is available under our public repositories as **NextGenRedPVE-edge**.
+
+### The Tooling Toolkit
+
+1. **`proxmox_create_vm.py`**
+   * *When to use:* To spin up a clean Ubuntu template environment on a Proxmox cluster configured with proper storage drivers and QEMU guest agents.
+   * *What it does:* Connects to Proxmox via SSH and automates VM templates generation.
+2. **`proxmox_configure_vm.py`**
+   * *When to use:* Immediately after VM generation.
+   * *What it does:* Auto-resolves dynamic guest IPs from the guest agent, adds restricted developer users, installs build dependencies, compilers, and dependencies.
+3. **`deploy_precompiled.py`**
+   * *When to use:* The recommended path. Deploying a high-speed pre-compiled model from Hugging Face.
+   * *What it does:* Connects to the guest container, downloads pre-compiled models (e.g., Qwen3.5 or Gemma), provisions cache folders, and launches the `axllm serve` gateway.
+4. **`deploy_golden_combo.py`**
+   * *When to use:* Compiling custom standard RoPE models from raw HF quantized sources.
+   * *What it does:* Automates the local compilation loop targeting the AX650 fallback architecture.
+5. **`benchmark_npu.py`**
+   * *When to use:* After model boot to evaluate efficiency.
+   * *What it does:* Queries evaluation prompt sequences and metrics CPU, memory, and tokens/sec throughput during inference execution.
+
+---
+
 ## Next Steps
 
 By leveraging the AX650 cross-compatibility spoof, we successfully booted a **Gemma 2.6B** model in under two minutes, running natively on the AX8850 edge NPU. 
