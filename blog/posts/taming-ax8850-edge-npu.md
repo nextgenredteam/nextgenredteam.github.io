@@ -148,6 +148,22 @@ axllm serve /opt/axera/models/gemma-4-E2B --host 0.0.0.0 --port 8000
 
 ---
 
+## Qwen 2.5-0.5B NPU Benchmarks
+
+To verify the performance of pre-compiled AX650 binaries running natively on the AX8850 CMM blocks, we ran a standard inference test suite against **Qwen 2.5-0.5B (AX650 Pre-Compiled)**. The model was served using the `axllm` gateway and queried via the completions API:
+
+| Test Prompt | NPU Response Time (s) | Key Output Snippet |
+| :--- | :--- | :--- |
+| **P1:** Capital of France? | **0.62s** | "The capital of France is Paris." |
+| **P2:** Define Zero Trust? | **2.52s** | "Zero-trust architecture is a security model that..." |
+| **P3:** HTTP GET Python Script? | **10.37s** | Code output importing `http.client` |
+| **P4:** Mitigate XSS? | **7.51s** | "To mitigate XSS, use a Content Security Policy (CSP)..." |
+| **P5:** Summarize OSI model? | **9.63s** | OSI Layer summaries (Physical, Data Link, Network...) |
+
+While the model's responses are direct and the generation speed on the M1 NPU is fast, we did notice minor output repetition on longer tokens (e.g., repeating the CSP header sentence in P4), which is typical of smaller 0.5B parameter models. However, the raw execution speed and the fact that it loads into memory and streams tokens in under a second validates that AX650 spoofing is a viable deployment pipeline.
+
+---
+
 ## Next Steps
 
 By leveraging the AX650 cross-compatibility spoof, we successfully booted a **Gemma 2.6B** model in under two minutes, running natively on the AX8850 edge NPU. 

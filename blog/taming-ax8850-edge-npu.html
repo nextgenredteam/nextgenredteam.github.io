@@ -173,6 +173,44 @@ axcl-smi
 axllm serve /opt/axera/models/gemma-4-E2B --host 0.0.0.0 --port 8000
 </code></pre>
 <hr>
+<h2>Qwen 2.5-0.5B NPU Benchmarks</h2>
+<p>To verify the performance of pre-compiled AX650 binaries running natively on the AX8850 CMM blocks, we ran a standard inference test suite against <strong>Qwen 2.5-0.5B (AX650 Pre-Compiled)</strong>. The model was served using the <code>axllm</code> gateway and queried via the completions API:</p>
+<table>
+<thead>
+<tr>
+<th align="left">Test Prompt</th>
+<th align="left">NPU Response Time (s)</th>
+<th align="left">Key Output Snippet</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><strong>P1:</strong> Capital of France?</td>
+<td align="left"><strong>0.62s</strong></td>
+<td align="left">&quot;The capital of France is Paris.&quot;</td>
+</tr>
+<tr>
+<td align="left"><strong>P2:</strong> Define Zero Trust?</td>
+<td align="left"><strong>2.52s</strong></td>
+<td align="left">&quot;Zero-trust architecture is a security model that...&quot;</td>
+</tr>
+<tr>
+<td align="left"><strong>P3:</strong> HTTP GET Python Script?</td>
+<td align="left"><strong>10.37s</strong></td>
+<td align="left">Code output importing <code>http.client</code></td>
+</tr>
+<tr>
+<td align="left"><strong>P4:</strong> Mitigate XSS?</td>
+<td align="left"><strong>7.51s</strong></td>
+<td align="left">&quot;To mitigate XSS, use a Content Security Policy (CSP)...&quot;</td>
+</tr>
+<tr>
+<td align="left"><strong>P5:</strong> Summarize OSI model?</td>
+<td align="left"><strong>9.63s</strong></td>
+<td align="left">OSI Layer summaries (Physical, Data Link, Network...)</td>
+</tr>
+</tbody></table>
+<p>While the model&#39;s responses are direct and the generation speed on the M1 NPU is fast, we did notice minor output repetition on longer tokens (e.g., repeating the CSP header sentence in P4), which is typical of smaller 0.5B parameter models. However, the raw execution speed and the fact that it loads into memory and streams tokens in under a second validates that AX650 spoofing is a viable deployment pipeline.</p>
+<hr>
 <h2>Next Steps</h2>
 <p>By leveraging the AX650 cross-compatibility spoof, we successfully booted a <strong>Gemma 2.6B</strong> model in under two minutes, running natively on the AX8850 edge NPU. </p>
 <p>Now that we are chest-deep in the firmware of this board, we are going to dive deeper to see what else we can extract—and find out if we can manually update the core firmware and system software to the latest versions.</p>
