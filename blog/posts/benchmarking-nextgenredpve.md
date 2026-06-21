@@ -1,19 +1,19 @@
 ---
-title: "Benchmarking NextGenPVE: Running Local Offensive AI Agents on Proxmox"
+title: "Benchmarking NextGenRedPVE: Running Local Offensive AI Agents on Proxmox"
 date: "2026-06-19"
 author: "Joe Brinkley"
-description: "How we tested, why we tested, and what we learned benchmarking local abliterated LLMs for red team operations on our NextGenPVE cluster."
+description: "How we tested, why we tested, and what we learned benchmarking local abliterated LLMs for red team operations on our NextGenRedPVE cluster."
 ---
 
-# Benchmarking NextGenPVE: Running Local Offensive AI Agents on Proxmox
+# Benchmarking NextGenRedPVE: Running Local Offensive AI Agents on Proxmox
 
-![NextGenPVE AI Benchmarking Banner](../assets/nextgenpve_benchmark.png)
+![NextGenRedPVE AI Benchmarking Banner](../assets/nextgenpve_benchmark.png)
 
 In modern offensive security operations, AI is no longer a futuristic concept—it’s an active member of the red team. However, relying on commercial cloud LLMs (like GPT-4 or Claude) presents two massive blockers for professional red teaming:
 1. **Safety Refusal Loops**: Cloud providers enforce strict, broad-brush alignment guardrails. Asking a cloud model to analyze an IDOR chain or generate a PoC HTTP exploit request often triggers a generic refusal: *"As an AI, I cannot assist with hacking..."*
 2. **Data Privacy & OpSec**: Feeding client network layouts, custom exploitation code, or proprietary vulnerability details into external third-party APIs is a compliance and confidentiality nightmare.
 
-To solve this, we built **NextGenPVE**—our locally-hosted, heterogeneous Proxmox cluster dedicated to running uncensored, abliterated local LLMs. 
+To solve this, we built **NextGenRedPVE**—our locally-hosted, heterogeneous Proxmox cluster dedicated to running uncensored, abliterated local LLMs. 
 
 To ensure our AI agents can reason through complex offensive scenarios efficiently without melting our hardware, we conducted extensive benchmark testing across multiple model architectures (Dense and Mixture-of-Experts) ranging from 2B to 35B parameters.
 
@@ -30,7 +30,7 @@ We needed a local model that could act as a competent **Lead Offensive Security 
 ---
 
 ## What & How We Tested
-We benchmarked several models across three distinct phases (**v5, v6, and v7**) on the NextGenPVE environment. The testbed server host was a dedicated machine running Proxmox VE, with high-compute tasks allocated to our primary node `NextGenPVE` and GPU-passthrough allocated to our VM workloads (like `NextGen-Brain-RTX`).
+We benchmarked several models across three distinct phases (**v5, v6, and v7**) on the NextGenRedPVE environment. The testbed server host was a dedicated machine running Proxmox VE, with high-compute tasks allocated to our primary node `NextGenRedPVE` and GPU-passthrough allocated to our VM workloads (like `NextGenRedBrain`).
 
 ### The Test Suite
 Each model was subjected to a test suite of **5 real-world offensive security prompts (P1 to P5)**, including:
@@ -88,12 +88,12 @@ While **Qwen3.6-27B-Abliterated** was highly intelligent and passed all 5 prompt
 
 ## What We’re Running in Production
 
-After analyzing the data, we settled on a hybrid architecture for NextGenPVE:
+After analyzing the data, we settled on a hybrid architecture for NextGenRedPVE:
 
-* **Production Inference Host (`NextGen-Brain-RTX` VM)**:
+* **Production Inference Host (`NextGenRedBrain` VM)**:
   We chose **Gemma-4-26B-Abliterated** as our primary reasoning engine. Running locally on Ollama, it strikes the perfect balance of deep vulnerability reasoning and acceptable generation speeds (32.44 t/s) with a low CPU overhead (4.8%). When we need extreme precision, we fallback to Gemini via API (with anonymized data).
-* **Production Agent Gateway (`NextGen-Hermes-Prod` LXC)**:
-  This container runs our **Hermes Agent Gateway**, coordinating tasks and querying `NextGen-Brain-RTX` for fast, local intelligence.
+* **Production Agent Gateway (`NextGenRedHermes` LXC)**:
+  This container runs our **Hermes Agent Gateway**, coordinating tasks and querying `NextGenRedBrain` for fast, local intelligence.
 * **Edge Scouts**:
   For persistent network monitoring and telemetry parsing, we deploy **Gemma-4-E2B-Abliterated** directly to our Tailscale-connected ZimaBoards.
 

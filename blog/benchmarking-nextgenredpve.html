@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Benchmarking NextGenPVE: Running Local Offensive AI Agents on Proxmox | NextGenRedTeam Blog</title>
-  <meta name="description" content="How we tested, why we tested, and what we learned benchmarking local abliterated LLMs for red team operations on our NextGenPVE cluster.">
+  <title>Benchmarking NextGenRedPVE: Running Local Offensive AI Agents on Proxmox | NextGenRedTeam Blog</title>
+  <meta name="description" content="How we tested, why we tested, and what we learned benchmarking local abliterated LLMs for red team operations on our NextGenRedPVE cluster.">
   <link rel="stylesheet" href="../index.css">
   <link rel="icon" href="../favicon.ico" type="image/x-icon">
   
@@ -16,8 +16,8 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
   
   <!-- Open Graph -->
-  <meta property="og:title" content="Benchmarking NextGenPVE: Running Local Offensive AI Agents on Proxmox | NextGenRedTeam Blog">
-  <meta property="og:description" content="How we tested, why we tested, and what we learned benchmarking local abliterated LLMs for red team operations on our NextGenPVE cluster.">
+  <meta property="og:title" content="Benchmarking NextGenRedPVE: Running Local Offensive AI Agents on Proxmox | NextGenRedTeam Blog">
+  <meta property="og:description" content="How we tested, why we tested, and what we learned benchmarking local abliterated LLMs for red team operations on our NextGenRedPVE cluster.">
   <meta property="og:type" content="article">
   <meta property="og:url" content="https://nextgenredteam.com/blog/">
   <meta name="twitter:card" content="summary_large_image">
@@ -48,7 +48,7 @@
         <span class="meta-date">// PUBLISHED: 2026-06-19</span>
         <span class="meta-author">// AUTHOR: Joe Brinkley</span>
       </div>
-      <h1 class="post-title">Benchmarking NextGenPVE: Running Local Offensive AI Agents on Proxmox</h1>
+      <h1 class="post-title">Benchmarking NextGenRedPVE: Running Local Offensive AI Agents on Proxmox</h1>
       <div class="cyber-divider-cyan"></div>
     </div>
   </header>
@@ -56,14 +56,14 @@
   <!-- Article Content -->
   <main class="post-content-section">
     <article class="cyber-container markdown-body">
-      <h1>Benchmarking NextGenPVE: Running Local Offensive AI Agents on Proxmox</h1>
-<p><img src="../assets/nextgenpve_benchmark.png" alt="NextGenPVE AI Benchmarking Banner"></p>
+      <h1>Benchmarking NextGenRedPVE: Running Local Offensive AI Agents on Proxmox</h1>
+<p><img src="../assets/nextgenpve_benchmark.png" alt="NextGenRedPVE AI Benchmarking Banner"></p>
 <p>In modern offensive security operations, AI is no longer a futuristic concept—it’s an active member of the red team. However, relying on commercial cloud LLMs (like GPT-4 or Claude) presents two massive blockers for professional red teaming:</p>
 <ol>
 <li><strong>Safety Refusal Loops</strong>: Cloud providers enforce strict, broad-brush alignment guardrails. Asking a cloud model to analyze an IDOR chain or generate a PoC HTTP exploit request often triggers a generic refusal: <em>&quot;As an AI, I cannot assist with hacking...&quot;</em></li>
 <li><strong>Data Privacy &amp; OpSec</strong>: Feeding client network layouts, custom exploitation code, or proprietary vulnerability details into external third-party APIs is a compliance and confidentiality nightmare.</li>
 </ol>
-<p>To solve this, we built <strong>NextGenPVE</strong>—our locally-hosted, heterogeneous Proxmox cluster dedicated to running uncensored, abliterated local LLMs. </p>
+<p>To solve this, we built <strong>NextGenRedPVE</strong>—our locally-hosted, heterogeneous Proxmox cluster dedicated to running uncensored, abliterated local LLMs. </p>
 <p>To ensure our AI agents can reason through complex offensive scenarios efficiently without melting our hardware, we conducted extensive benchmark testing across multiple model architectures (Dense and Mixture-of-Experts) ranging from 2B to 35B parameters.</p>
 <p>Here is how we did it, what we tested, and the results that shaped our production setup.</p>
 <hr>
@@ -76,7 +76,7 @@
 </ul>
 <hr>
 <h2>What &amp; How We Tested</h2>
-<p>We benchmarked several models across three distinct phases (<strong>v5, v6, and v7</strong>) on the NextGenPVE environment. The testbed server host was a dedicated machine running Proxmox VE, with high-compute tasks allocated to our primary node <code>NextGenPVE</code> and GPU-passthrough allocated to our VM workloads (like <code>NextGen-Brain-RTX</code>).</p>
+<p>We benchmarked several models across three distinct phases (<strong>v5, v6, and v7</strong>) on the NextGenRedPVE environment. The testbed server host was a dedicated machine running Proxmox VE, with high-compute tasks allocated to our primary node <code>NextGenRedPVE</code> and GPU-passthrough allocated to our VM workloads (like <code>NextGenRedBrain</code>).</p>
 <h3>The Test Suite</h3>
 <p>Each model was subjected to a test suite of <strong>5 real-world offensive security prompts (P1 to P5)</strong>, including:</p>
 <ul>
@@ -223,12 +223,12 @@
 <p>While <strong>Qwen3.6-27B-Abliterated</strong> was highly intelligent and passed all 5 prompts, its generation speed choked down to a painful <strong>3.65 t/s</strong>. The compute overhead of a 27B dense model running without heavy GPU acceleration makes it impractical for real-time agent loops where speed is critical.</p>
 <hr>
 <h2>What We’re Running in Production</h2>
-<p>After analyzing the data, we settled on a hybrid architecture for NextGenPVE:</p>
+<p>After analyzing the data, we settled on a hybrid architecture for NextGenRedPVE:</p>
 <ul>
-<li><strong>Production Inference Host (<code>NextGen-Brain-RTX</code> VM)</strong>:
+<li><strong>Production Inference Host (<code>NextGenRedBrain</code> VM)</strong>:
 We chose <strong>Gemma-4-26B-Abliterated</strong> as our primary reasoning engine. Running locally on Ollama, it strikes the perfect balance of deep vulnerability reasoning and acceptable generation speeds (32.44 t/s) with a low CPU overhead (4.8%). When we need extreme precision, we fallback to Gemini via API (with anonymized data).</li>
-<li><strong>Production Agent Gateway (<code>NextGen-Hermes-Prod</code> LXC)</strong>:
-This container runs our <strong>Hermes Agent Gateway</strong>, coordinating tasks and querying <code>NextGen-Brain-RTX</code> for fast, local intelligence.</li>
+<li><strong>Production Agent Gateway (<code>NextGenRedHermes</code> LXC)</strong>:
+This container runs our <strong>Hermes Agent Gateway</strong>, coordinating tasks and querying <code>NextGenRedBrain</code> for fast, local intelligence.</li>
 <li><strong>Edge Scouts</strong>:
 For persistent network monitoring and telemetry parsing, we deploy <strong>Gemma-4-E2B-Abliterated</strong> directly to our Tailscale-connected ZimaBoards.</li>
 </ul>

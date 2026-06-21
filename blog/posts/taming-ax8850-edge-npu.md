@@ -20,8 +20,8 @@ Here is the technical breakdown of the compiler bugs we faced, the PyArmor runti
 ## The Target Environment
 
 Our hardware testbed consists of:
-* **Host:** Proxmox VE server (`192.168.40.250`)
-* **Workload Container:** A privileged LXC container (`LXC 102`) passing through the PCIe NPU interface
+* **Host:** Proxmox VE server
+* **Workload Container:** A privileged LXC container passing through the PCIe NPU interface
 * **NPU Hardware:** Radxa AI Core AX-M1 (AX8850 LAMBERT architecture)
 * **Compiler:** `pulsar2` (distributed inside the `ax_pulsar2_6.0_package` compiler suite)
 
