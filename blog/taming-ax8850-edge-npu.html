@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Taming the Edge: Bypassing Axera AX8850 NPU Compiler Constraints | NextGenRedTeam Blog</title>
+  <meta name="description" content="A technical deep-dive into reverse-engineering the Pulsar2 compiler, patching PyArmor memory classes in-flight, and executing local LLMs on the RTaxda AX M1 NPU.">
+  <link rel="stylesheet" href="../index.css">
+  <link rel="icon" href="../favicon.ico" type="image/x-icon">
+  <!-- Open Graph -->
+  <meta property="og:title" content="Taming the Edge: Bypassing Axera AX8850 NPU Compiler Constraints | NextGenRedTeam Blog">
+  <meta property="og:description" content="A technical deep-dive into reverse-engineering the Pulsar2 compiler, patching PyArmor memory classes in-flight, and executing local LLMs on the RTaxda AX M1 NPU.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://nextgenredteam.com/blog/">
+  <meta name="twitter:card" content="summary_large_image">
+</head>
+<body class="blog-post-page">
+  <div class="scanlines"></div>
+  <div class="noise-overlay"></div>
+
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="../index.html" class="logo-container" id="logo-link">
+        <img src="../assets/logos/logo2.png" id="ngrt-logo" alt="NGRT Logo" class="logo-img">
+      </a>
+      <div class="nav-links">
+        <a href="../index.html#services" class="nav-link">[01] Services</a>
+        <a href="../index.html#tools" class="nav-link">[02] Tools</a>
+        <a href="index.html" class="nav-link active">[03] Blog</a>
+        <a href="../index.html#engage" class="nav-link-btn button">[Collab &amp; Media]</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Article Hero -->
+  <header class="post-hero">
+    <div class="cyber-container">
+      <div class="post-meta">
+        <span class="meta-date">// PUBLISHED: 2026-06-21</span>
+        <span class="meta-author">// AUTHOR: Joe Brinkley</span>
+      </div>
+      <h1 class="post-title">Taming the Edge: Bypassing Axera AX8850 NPU Compiler Constraints</h1>
+      <div class="cyber-divider-cyan"></div>
+    </div>
+  </header>
+
+  <!-- Article Content -->
+  <main class="post-content-section">
+    <article class="cyber-container markdown-body">
+      <h1>Taming the Edge: Bypassing Axera AX8850 NPU Compiler Constraints</h1>
+<p><img src="../assets/axera_edge_npu.png" alt="Taming the Edge: Bypassing Axera AX8850 NPU Compiler Constraints"></p>
+<p>Edge Neural Processing Units (NPUs) represent a massive leap in deploying local, air-gapped LLMs for tactical offensive security operations. However, navigating the closed-source, highly rigid vendor compilers required to run models on bare silicon can feel like hacking a black box.</p>
+<p>Recently, our team targeted the <strong>RTaxda AI Core AX M1</strong> board, which features the <strong>Axera AX8850 (LAMBERT)</strong> architecture. While the chip has hardware parity with recent edge modules, its vendor software stack remains outdated. Attempting to compile dense and Mixture-of-Experts (MoE) transformer models onto its Contiguous Memory (CMM) blocks using the proprietary <code>pulsar2</code> compiler suite led us directly into the weeds of reverse-engineering closed-source Python binaries.</p>
+<p>Here is the technical breakdown of the compiler bugs we faced, the PyArmor runtime intercept we engineered, and how we bypassed silicon limits to achieve native inference.</p>
+<hr>
+<h2>The Target Environment</h2>
+<p>Our hardware testbed consists of:</p>
+<ul>
+<li><strong>Host:</strong> Proxmox VE server (<code>192.168.40.250</code>)</li>
+<li><strong>Workload Container:</strong> A privileged LXC container (<code>LXC 102</code>) passing through the PCIe NPU interface</li>
+<li><strong>NPU Hardware:</strong> RTaxda AI Core AX M1 (AX8850 LAMBERT architecture)</li>
+<li><strong>Compiler:</strong> <code>pulsar2</code> (distributed inside the <code>ax_pulsar2_6.0_package</code> compiler suite)</li>
+</ul>
+<hr>
+<h2>Roadblock 1: The Closed-Source Compiler Loop</h2>
+<p>The <code>pulsar2</code> compiler is distributed as an obfuscated Python package compiled using PyArmor. This prevents direct analysis or patch modification of files on disk. </p>
+<p>When attempting to build for the <code>LAMBERT</code> target, we hit two initial roadblocks:</p>
+<ol>
+<li><strong>Startup Wrappers:</strong> Symlinking the compiler binary directly to <code>/usr/local/bin/pulsar2</code> broke internal path resolution loops because of how the script resolved <code>${BASH_SOURCE[0]}</code>.</li>
+<li><strong>The Backend Class Bug:</strong> The compiler expects to map the <code>--chip LAMBERT</code> argument to a <code>LambertBackend</code> class inside Python&#39;s <code>backend.lambert.backend_impl</code>. However, the compiled package threw a module resolution exception because it lacked the class definition.</li>
+</ol>
+<h3>The Fix: In-Memory Python Interception</h3>
+<p>To resolve the path loop, we wrapped the compiler execution in a forwarding script:</p>
+<pre><code class="language-bash">#!/bin/bash
+exec /opt/axera/compiler/ax_pulsar2_6.0_package/bin/pulsar2 &quot;$@&quot;
+</code></pre>
+<p>To fix the backend class error without breaking PyArmor&#39;s signature checks, we created a custom <code>sitecustomize.py</code> file and injected it into the compiler&#39;s bundled Python site-packages directory (<code>/opt/axera/compiler/ax_pulsar2_6.0_package/python3/lib/python3.12/site-packages/sitecustomize.py</code>). </p>
+<p>By hooking Python’s built-in <code>__import__</code> function, we intercepted the import sequence in memory, dynamically mapped the <code>backend.lambert</code> requests to the existing <code>backend.ax8860</code> classes, and aliased the backend classes in-flight:</p>
+<pre><code class="language-python">import builtins
+import sys
+import importlib
+
+original_import = builtins.__import__
+
+def custom_import(name, globals=None, locals=None, fromlist=(), level=0):
+    if name.startswith(&quot;backend.lambert&quot;):
+        # Map Lambert target to AX8860 backend classes in memory
+        target_name = name.replace(&quot;backend.lambert&quot;, &quot;backend.ax8860&quot;)
+        mod = original_import(target_name, globals, locals, fromlist, level)
+        sys.modules[name] = sys.modules[target_name]
+        try:
+            impl = importlib.import_module(&quot;backend.ax8860.backend_impl&quot;)
+            if hasattr(impl, &quot;AX8860Backend&quot;):
+                impl.LambertBackend = impl.AX8860Backend
+                sys.modules[&quot;backend.lambert.backend_impl&quot;] = impl
+        except Exception:
+            pass
+        return mod
+    return original_import(name, globals, locals, fromlist, level)
+
+builtins.__import__ = custom_import
+</code></pre>
+<p>This bypass tricked the compiler into resolving the backend class successfully, allowing the code generation pipeline to start.</p>
+<hr>
+<h2>Roadblock 2: SRAM Allocation &amp; The <code>TileFailException</code></h2>
+<p>Once the compiler began parsing the model, we ran into deep physical memory layout constraints on the chip&#39;s internal SRAM blocks.</p>
+<h3>The <code>mRoPE</code> Crash</h3>
+<p>When attempting to compile models like DeepSeek, the compiler immediately crashed. </p>
+<ul>
+<li><strong>The Root Cause:</strong> These models utilize multi-core Rotary Position Embedding (mRoPE). The NPU&#39;s physical gating engine lacks the hardware logic to tile and compile multi-dimensional positional embeddings on silicon.</li>
+<li><strong>The Fix:</strong> Stick to standard, single-dimensional RoPE architectures (such as Qwen 1.5/2.5 or Gemma). MoE models and dynamic embeddings are fundamentally incompatible with static CMM memory maps.</li>
+</ul>
+<h3>The <code>TileFailException</code> (Group Quantization)</h3>
+<p>When compiling standard float models (FP16/BF16) directly to INT4 using <code>--weight_type s4</code>, the compilation crashed with a <code>TileFailException</code> or <code>AssertionError: invalid groupN</code>.</p>
+<ul>
+<li><strong>The Root Cause:</strong> The silicon&#39;s SRAM tiler requires a strictly structured, grouped quantization matrix (specifically <code>groupN=128</code>). When fed raw float weights, the compiler falls back to a per-tensor or channel-wide quantization scheme (<code>groupN=1024</code>), which exceeds the physical SRAM tile boundaries.</li>
+</ul>
+<h3>The Fix: In-Flight Function Hooking</h3>
+<p>Using our <code>sitecustomize.py</code> injector, we targeted <code>conv_common</code> module functions to log internal shapes and dynamically hook the compiler&#39;s math routines. We intercepted <code>get_group_info</code> and overrode data type validations in <code>get_ifm_dtype</code> to force unsupported FP32 tensors to register as BF16 (represented as type <code>6</code> in the compiler engine):</p>
+<pre><code class="language-python"># Part of our injected runtime hook
+if &quot;conv_common&quot; in name:
+    # Hook the group allocation assertion
+    if hasattr(mod, &quot;get_group_info&quot;):
+        orig_get_group_info = mod.get_group_info
+        def wrapper_get_group_info(inputs_spec, attrs):
+            try:
+                return orig_get_group_info(inputs_spec, attrs)
+            except AssertionError as ae:
+                if &quot;invalid groupN&quot; in str(ae):
+                    # Force override to let the tiler pass
+                    return (0, 0)
+                raise ae
+        mod.get_group_info = wrapper_get_group_info
+
+    # Patch data type mapping to avoid FP32 crashes
+    if hasattr(mod, &quot;get_ifm_dtype&quot;):
+        orig_get_ifm_dtype = mod.get_ifm_dtype
+        def wrapper_get_ifm_dtype(dtype):
+            try:
+                return orig_get_ifm_dtype(dtype)
+            except KeyError:
+                if getattr(dtype, &quot;name&quot;, &quot;&quot;) == &quot;FP32&quot;:
+                    return 6 # Force override to BF16 (Type 6)
+</code></pre>
+<hr>
+<h2>Bypassing Compilation: The AX650 Cross-Compatibility Spoof</h2>
+<p>While the memory hooking allowed us to compile small models, the &quot;Golden Combo&quot; for compiling larger models from scratch requires:</p>
+<ol>
+<li><strong>Standard RoPE Architecture</strong> (e.g., Qwen 1.5).</li>
+<li><strong>Pre-Quantized Weights</strong> (e.g., <code>Qwen1.5-0.5B-Chat-GPTQ-Int4</code> or AWQ) to ensure weight groupings are already set to <code>groupN=128</code> prior to compilation.</li>
+</ol>
+<p>However, our biggest breakthrough was discovering a hardware cross-compatibility shortcut: <strong>The AX8850 silicon natively executes graph files (<code>.axmodel</code>) compiled for the older AX650 architecture.</strong></p>
+<p>Instead of wrestling with local compiler issues, we bypassed the entire compilation pipeline:</p>
+<ol>
+<li>Download a pre-compiled AX650 model from Hugging Face (such as <code>AXERA-TECH/gemma-4-E2B-it-GPTQ-INT4</code>).</li>
+<li>Download the pre-compiled CMM slices directly to the target system.</li>
+<li>Launch the <code>axllm</code> PCIe Inference gateway pointing to the model directory.</li>
+</ol>
+<p>The AX8850 native memory allocator accepts the AX650 binary slices perfectly, serving the models natively on silicon without any magic bytes rejection.</p>
+<pre><code class="language-bash"># Verify CMM status
+axcl-smi
+
+# Spin up the gateway
+axllm serve /opt/axera/models/gemma-4-E2B --host 0.0.0.0 --port 8000
+</code></pre>
+<hr>
+<h2>Next Steps</h2>
+<p>By leveraging the AX650 cross-compatibility spoof, we successfully booted a <strong>Gemma 2.6B</strong> model in under two minutes, running natively on the AX8850 edge NPU. </p>
+<p>Now that we are chest-deep in the firmware of this board, we are going to dive deeper to see what else we can extract—and find out if we can manually update the core firmware and system software to the latest versions.</p>
+<p><em>Stay tuned for our next deep-dive on bridging these edge APIs into our autonomous C2 pipelines.</em></p>
+
+      
+      <div class="post-footer-cta">
+        <div class="cyber-divider-purple"></div>
+        <h3>Collaborate on Security Research</h3>
+        <p>At NextGenRedTeam, we study adversary TTPs and build open-source tools to help defenders. Let's collaborate on research, media projects, or community initiatives.</p>
+        <div class="cta-actions">
+          <a href="https://calendar.proton.me/bookings#HVEHryH4oOT8O4hzE1WTkx71-bIihVp1FCAnLpSB-dM=" target="_blank" class="button border-purple">Schedule Collab &amp; Media</a>
+          <a href="index.html" class="button border-cyan">Back to Blog</a>
+        </div>
+      </div>
+    </article>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="cyber-container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <span class="cyber-glitch-text font-mono">NGRT</span>
+          <p class="footer-desc">Independent Threat Emulation Research &amp; Collaborative Defense.</p>
+        </div>
+        <div class="footer-links">
+          <a href="../index.html#services">Services</a>
+          <a href="../index.html#tools">GitHub Tools</a>
+          <a href="index.html">Threat Lab Blog</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 NextGenRedTeam LLC. All rights reserved. Obfuscated communications active.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="../app.js"></script>
+</body>
+</html>
