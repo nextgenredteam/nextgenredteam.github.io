@@ -48,6 +48,11 @@ function getBlogPostTemplate(title, date, author, description, contentHtml) {
         <a href="index.html" class="nav-link active">[03] Blog</a>
         <a href="../index.html#engage" class="nav-link-btn button">[Collab &amp; Media]</a>
       </div>
+      <button class="nav-burger" id="nav-burger" aria-label="Toggle Menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
     </div>
   </nav>
 
@@ -141,6 +146,11 @@ function getBlogIndexTemplate(postsCardsHtml) {
         <a href="index.html" class="nav-link active">[03] Blog</a>
         <a href="../index.html#engage" class="nav-link-btn button">[Collab &amp; Media]</a>
       </div>
+      <button class="nav-burger" id="nav-burger" aria-label="Toggle Menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
     </div>
   </nav>
 

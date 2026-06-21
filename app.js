@@ -4,12 +4,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const logoImg = document.getElementById('ngrt-logo');
   if (logoImg) {
     const totalLogos = 5;
-    let logoPathPrefix = 'assets/logos/logo';
-    
-    // Adjust path if we are inside the /blog/ subfolder
-    if (window.location.pathname.includes('/blog/')) {
-      logoPathPrefix = '../assets/logos/logo';
-    }
+    const isBlogSub = window.location.pathname.includes('/blog/');
+    const prefix = isBlogSub ? '../' : '';
+    const logoPathPrefix = `${prefix}assets/logos/logo`;
     
     // Retrieve last logo index from localStorage, or default to 1
     let currentIndex = parseInt(localStorage.getItem('ngrt_logo_index') || '1', 10);
@@ -58,13 +55,14 @@ document.addEventListener('DOMContentLoaded', () => {
       { text: '[*] Checking external perimeter for security controls...', type: 'info' },
       { text: '[+] Discovery: 80/tcp, 443/tcp, 22/tcp [Filtered]', type: 'success' },
       { text: '[+] Analyzing threat intelligence vectors...', type: 'info' },
-      { text: '[!] IDENTIFIED: Smart Table hardware detected (SoBro Table)', type: 'warning' },
-      { text: '[!] WARNING: Official Android controller app reported CRASHING/ABANDONED', type: 'warning' },
-      { text: '[*] Attempting API rescue sequence using JoeBro PWA...', type: 'info' },
-      { text: '[+] Connected to Ayla Networks API via custom throttler', type: 'success' },
-      { text: '[+] Bypassing mobile app constraints. Controls unlocked.', type: 'success' },
-      { text: '[+] Table Backlight: RGB Active | Drawer Locks: Secure', type: 'success' },
-      { text: '[*] Human-in-the-Loop validation: COMPLETE. System stable.', type: 'info' },
+      { text: '[!] DISCOVERED: Radxa AI Core AX-M1 NPU (LAMBERT AX8850)', type: 'warning' },
+      { text: '[*] Bypassing Pulsar2 compiler constraints using PyArmor site-customize hook...', type: 'info' },
+      { text: '[+] Booting Gemma 2.6B NPU model via axllm API gateway (Port 8000)...', type: 'success' },
+      { text: '[+] NPU Inference stream: ONLINE [Latency: 0.62s]', type: 'success' },
+      { text: '[*] Spawning Swarm-AI agent worker nodes...', type: 'info' },
+      { text: '[+] Allocating micro-containers: [Worker-A01] [Worker-A05]', type: 'success' },
+      { text: '[+] Connected to Central SQL Intelligence Database', type: 'success' },
+      { text: '[*] Smart Table reverse-engineering bypass: ACTIVE (JoeBro PWA)', type: 'info' },
       { text: 'ngrt --status // ENGAGED & SECURE', type: 'command' }
     ];
 
@@ -187,6 +185,16 @@ document.addEventListener('DOMContentLoaded', () => {
       if (e.target === contactModal) {
         closeModal();
       }
+    });
+  }
+
+  // --- 4. MOBILE NAVIGATION MENU TOGGLE ---
+  const burger = document.getElementById('nav-burger');
+  const navLinks = document.querySelector('.nav-links');
+  if (burger && navLinks) {
+    burger.addEventListener('click', () => {
+      navLinks.classList.toggle('active');
+      burger.classList.toggle('open');
     });
   }
 
