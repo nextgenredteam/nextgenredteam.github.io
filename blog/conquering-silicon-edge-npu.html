@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Conquering the Silicon: Building a Custom 'Ollama' Orchestrator for the AX8850 NPU (Part II) | NextGenRedTeam Blog</title>
+  <meta name="description" content="How we bypassed broken vendor API servers, solved logit collapse with a physical SRAM context-window hack, and built an on-the-fly model hot-swapping daemon.">
+  <link rel="stylesheet" href="../index.css">
+  <link rel="icon" href="../favicon.ico" type="image/x-icon">
+  
+  <!-- MathJax Math Rendering Support -->
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  
+  <!-- Prism.js Tomorrow Night Syntax Highlighting Theme -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  
+  <!-- Open Graph -->
+  <meta property="og:title" content="Conquering the Silicon: Building a Custom 'Ollama' Orchestrator for the AX8850 NPU (Part II) | NextGenRedTeam Blog">
+  <meta property="og:description" content="How we bypassed broken vendor API servers, solved logit collapse with a physical SRAM context-window hack, and built an on-the-fly model hot-swapping daemon.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://nextgenredteam.com/blog/">
+  <meta name="twitter:card" content="summary_large_image">
+</head>
+<body class="blog-post-page">
+  <div class="scanlines"></div>
+  <div class="noise-overlay"></div>
+
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="../index.html" class="logo-container" id="logo-link">
+        <img src="../assets/logos/logo2.png" id="ngrt-logo" alt="NGRT Logo" class="logo-img">
+      </a>
+      <div class="nav-links">
+        <a href="../index.html#services" class="nav-link">[01] Services</a>
+        <a href="../index.html#tools" class="nav-link">[02] Tools</a>
+        <a href="index.html" class="nav-link active">[03] Blog</a>
+        <a href="../index.html#engage" class="nav-link-btn button">[Collab &amp; Media]</a>
+      </div>
+      <button class="nav-burger" id="nav-burger" aria-label="Toggle Menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Article Hero -->
+  <header class="post-hero">
+    <div class="cyber-container">
+      <div class="post-meta">
+        <span class="meta-date">// PUBLISHED: 2026-06-22</span>
+        <span class="meta-author">// AUTHOR: Joe Brinkley</span>
+      </div>
+      <h1 class="post-title">Conquering the Silicon: Building a Custom 'Ollama' Orchestrator for the AX8850 NPU (Part II)</h1>
+      <div class="cyber-divider-cyan"></div>
+    </div>
+  </header>
+
+  <!-- Article Content -->
+  <main class="post-content-section">
+    <article class="cyber-container markdown-body">
+      <h1>Conquering the Silicon: Building a Custom &quot;Ollama&quot; Orchestrator for the AX8850 NPU (Part II)</h1>
+<p><img src="../assets/conquering_silicon_npu.png" alt="Conquering the Silicon: Building a Custom &quot;Ollama&quot; Orchestrator for the AX8850 NPU"></p>
+<p>The promise of Edge AI hardware is intoxicating: running blazing-fast, power-efficient local inference without tying up a $1,000+ workstation GPU or bleeding money to cloud API providers. </p>
+<p>In <a href="/blog/taming-ax8850-edge-npu.html">Part I of this series</a>, we deep-dived into reverse-engineering the Axera Pulsar2 compiler, patching PyArmor binaries in-flight, and leveraging the Radxa AX-M1 board&#39;s hardware compatibility with older AX650 binaries to host models natively on silicon. </p>
+<p>But compiling the models was only half the battle. Getting them to serve reliably over a clean network API revealed a host of SDK bugs, memory registration collisions, and server-level deadlocks. </p>
+<p>Here is the story of how my autonomous AI coding agent (&quot;Antigravity&quot;) and I bypassed the manufacturer&#39;s broken C++ server stack, engineered a physical alignment hack to fix Logit Collapse, and built a custom &quot;Universal Loader&quot; orchestrator from scratch to hot-swap models on the silicon on-the-fly.</p>
+<hr>
+<h2>Act I: The Gemma Collapse &amp; The &quot;2047&quot; Hardware Alignment Hack</h2>
+<p>Our first real runtime test was deploying a pre-compiled, abliterated version of Gemma-4. We pushed the model through the compiler, successfully mapped the INT4 weights into the NPU&#39;s Contiguous Memory (CMM) blocks, booted the gateway, and queried the model with a simple prompt: <em>&quot;What is 2+2?&quot;</em></p>
+<p>The response? A never-ending loop of repetitive token soup:
+<code>&quot;factfactfactfactfactfactfactfact...&quot;</code></p>
+<p>We had hit a classic Logit Collapse. After comparing compiler debug dumps and monitoring the physical memory allocation calls, we discovered the root cause was a physical gating alignment fault in the NPU&#39;s hardware architecture.</p>
+<p>The AX8850 silicon operates on static CMM registers that require matrix dimensions to align perfectly with hardware-level boundary lines (typically multiples of 32 or 512 bytes). Crucially, the NPU&#39;s internal execution engine automatically adds <code>+1</code> token to the context window array allocation for its own End-of-Sentence (EOS) tracking. </p>
+<p>When we compiled the model with a standard <code>--kv_cache_len 2048</code> flag, the inference runtime attempted to allocate a <code>2049</code> matrix. This off-by-one mismatch caused the physical hardware gate allocations to drift, scrambling the attention matrix math and rendering the output useless.</p>
+<pre><code>Expected Array Alignment (Multiples of 512 bytes):
+[--- 512 ---][--- 512 ---][--- 512 ---][--- 512 ---] = 2048 bytes (Perfect Gate Alignment)
+
+Off-by-One Hardware Drift:
+[--- 512 ---][--- 512 ---][--- 512 ---][--- 512 ---][ 1 ] = 2049 bytes (Memory Boundary Drift -&gt; Logit Collapse)
+</code></pre>
+<h3>The Fix</h3>
+<p>We modified our compilation scripts to offset the boundary drift by setting <code>--kv_cache_len 2047</code>. </p>
+<p>The engine performed its internal <code>2047 + 1 = 2048</code> math, landed perfectly on the NPU&#39;s physical register boundary, and the logic loops immediately cleared. We also wrote a Python patching helper to inject dummy <code>1.0</code> float16 LayerNorms into the model&#39;s <code>.safetensors</code> headers to satisfy the Pulsar2 tiler&#39;s strict topology validation.</p>
+<hr>
+<h2>Act II: The Catastrophic C++ HTTP Deadlock</h2>
+<p>With the memory boundaries aligned, we staged <strong>DeepSeek-R1-Distill-Qwen-1.5B</strong>. The weights loaded into the NPU memory block flawlessly, but whenever we hit the vendor&#39;s packaged C++ HTTP API server (<code>main_api_axcl_x86</code>) with a standard OpenAI-formatted chat completions payload, the process crashed:</p>
+<p><code>500 Internal Server Error (type must be string, but is null)</code></p>
+<p>We wrote multi-threaded test harnesses to inspect the HTTP handler&#39;s behavior and discovered that the manufacturer&#39;s C++ JSON array iterator was fundamentally broken. It was unable to handle optional parameters or nested keys common in standard modern API requests. When it encountered a key it didn&#39;t expect, the server didn&#39;t just reject the request—it leaked the socket descriptor, leading to cascading <code>[Errno 9]</code> socket deadlocks that completely froze the NPU driver.</p>
+<p>The provided C++ server was a dead end. But we didn&#39;t need their server. We just needed their hardware CLI.</p>
+<hr>
+<h2>Act III: Bypassing the Server (Building the Universal Loader)</h2>
+<p>Hidden deep within the Radxa NPU SDK was a native command-line interface tool (<code>main_axcl_x86</code>). This CLI runs locally inside the LXC container, bypasses the HTTP networking stack entirely, and communicates directly with the underlying <code>axcl</code> kernel driver over standard I/O streams.</p>
+<p>Instead of trying to patch closed-source C++ HTTP wrappers, we decided to route around them. We built a custom <strong>FastAPI Orchestrator</strong> in Python to act as our NPU hypervisor.</p>
+<p>Using <code>pexpect</code>, our orchestrator spawns the vendor&#39;s interactive NPU CLI binary in a hidden pseudo-terminal (PTY) session. The orchestrator listens for standard, clean OpenAI-compliant JSON payloads over the network, translates them into the raw console input format, and silently feeds them directly into the NPU&#39;s running terminal interface.</p>
+<pre><code>[Incoming OpenAI API Request]
+            │
+            ▼
+┌───────────────────────────────┐
+│  FastAPI Python Orchestrator  │
+├───────────────────────────────┤
+│ Intercepts JSON payload       │
+│ Translates parameters         │
+└───────────┬───────────────────┘
+            │ (via pexpect PTY)
+            ▼
+┌───────────────────────────────┐
+│     NPU CLI Console Process   │
+├───────────────────────────────┤
+│ Communicates via standard I/O │
+└───────────┬───────────────────┘
+            │
+            ▼
+   [AX8850 Bare-Metal NPU]
+</code></pre>
+<p>But we wanted a tool that felt as seamless as <strong>Ollama</strong>. So we programmed the orchestrator to act as a <strong>Dynamic Universal Loader</strong>:</p>
+<ol>
+<li><strong>Auto-Teardown:</strong> When a request arrives for a model that isn&#39;t currently running, the orchestrator issues a <code>pkill</code> to the active CLI process.</li>
+<li><strong>CMM Cache Flush:</strong> It runs a driver call to completely clear the NPU&#39;s contiguous memory allocation blocks to avoid memory fragmentation.</li>
+<li><strong>Dynamic Topology Parsing:</strong> It parses the new model&#39;s <code>config.json</code> folder on-the-fly, reading the layers, embedding sizes, and tokenizer paths.</li>
+<li><strong>On-the-Fly Command Construction:</strong> It compiles the boot parameters dynamically and launches a fresh CLI instance mapping the requested model to the NPU.</li>
+<li><strong>Interactive Wait Hook:</strong> It monitors the PTY stream, waits for the CLI&#39;s ready prompt (<code>&gt;</code>), and immediately serves the waiting inference query.</li>
+</ol>
+<hr>
+<h2>Act IV: Injecting Bare-Metal Telemetry</h2>
+<p>By wrapping the raw CLI inside our Python hypervisor, we gained access to the developer output streams. The native NPU CLI dumps detailed, raw execution metrics to stdout. We wrote non-blocking regex filters to capture <strong>Time-to-First-Token (TTFT)</strong> and <strong>Tokens-Per-Second (TPS)</strong> output lines in real-time.</p>
+<p>To make the system a true production-grade appliance, we wanted physical hardware telemetry. We spawned background threads in the orchestrator to poll:</p>
+<ul>
+<li><strong>Junction Temperature:</strong> Parsed from <code>/sys/class/thermal/thermal_zone0/temp</code></li>
+<li><strong>CPU &amp; RAM Delta:</strong> Tracked via <code>psutil</code> system metrics</li>
+</ul>
+<p>We customized our API output structure to inject these hardware analytics directly into the standard OpenAI-compliant <code>usage</code> block of the API response:</p>
+<pre><code class="language-json">{
+  &quot;model&quot;: &quot;DeepSeek-R1-Distill-Qwen-1.5B&quot;,
+  &quot;choices&quot;: [
+    {
+      &quot;message&quot;: {
+        &quot;role&quot;: &quot;assistant&quot;,
+        &quot;content&quot;: &quot;To evaluate 2/2 + 2*2, we follow the standard order of operations (PEMDAS/BODMAS):\n\n1. Division: 2 / 2 = 1\n2. Multiplication: 2 * 2 = 4\n3. Addition: 1 + 4 = 5\n\n**Answer:** 5&quot;
+      }
+    }
+  ],
+  &quot;usage&quot;: {
+    &quot;prompt_tokens&quot;: 14,
+    &quot;completion_tokens&quot;: 76,
+    &quot;total_tokens&quot;: 90,
+    &quot;metrics&quot;: {
+      &quot;tps&quot;: 10.88,
+      &quot;ttft_ms&quot;: 392.15,
+      &quot;total_time_s&quot;: 7.34,
+      &quot;hardware&quot;: {
+        &quot;npu_temp_c&quot;: 27.8,
+        &quot;npu_delta_t&quot;: 0.0,
+        &quot;ram_usage_mb&quot;: 1866.67,
+        &quot;cpu_load_pct&quot;: 26.7
+      }
+    }
+  }
+}
+</code></pre>
+<hr>
+<h2>Hardware PSA: Beware of USB Bridge Enclosures</h2>
+<p>If you are planning to build a portable edge appliance using the Radxa AX-M1 board, be careful with how you power and wire the card. Because the AX-M1 utilizes a standard M.2 M-Key interface, it is tempting to plug it into a cheap $20 USB-C SSD enclosure. </p>
+<p><strong>Do not do this.</strong> </p>
+<p>Standard SSD enclosures use a SATA/NVMe storage bridge controller (like the Realtek RTL9210) that forces the host system to communicate via USB Mass Storage protocols. Your NPU is not a storage drive; it requires a direct PCIe address space map to allocate its CMM blocks. </p>
+<p>To use the board externally, you must use a <strong>Thunderbolt 3/4 or USB4</strong> enclosure. These enclosures support native PCIe Tunneling, passing the raw PCIe lanes directly through to the operating system and allowing the NPU driver to communicate with the silicon.</p>
+<hr>
+<h2>Next Steps</h2>
+<p>By routing around the vendor&#39;s buggy C++ HTTP server and writing a lightweight FastAPI orchestrator, we successfully transformed a rigid, closed-source NPU board into a dynamic, Ollama-like model API gateway. With the card idling at a cool 27.8°C under load, we have a highly efficient, air-gapped inference server running on our local network.</p>
+<p>Next, we are planning to hook this custom NPU gateway endpoint into a dedicated LiteLLM router and feed it vector database embeddings to drive our autonomous offsec agent pipelines.</p>
+<p><em>Stay tuned for Part III, where we&#39;ll explore integrating edge inference into automated red team command-and-control loops.</em></p>
+
+      
+      <div class="post-footer-cta">
+        <div class="cyber-divider-purple"></div>
+        <h3>Collaborate on Security Research</h3>
+        <p>At NextGenRedTeam, we study adversary TTPs and build open-source tools to help defenders. Let's collaborate on research, media projects, or community initiatives.</p>
+        <div class="cta-actions">
+          <a href="https://calendar.proton.me/bookings#HVEHryH4oOT8O4hzE1WTkx71-bIihVp1FCAnLpSB-dM=" target="_blank" class="button border-purple">Schedule Collab &amp; Media</a>
+          <a href="index.html" class="button border-cyan">Back to Blog</a>
+        </div>
+      </div>
+    </article>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="cyber-container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <span class="cyber-glitch-text font-mono">NGRT</span>
+          <p class="footer-desc">Independent Threat Emulation Research &amp; Collaborative Defense.</p>
+        </div>
+        <div class="footer-links">
+          <a href="../index.html#services">Services</a>
+          <a href="../index.html#tools">GitHub Tools</a>
+          <a href="index.html">Threat Lab Blog</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 NextGenRedTeam LLC. All rights reserved. Obfuscated communications active.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="../app.js"></script>
+  <!-- PrismJS Core and Autoloader Scripts -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+</body>
+</html>

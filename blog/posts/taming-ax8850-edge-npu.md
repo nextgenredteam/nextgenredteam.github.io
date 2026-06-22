@@ -253,6 +253,6 @@ To automate and streamline these deployment steps, we've developed and packaged 
 
 By leveraging the AX650 cross-compatibility spoof, we successfully booted a **Gemma 2.6B** model in under two minutes, running natively on the AX8850 edge NPU. 
 
-Now that we are chest-deep in the firmware of this board, we are going to dive deeper to see what else we can extract—and find out if we can manually update the core firmware and system software to the latest versions.
+Now, we've taken the next leap: bypassing broken vendor C++ HTTP APIs, designing a custom FastAPI orchestrator, and piping bare-metal telemetry directly into OpenAI-formatted API outputs.
 
-*Stay tuned for our next deep-dive on bridging these edge APIs into our autonomous C2 pipelines.*
+Check out the full story in **[Conquering the Silicon: Building a Custom 'Ollama' Orchestrator for the AX8850 NPU (Part II)](/blog/conquering-silicon-edge-npu.html)**.
