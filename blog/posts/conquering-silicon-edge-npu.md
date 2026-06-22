@@ -15,7 +15,7 @@ In [Part I of this series](/blog/taming-ax8850-edge-npu.html), we deep-dived int
 
 But compiling the models was only half the battle. Getting them to serve reliably over a clean network API revealed a host of SDK bugs, memory registration collisions, and server-level deadlocks. 
 
-Here is the story of how my autonomous AI coding agent ("Antigravity") and I bypassed the manufacturer's broken C++ server stack, engineered a physical alignment hack to fix Logit Collapse, and built a custom "Universal Loader" orchestrator from scratch to hot-swap models on the silicon on-the-fly.
+Here is the story of how we bypassed the manufacturer's broken C++ server stack, engineered a physical alignment hack to fix Logit Collapse, and built a custom "Universal Loader" orchestrator from scratch to hot-swap models on the silicon on-the-fly.
 
 ---
 
@@ -139,18 +139,6 @@ We customized our API output structure to inject these hardware analytics direct
   }
 }
 ```
-
----
-
-## Hardware PSA: Beware of USB Bridge Enclosures
-
-If you are planning to build a portable edge appliance using the Radxa AX-M1 board, be careful with how you power and wire the card. Because the AX-M1 utilizes a standard M.2 M-Key interface, it is tempting to plug it into a cheap $20 USB-C SSD enclosure. 
-
-**Do not do this.** 
-
-Standard SSD enclosures use a SATA/NVMe storage bridge controller (like the Realtek RTL9210) that forces the host system to communicate via USB Mass Storage protocols. Your NPU is not a storage drive; it requires a direct PCIe address space map to allocate its CMM blocks. 
-
-To use the board externally, you must use a **Thunderbolt 3/4 or USB4** enclosure. These enclosures support native PCIe Tunneling, passing the raw PCIe lanes directly through to the operating system and allowing the NPU driver to communicate with the silicon.
 
 ---
 

@@ -66,7 +66,7 @@
 <p>The promise of Edge AI hardware is intoxicating: running blazing-fast, power-efficient local inference without tying up a $1,000+ workstation GPU or bleeding money to cloud API providers. </p>
 <p>In <a href="/blog/taming-ax8850-edge-npu.html">Part I of this series</a>, we deep-dived into reverse-engineering the Axera Pulsar2 compiler, patching PyArmor binaries in-flight, and leveraging the Radxa AX-M1 board&#39;s hardware compatibility with older AX650 binaries to host models natively on silicon. </p>
 <p>But compiling the models was only half the battle. Getting them to serve reliably over a clean network API revealed a host of SDK bugs, memory registration collisions, and server-level deadlocks. </p>
-<p>Here is the story of how my autonomous AI coding agent (&quot;Antigravity&quot;) and I bypassed the manufacturer&#39;s broken C++ server stack, engineered a physical alignment hack to fix Logit Collapse, and built a custom &quot;Universal Loader&quot; orchestrator from scratch to hot-swap models on the silicon on-the-fly.</p>
+<p>Here is the story of how we bypassed the manufacturer&#39;s broken C++ server stack, engineered a physical alignment hack to fix Logit Collapse, and built a custom &quot;Universal Loader&quot; orchestrator from scratch to hot-swap models on the silicon on-the-fly.</p>
 <hr>
 <h2>Act I: The Gemma Collapse &amp; The &quot;2047&quot; Hardware Alignment Hack</h2>
 <p>Our first real runtime test was deploying a pre-compiled, abliterated version of Gemma-4. We pushed the model through the compiler, successfully mapped the INT4 weights into the NPU&#39;s Contiguous Memory (CMM) blocks, booted the gateway, and queried the model with a simple prompt: <em>&quot;What is 2+2?&quot;</em></p>
@@ -160,12 +160,6 @@ Off-by-One Hardware Drift:
   }
 }
 </code></pre>
-<hr>
-<h2>Hardware PSA: Beware of USB Bridge Enclosures</h2>
-<p>If you are planning to build a portable edge appliance using the Radxa AX-M1 board, be careful with how you power and wire the card. Because the AX-M1 utilizes a standard M.2 M-Key interface, it is tempting to plug it into a cheap $20 USB-C SSD enclosure. </p>
-<p><strong>Do not do this.</strong> </p>
-<p>Standard SSD enclosures use a SATA/NVMe storage bridge controller (like the Realtek RTL9210) that forces the host system to communicate via USB Mass Storage protocols. Your NPU is not a storage drive; it requires a direct PCIe address space map to allocate its CMM blocks. </p>
-<p>To use the board externally, you must use a <strong>Thunderbolt 3/4 or USB4</strong> enclosure. These enclosures support native PCIe Tunneling, passing the raw PCIe lanes directly through to the operating system and allowing the NPU driver to communicate with the silicon.</p>
 <hr>
 <h2>Next Steps</h2>
 <p>By routing around the vendor&#39;s buggy C++ HTTP server and writing a lightweight FastAPI orchestrator, we successfully transformed a rigid, closed-source NPU board into a dynamic, Ollama-like model API gateway. With the card idling at a cool 27.8°C under load, we have a highly efficient, air-gapped inference server running on our local network.</p>
