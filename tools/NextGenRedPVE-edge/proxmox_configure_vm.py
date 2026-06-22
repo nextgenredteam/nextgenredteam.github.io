@@ -91,7 +91,8 @@ def configure_guest(ip, key_file, pub_key, npu_user):
         if key_file and os.path.exists(key_file):
             guest_client.connect(ip, port=22, username='root', key_filename=key_file, timeout=15)
         else:
-            guest_client.connect(ip, port=22, username='root', password='changeme-set-a-strong-password', timeout=15)
+            bootstrap_password = get_env_or_default('VM_BOOTSTRAP_PASSWORD', 'changeme-set-a-strong-password')
+            guest_client.connect(ip, port=22, username='root', password=bootstrap_password, timeout=15)
             
         for cmd in commands:
             print(f"[*] Running on Guest: {cmd[:60]}...")

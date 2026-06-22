@@ -33,6 +33,9 @@ def main():
         
     print(f"[*] Provisioning VM {target_id} on Proxmox host: {host}...")
     
+    # Fetch the VM bootstrap password to use in Cloud-Init
+    bootstrap_password = get_env_or_default('VM_BOOTSTRAP_PASSWORD', 'changeme-set-a-strong-password')
+
     commands = [
         # Write public key to temporary cloud-init load file
         f"echo '{pub_key}' > /tmp/npu_vm_keys",
@@ -69,7 +72,7 @@ def main():
         f"qm set {target_id} --machine q35",
         
         # Configure default administrative credentials and auto network configurations
-        f"qm set {target_id} --ciuser root --cipassword 'changeme-set-a-strong-password' --ipconfig0 ip=dhcp",
+        f"qm set {target_id} --ciuser root --cipassword '{bootstrap_password}' --ipconfig0 ip=dhcp",
         
         # Apply the ssh credential hooks
         f"qm set {target_id} --sshkeys /tmp/npu_vm_keys",
