@@ -239,6 +239,76 @@ root     29290  0.8  1.0 2034400 174232 ?  Sl   21:58   0:07 axllm serve /opt/ax
 root     29915  0.0  0.7  651252 127736 ?  Sl   22:14   0:00 axllm serve /opt/axera/models/gemma-4-E2B ... --port 8002
 </code></pre>
 <p>This multi-tenant NPU setup allows edge routers or localized offensive security hardware to route classification and analysis tasks to different specialized local models simultaneously, maximizing hardware utilization.</p>
+<h3>The Catch: Concurrency Driver Bottlenecks &amp; Loops</h3>
+<p>While the dual-model allocation is physically supported by the NPU&#39;s SRAM and CMM, our testing exposed significant stability bugs when querying both models simultaneously:</p>
+<ol>
+<li><strong>API Timing Collisions &amp; Cutoffs:</strong> When querying both Qwen 3.5 and Gemma 4 concurrently (e.g. asking both models to evaluate <code>2/2+2*2=</code>), the <code>axcl</code> driver backend struggled to multiplex execution contexts. Qwen 3.5 successfully booted its <code>&lt;think&gt;</code> reasoning block but froze mid-token.</li>
+<li><strong>EOS Array Bugs &amp; Loops:</strong> Gemma 4 started spewing repetitive garbage loop outputs (<code>&quot;content&quot;: &quot;factfactfactfact...&quot;</code>). This occurred because the vendor gateway failed to handle Hugging Face token configs where <code>eos_token_id</code> is defined as an array (<code>[1, 106]</code>) instead of a single integer. We had to write an automated patching script to force <code>eos_token_id = 106</code> on the disk-level configuration to restore proper end-of-sentence behavior.</li>
+<li><strong>Driver Hangs:</strong> High-concurrency query execution eventually exhausted the NPU core scheduling queue, necessitating a hard service restart (<code>pkill -f axllm</code>) and temporary file cleanups (<code>/tmp/axcl/*</code>).</li>
+</ol>
+<hr>
+<h2>Model Support Quick Reference</h2>
+<p>Here is a quick compatibility matrix of the LLM architectures we tested against the AX8850 (AICore AX-M1) during our research:</p>
+<table>
+<thead>
+<tr>
+<th align="left">Model Name</th>
+<th align="left">Parameters</th>
+<th align="left">Source</th>
+<th align="left">Compatibility</th>
+<th align="left">Notes / Failure Cause</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><strong>Qwen 2.5-0.5B</strong></td>
+<td align="left">0.5B</td>
+<td align="left">Pre-Compiled (AX650)</td>
+<td align="left"><strong>PASS</strong></td>
+<td align="left">Runs natively. Fast token streaming.</td>
+</tr>
+<tr>
+<td align="left"><strong>Qwen 3.5-2B</strong></td>
+<td align="left">2.0B</td>
+<td align="left">Pre-Compiled (AX650)</td>
+<td align="left"><strong>PASS</strong></td>
+<td align="left">Runs on port 8000. Susceptible to freeze under concurrent query load.</td>
+</tr>
+<tr>
+<td align="left"><strong>Qwen 1.5-0.5B</strong></td>
+<td align="left">0.5B</td>
+<td align="left">Local Compile (Pulsar2)</td>
+<td align="left"><strong>PASS</strong></td>
+<td align="left">Compiled using our custom in-memory patcher hooks.</td>
+</tr>
+<tr>
+<td align="left"><strong>Gemma 4 E2B-it</strong></td>
+<td align="left">2.0B</td>
+<td align="left">Pre-Compiled (AX650)</td>
+<td align="left"><strong>PARTIAL</strong></td>
+<td align="left">Runs on port 8002. Requires patching <code>eos_token_id</code> to single int <code>106</code> to prevent looping.</td>
+</tr>
+<tr>
+<td align="left"><strong>DeepSeek-R1-Distill-Qwen-1.5B</strong></td>
+<td align="left">1.5B</td>
+<td align="left">Pre-Compiled (AX650)</td>
+<td align="left"><strong>FAIL</strong></td>
+<td align="left">Crashes with <code>0x8030070c</code> driver execution error (often triggered by 0-byte HF stub config imports).</td>
+</tr>
+<tr>
+<td align="left"><strong>DeepSeek-Coder-V2 / MoE</strong></td>
+<td align="left">Various</td>
+<td align="left">Direct compile attempt</td>
+<td align="left"><strong>FAIL</strong></td>
+<td align="left">Compiler crash. SRAM tiler cannot process <code>mRoPE</code> (multi-core Rotary Position Embedding) shapes.</td>
+</tr>
+<tr>
+<td align="left"><strong>Raw float16 / bf16 models</strong></td>
+<td align="left">Various</td>
+<td align="left">Direct compile attempt</td>
+<td align="left"><strong>FAIL</strong></td>
+<td align="left">Compiler <code>TileFailException</code> / <code>invalid groupN</code> crash. SRAM requires pre-quantized weights (<code>groupN=128</code>).</td>
+</tr>
+</tbody></table>
 <hr>
 <h2>Deployment &amp; Tooling Suite</h2>
 <p>To automate and streamline these deployment steps, we&#39;ve developed and packaged a unified Python toolkit for NPU guest provisioning, model compiling, and testing. It is available under our public repositories as <a href="https://github.com/nextgenredteam/nextgenredteam.github.io/tree/main/tools/NextGenRedPVE-edge">NextGenRedPVE-edge</a>.</p>

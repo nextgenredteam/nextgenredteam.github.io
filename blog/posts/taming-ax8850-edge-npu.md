@@ -198,6 +198,30 @@ root     29915  0.0  0.7  651252 127736 ?  Sl   22:14   0:00 axllm serve /opt/ax
 
 This multi-tenant NPU setup allows edge routers or localized offensive security hardware to route classification and analysis tasks to different specialized local models simultaneously, maximizing hardware utilization.
 
+### The Catch: Concurrency Driver Bottlenecks & Loops
+
+While the dual-model allocation is physically supported by the NPU's SRAM and CMM, our testing exposed significant stability bugs when querying both models simultaneously:
+
+1. **API Timing Collisions & Cutoffs:** When querying both Qwen 3.5 and Gemma 4 concurrently (e.g. asking both models to evaluate `2/2+2*2=`), the `axcl` driver backend struggled to multiplex execution contexts. Qwen 3.5 successfully booted its `<think>` reasoning block but froze mid-token.
+2. **EOS Array Bugs & Loops:** Gemma 4 started spewing repetitive garbage loop outputs (`"content": "factfactfactfact..."`). This occurred because the vendor gateway failed to handle Hugging Face token configs where `eos_token_id` is defined as an array (`[1, 106]`) instead of a single integer. We had to write an automated patching script to force `eos_token_id = 106` on the disk-level configuration to restore proper end-of-sentence behavior.
+3. **Driver Hangs:** High-concurrency query execution eventually exhausted the NPU core scheduling queue, necessitating a hard service restart (`pkill -f axllm`) and temporary file cleanups (`/tmp/axcl/*`).
+
+---
+
+## Model Support Quick Reference
+
+Here is a quick compatibility matrix of the LLM architectures we tested against the AX8850 (AICore AX-M1) during our research:
+
+| Model Name | Parameters | Source | Compatibility | Notes / Failure Cause |
+| :--- | :--- | :--- | :--- | :--- |
+| **Qwen 2.5-0.5B** | 0.5B | Pre-Compiled (AX650) | **PASS** | Runs natively. Fast token streaming. |
+| **Qwen 3.5-2B** | 2.0B | Pre-Compiled (AX650) | **PASS** | Runs on port 8000. Susceptible to freeze under concurrent query load. |
+| **Qwen 1.5-0.5B** | 0.5B | Local Compile (Pulsar2) | **PASS** | Compiled using our custom in-memory patcher hooks. |
+| **Gemma 4 E2B-it** | 2.0B | Pre-Compiled (AX650) | **PARTIAL** | Runs on port 8002. Requires patching `eos_token_id` to single int `106` to prevent looping. |
+| **DeepSeek-R1-Distill-Qwen-1.5B** | 1.5B | Pre-Compiled (AX650) | **FAIL** | Crashes with `0x8030070c` driver execution error (often triggered by 0-byte HF stub config imports). |
+| **DeepSeek-Coder-V2 / MoE** | Various | Direct compile attempt | **FAIL** | Compiler crash. SRAM tiler cannot process `mRoPE` (multi-core Rotary Position Embedding) shapes. |
+| **Raw float16 / bf16 models** | Various | Direct compile attempt | **FAIL** | Compiler `TileFailException` / `invalid groupN` crash. SRAM requires pre-quantized weights (`groupN=128`). |
+
 ---
 
 
