@@ -75,7 +75,36 @@ nohup axllm serve /opt/axera/models/Qwen2.5-1.5B-Instruct/ --port 8000 > /var/lo
 
 The endpoint is now exposed to your wider enterprise network at `http://<LXC_IP_ADDRESS>:8000/v1/chat/completions`, operating as a dedicated, hardware-accelerated OpenAI API drop-in replacement.
 
+### Step 5: Hardening Driver Initialization (Mitigating Kernel Lockups)
+
+When restarting the C++ server or hot-swapping models, terminating the server process abruptly can leave the NPU kernel driver (`axcl`) in an unstable state. If the PCIe memory maps are not properly deallocated, the host kernel locks up, and subsequent runs will fail with memory boundary crashes—often misleadingly suggesting that your `.axmodel` files are corrupted.
+
+To guarantee months of uninterrupted runtime, use a dedicated bash wrapper (`start_server.sh`) to perform socket teardown and flush the driver before booting:
+
+```bash
+#!/bin/bash
+set -e
+
+PORT=8000
+MODEL_DIR="/opt/axera/models/Qwen2.5-1.5B-Instruct"
+
+echo "[*] Tearing down existing socket connections on port $PORT..."
+# Force close any deadlocked network processes on the port
+sudo fuser -k $PORT/tcp || true
+sleep 1
+
+echo "[*] Flushing NPU PCIe driver and releasing CMM maps..."
+# Reset driver state to avoid memory address mapping collisions
+sudo axcl_util reset || true
+sleep 2
+
+echo "[*] Launching zero-copy inference server..."
+nohup axllm serve "$MODEL_DIR" --port $PORT > /var/log/axllm_server.log 2>&1 &
+echo "[+] NPU engine initialized successfully!"
+```
+
 ---
+
 
 ## 2. Cracking the Tokenizer Engine
 

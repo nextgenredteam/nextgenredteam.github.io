@@ -108,6 +108,29 @@ pip install transformers huggingface_hub torch
 <pre><code class="language-bash">nohup axllm serve /opt/axera/models/Qwen2.5-1.5B-Instruct/ --port 8000 &gt; /var/log/axllm_server.log 2&gt;&amp;1 &amp;
 </code></pre>
 <p>The endpoint is now exposed to your wider enterprise network at <code>http://&lt;LXC_IP_ADDRESS&gt;:8000/v1/chat/completions</code>, operating as a dedicated, hardware-accelerated OpenAI API drop-in replacement.</p>
+<h3>Step 5: Hardening Driver Initialization (Mitigating Kernel Lockups)</h3>
+<p>When restarting the C++ server or hot-swapping models, terminating the server process abruptly can leave the NPU kernel driver (<code>axcl</code>) in an unstable state. If the PCIe memory maps are not properly deallocated, the host kernel locks up, and subsequent runs will fail with memory boundary crashes—often misleadingly suggesting that your <code>.axmodel</code> files are corrupted.</p>
+<p>To guarantee months of uninterrupted runtime, use a dedicated bash wrapper (<code>start_server.sh</code>) to perform socket teardown and flush the driver before booting:</p>
+<pre><code class="language-bash">#!/bin/bash
+set -e
+
+PORT=8000
+MODEL_DIR=&quot;/opt/axera/models/Qwen2.5-1.5B-Instruct&quot;
+
+echo &quot;[*] Tearing down existing socket connections on port $PORT...&quot;
+# Force close any deadlocked network processes on the port
+sudo fuser -k $PORT/tcp || true
+sleep 1
+
+echo &quot;[*] Flushing NPU PCIe driver and releasing CMM maps...&quot;
+# Reset driver state to avoid memory address mapping collisions
+sudo axcl_util reset || true
+sleep 2
+
+echo &quot;[*] Launching zero-copy inference server...&quot;
+nohup axllm serve &quot;$MODEL_DIR&quot; --port $PORT &gt; /var/log/axllm_server.log 2&gt;&amp;1 &amp;
+echo &quot;[+] NPU engine initialized successfully!&quot;
+</code></pre>
 <hr>
 <h2>2. Cracking the Tokenizer Engine</h2>
 <p>The native C++ server does not parse standard Hugging Face <code>tokenizer.json</code> files at runtime. Instead, the integrated <code>tokenizer.axera</code> library expects a proprietary, flattened binary format called <code>tokenizer.txt</code>. This file must begin with a strict, hardware-specific hex magic number header.</p>
