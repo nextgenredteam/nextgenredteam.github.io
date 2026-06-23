@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ultimate Guide: Unlocking Native Zero-Copy 14+ TPS on the Axera AX8850 | NextGenRedTeam Blog</title>
+  <meta name="description" content="How we bypassed Radxa's Python CPU bottlenecks, compiled a native C++ server, and achieved stable 14+ TPS on LLaMA 3.2 3B using zero-copy memory pipelines.">
+  <link rel="stylesheet" href="../index.css">
+  <link rel="icon" href="../favicon.ico" type="image/x-icon">
+  
+  <!-- MathJax Math Rendering Support -->
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  
+  <!-- Prism.js Tomorrow Night Syntax Highlighting Theme -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  
+  <!-- Open Graph -->
+  <meta property="og:title" content="Ultimate Guide: Unlocking Native Zero-Copy 14+ TPS on the Axera AX8850 | NextGenRedTeam Blog">
+  <meta property="og:description" content="How we bypassed Radxa's Python CPU bottlenecks, compiled a native C++ server, and achieved stable 14+ TPS on LLaMA 3.2 3B using zero-copy memory pipelines.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://nextgenredteam.com/blog/">
+  <meta name="twitter:card" content="summary_large_image">
+</head>
+<body class="blog-post-page">
+  <div class="scanlines"></div>
+  <div class="noise-overlay"></div>
+
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="../index.html" class="logo-container" id="logo-link">
+        <img src="../assets/logos/logo2.png" id="ngrt-logo" alt="NGRT Logo" class="logo-img">
+      </a>
+      <div class="nav-links">
+        <a href="../index.html#services" class="nav-link">[01] Services</a>
+        <a href="../index.html#tools" class="nav-link">[02] Tools</a>
+        <a href="index.html" class="nav-link active">[03] Blog</a>
+        <a href="../index.html#engage" class="nav-link-btn button">[Collab &amp; Media]</a>
+      </div>
+      <button class="nav-burger" id="nav-burger" aria-label="Toggle Menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Article Hero -->
+  <header class="post-hero">
+    <div class="cyber-container">
+      <div class="post-meta">
+        <span class="meta-date">// PUBLISHED: 2026-06-23</span>
+        <span class="meta-author">// AUTHOR: Joe Brinkley</span>
+      </div>
+      <h1 class="post-title">Ultimate Guide: Unlocking Native Zero-Copy 14+ TPS on the Axera AX8850</h1>
+      <div class="cyber-divider-cyan"></div>
+    </div>
+  </header>
+
+  <!-- Article Content -->
+  <main class="post-content-section">
+    <article class="cyber-container markdown-body">
+      <h1>Ultimate Guide: Unlocking Native Zero-Copy 14+ TPS on the Axera AX8850 (Bypassing Radxa&#39;s Python Bottlenecks)</h1>
+<p><img src="../assets/ultimate_zero_copy_npu.png" alt="Ultimate Guide: Unlocking Native Zero-Copy 14+ TPS on the Axera AX8850"></p>
+<p>If you&#39;re running LLMs on the Axera AX8850 (or AX650N) NPUs using the default Radxa drivers and legacy Python orchestrators, you are severely bottlenecking your hardware. </p>
+<p>The default Radxa Python wrapper uses a stateful <code>pexpect</code> CLI bridge that pushes raw strings back and forth to a C++ binary. This creates massive I/O overhead, corrupts the KV Cache management, and causes the infamous <strong>0.0 TPS Deadlock</strong> the second your context window fills up.</p>
+<p>Furthermore, the default global Python environments shipped on these NPUs are fundamentally broken and corrupted, which will silently crash the <code>huggingface-cli</code> and <code>Pulsar2</code> model compilers.</p>
+<p>Here is the exact technical breakdown of how we bypassed the Radxa drivers, patched the C++ tokenizers, and deployed a pure, zero-copy native API server directly connected to the NPU&#39;s PCIe kernel driver.</p>
+<hr>
+<h2>🛠️ What We Patched</h2>
+<ol>
+<li><strong>The Orchestrator:</strong> We completely threw out the Python wrapper. We cloned Axera&#39;s upstream <code>ax-llm</code> repository and compiled their unified <code>axllm serve</code> C++ daemon natively. This exposes a zero-copy OpenAI <code>/v1/chat/completions</code> API out of the box.</li>
+<li><strong>The Python Environment:</strong> The global <code>transformers</code> library on the NPU host is broken. We bypassed it by bootstrapping an entirely isolated Python <code>venv</code> purely for compiling the models and tokenizers.</li>
+<li><strong>The Tokenizer Magic:</strong> The native C++ server <strong>will crash</strong> if you feed it standard Hugging Face <code>tokenizer.json</code> files. It strictly requires a proprietary binary <code>tokenizer.txt</code> file beginning with a specific hex &quot;magic number&quot;. We intercepted the compiler pipeline to generate this securely in our clean <code>venv</code>.</li>
+</ol>
+<hr>
+<h2>⚡ The &quot;One-Go&quot; Pipeline Script</h2>
+<p>If you want to skip the headache, here is the exact, end-to-end bash pipeline to get an LLM (like LLaMA 3.2 3B) compiled and running perfectly on the raw silicon in one go.</p>
+<h3>Step 1: Compile the Native C++ Server</h3>
+<p>First, build the zero-copy daemon from Axera&#39;s upstream source:</p>
+<pre><code class="language-bash"># Clone the unified upstream engine
+git clone https://github.com/AXERA-TECH/ax-llm.git
+cd ax-llm
+git submodule update --init --recursive
+
+# Build the PCIe host backend for x86
+mkdir build &amp;&amp; cd build
+cmake .. -DAX_TARGET_ARCH=x86 -DAX_BUILD_API=ON
+make -j8
+</code></pre>
+<h3>Step 2: The Fully Automated Pipeline</h3>
+<p>Run this single bash script. It will create a clean virtual environment, download the weights using the modern <code>hf</code> command, compile the NPU <code>.axmodel</code> chunks utilizing maximum KV Cache, and securely generate the proprietary tokenizer.</p>
+<pre><code class="language-bash">#!/bin/bash
+# 1. Isolate the environment! Never use the host Python for this.
+echo &quot;Creating clean compiler VENV...&quot;
+python3 -m venv /opt/axera/compiler_venv
+export PATH=/opt/axera/compiler_venv/bin:/usr/local/bin:$PATH
+
+echo &quot;Installing clean dependencies...&quot;
+pip install --upgrade pip
+pip install transformers huggingface_hub torch
+
+# 2. Download the RAW Weights using the modern CLI
+echo &quot;Downloading LLaMA 3.2 RAW Weights...&quot;
+hf download huihui-ai/Llama-3.2-3B-Instruct-abliterated --local-dir /opt/axera/models/Llama-3.2-3B-RAW
+
+# 3. Compile the Model Chunks for the NPU
+# (Note: We explicitly override the kv_cache_len to maximize the 5.5GB NPU RAM!)
+echo &quot;Building LLaMA 3.2 3B (8191 Context)...&quot;
+pulsar2 llm_build --input_path /opt/axera/models/Llama-3.2-3B-RAW \
+                  --output_path /opt/axera/models/Llama-3.2-3B-AX \
+                  --kv_cache_len 8191 \
+                  --chip AX650 \
+                  -w s4
+
+# 4. Generate the Proprietary Tokenizer
+# This MUST be run inside the clean venv, otherwise the broken host environment will crash it!
+echo &quot;Exporting Tokenizer with Magic Hex...&quot;
+python3 /opt/axera/source/ax-llm/third_party/tokenizer.axera/tests/convert_tokenizer.py \
+    --tokenizer_path /opt/axera/models/Llama-3.2-3B-RAW \
+    --dst_path /opt/axera/models/Llama-3.2-3B-AX/tokenizer.txt
+
+echo &quot;Pipeline Complete!&quot;
+</code></pre>
+<h3>Step 3: Boot the Daemon</h3>
+<p>Once the model is compiled into the <code>Llama-3.2-3B-AX</code> folder, you need to map it via a <code>config.json</code> payload so the C++ object factory recognizes it. Ensure your folder contains a <code>config.json</code> similar to this:</p>
+<pre><code class="language-json">{
+    &quot;model_name&quot;: &quot;llama3_2&quot;,
+    &quot;template_filename_axmodel&quot;: &quot;llama3_2_p128_l%d_together.axmodel&quot;,
+    &quot;url_tokenizer_model&quot;: &quot;tokenizer.txt&quot;,
+    &quot;tokenizer_type&quot;: &quot;LLaMA&quot;
+}
+</code></pre>
+<p>Then, fire up the daemon:</p>
+<pre><code class="language-bash">cd /opt/axera/source/ax-llm/
+sudo ./build/axllm serve /opt/axera/models/Llama-3.2-3B-AX/ --port 8000
+</code></pre>
+<hr>
+<h2>The Results</h2>
+<p>You now have a fully operational, OpenAI-compatible REST server listening on <code>127.0.0.1:8000/v1/chat/completions</code>. </p>
+<p>By completely bypassing the CPU bottlenecks and utilizing the pure C++ NPU memory bridges, we stress-tested this engine and hit a perfectly stable <strong>~14 TPS</strong>. It handles back-to-back heavy reasoning prompts flawlessly, dynamically flushes the KV Cache, and completely eradicates the Radxa 0.0 TPS deadlock issue! 🔥</p>
+
+      
+      <div class="post-footer-cta">
+        <div class="cyber-divider-purple"></div>
+        <h3>Collaborate on Security Research</h3>
+        <p>At NextGenRedTeam, we study adversary TTPs and build open-source tools to help defenders. Let's collaborate on research, media projects, or community initiatives.</p>
+        <div class="cta-actions">
+          <a href="https://calendar.proton.me/bookings#HVEHryH4oOT8O4hzE1WTkx71-bIihVp1FCAnLpSB-dM=" target="_blank" class="button border-purple">Schedule Collab &amp; Media</a>
+          <a href="index.html" class="button border-cyan">Back to Blog</a>
+        </div>
+      </div>
+    </article>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="cyber-container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <span class="cyber-glitch-text font-mono">NGRT</span>
+          <p class="footer-desc">Independent Threat Emulation Research &amp; Collaborative Defense.</p>
+        </div>
+        <div class="footer-links">
+          <a href="../index.html#services">Services</a>
+          <a href="../index.html#tools">GitHub Tools</a>
+          <a href="index.html">Threat Lab Blog</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 NextGenRedTeam LLC. All rights reserved. Obfuscated communications active.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="../app.js"></script>
+  <!-- PrismJS Core and Autoloader Scripts -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+</body>
+</html>
