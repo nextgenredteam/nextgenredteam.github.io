@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ReTHink: Bypassing DKMS and Virtualizing the AX8850 NPU in Proxmox LXC | NextGenRedTeam Blog</title>
-  <meta name="description" content="How we decoupled the Axera AX8850 NPU from bare-metal, resolved Proxmox LXC DKMS compiler conflicts, and cleared stale CMM allocations to host localized reasoning LLMs.">
+  <title>ReThink: Bypassing DKMS and Virtualizing the AX8850 NPU in NextGenPVE LXC | NextGenRedTeam Blog</title>
+  <meta name="description" content="How we decoupled the Axera AX8850 NPU from bare-metal, resolved NextGenPVE LXC DKMS compiler conflicts, and cleared stale CMM allocations to host localized reasoning LLMs.">
   <link rel="stylesheet" href="../index.css">
   <link rel="icon" href="../favicon.ico" type="image/x-icon">
   
@@ -16,8 +16,8 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
   
   <!-- Open Graph -->
-  <meta property="og:title" content="ReTHink: Bypassing DKMS and Virtualizing the AX8850 NPU in Proxmox LXC | NextGenRedTeam Blog">
-  <meta property="og:description" content="How we decoupled the Axera AX8850 NPU from bare-metal, resolved Proxmox LXC DKMS compiler conflicts, and cleared stale CMM allocations to host localized reasoning LLMs.">
+  <meta property="og:title" content="ReThink: Bypassing DKMS and Virtualizing the AX8850 NPU in NextGenPVE LXC | NextGenRedTeam Blog">
+  <meta property="og:description" content="How we decoupled the Axera AX8850 NPU from bare-metal, resolved NextGenPVE LXC DKMS compiler conflicts, and cleared stale CMM allocations to host localized reasoning LLMs.">
   <meta property="og:type" content="article">
   <meta property="og:url" content="https://nextgenredteam.com/blog/">
   <meta name="twitter:card" content="summary_large_image">
@@ -53,7 +53,7 @@
         <span class="meta-date">// PUBLISHED: 2026-06-24</span>
         <span class="meta-author">// AUTHOR: Joe Brinkley</span>
       </div>
-      <h1 class="post-title">ReTHink: Bypassing DKMS and Virtualizing the AX8850 NPU in Proxmox LXC</h1>
+      <h1 class="post-title">ReThink: Bypassing DKMS and Virtualizing the AX8850 NPU in NextGenPVE LXC</h1>
       <div class="cyber-divider-cyan"></div>
     </div>
   </header>
@@ -61,24 +61,24 @@
   <!-- Article Content -->
   <main class="post-content-section">
     <article class="cyber-container markdown-body">
-      <h1>ReTHink: Bypassing DKMS and Virtualizing the AX8850 NPU in Proxmox LXC</h1>
-<p><img src="../assets/rethink_npu_lxc.png" alt="ReTHink: Bypassing DKMS and Virtualizing the AX8850 NPU in Proxmox LXC"></p>
+      <h1>ReThink: Bypassing DKMS and Virtualizing the AX8850 NPU in NextGenPVE LXC</h1>
+<p><img src="../assets/rethink_npu_lxc.png" alt="ReThink: Bypassing DKMS and Virtualizing the AX8850 NPU in NextGenPVE LXC"></p>
 <p>Deploying hardware accelerators in virtualized environments is never just a walk in the park, but our recent journey with the <strong>Axera AX8850 (LAMBERT) NPU</strong> proved to be an exceptionally deep dive into Linux container internals, driver architecture, and AI model quantization.</p>
-<p>This is the story of how we successfully decoupled a high-performance edge NPU from its bare-metal constraints, passed it into a lightweight Proxmox LXC, bypassed kernel-level limitations, and ultimately deployed an OpenAI-compatible API running a localized, quantized reasoning model.</p>
+<p>This is the story of how we successfully decoupled a high-performance edge NPU from its bare-metal constraints, passed it into a lightweight NextGenPVE LXC, bypassed kernel-level limitations, and ultimately deployed an OpenAI-compatible API running a localized, quantized reasoning model.</p>
 <hr>
 <h2>The Objective</h2>
-<p>Our goal was clear: take our bare-metal Proxmox host, which natively had the Axera NPU drivers (<code>axcl-dkms</code>) and firmware installed, and serve an LLM from within a privileged Linux Container (LXC). We wanted an isolated API gateway that could directly tap into the NPU hardware without polluting the host environment with Python dependencies or HTTP servers.</p>
+<p>Our goal was clear: take our bare-metal NextGenPVE host, which natively had the Axera NPU drivers (<code>axcl-dkms</code>) and firmware installed, and serve an LLM from within a Linux Container (LXC). We wanted an isolated API gateway that could directly tap into the NPU hardware without polluting the host environment with Python dependencies or HTTP servers.</p>
 <p>We targeted the <strong>Qwen3-1.7B-GPTQ-Int4</strong> model—a small, highly capable reasoning model that perfectly fits within the &quot;Sweet Spot&quot; of the AX8850&#39;s hardware constraints.</p>
 <hr>
 <h2>The Blind Spot: Why We Rebooted and Read the Docs</h2>
-<p>Initially, we attempted a standard installation within the LXC. However, we quickly hit a massive roadblock: the official Radxa documentation assumes you are running the software on a bare-metal Linux OS. </p>
-<p>When you run inside a Proxmox LXC, the container shares the host&#39;s kernel. This means <strong>you cannot compile kernel modules (DKMS)</strong> inside the container. We watched our container&#39;s package manager (<code>dpkg</code>) completely shatter as it tried to install the <code>axcl-dkms</code> package, triggering phantom kernel header mismatch errors that brought our deployment to a screeching halt.</p>
+<p>Initially, we attempted a standard installation within the LXC. However, we quickly hit a massive roadblock: the official documentation assumes you are running the software on a bare-metal Linux OS. </p>
+<p>When you run inside a NextGenPVE LXC, the container shares the host&#39;s kernel. This means <strong>you cannot compile kernel modules (DKMS)</strong> inside the container. We watched our container&#39;s package manager (<code>dpkg</code>) completely shatter as it tried to install the <code>axcl-dkms</code> package, triggering phantom kernel header mismatch errors that brought our deployment to a screeching halt.</p>
 <p>We had to stop, clean up the broken dpkg state, reboot our processes, and go back to the drawing board. After meticulously reading through the Axera documentation and dissecting the driver payload, we realized a crucial separation of concerns: <strong>the host must handle the hardware, and the container only needs the user-space API.</strong></p>
 <hr>
 <h2>The Solution: Manual Injection and CMM Memory Management</h2>
 <p>Here is what we actually had to do—things that are buried deep or entirely missing from the official documentation:</p>
 <h3>1. The <code>cgroup2</code> Passthrough</h3>
-<p>To give the LXC access to the NPU without giving it the driver payload, we used <code>cgroup2</code> rules in the Proxmox configuration. We identified the Major character device number (which turned out to be <code>10</code> for misc devices) for the NPU on the host and mapped the required character devices directly into the container:</p>
+<p>To give the LXC access to the NPU without giving it the driver payload, we used <code>cgroup2</code> rules in the NextGenPVE configuration. We identified the Major character device number (which turned out to be <code>10</code> for misc devices) for the NPU on the host and mapped the required character devices directly into the container:</p>
 <pre><code class="language-text"># Append to /etc/pve/lxc/&lt;LXC_ID&gt;.conf on the host:
 lxc.cgroup2.devices.allow: c 10:* rwm
 lxc.mount.entry: /dev/axcl_host dev/axcl_host none bind,optional,create=file 0 0
@@ -94,7 +94,7 @@ lxc.mount.entry: /dev/p2p dev/p2p none bind,optional,create=file 0 0
 <hr>
 <h2>Software and Hardware Stack</h2>
 <ul>
-<li><strong>Host</strong>: Proxmox VE (Linux Kernel)</li>
+<li><strong>Host</strong>: NextGenPVE (Linux Kernel)</li>
 <li><strong>Container</strong>: Privileged LXC (Debian/Ubuntu)</li>
 <li><strong>NPU</strong>: Axera AX8850 (LAMBERT)</li>
 <li><strong>NPU Driver/Firmware</strong>: V3.6.5</li>

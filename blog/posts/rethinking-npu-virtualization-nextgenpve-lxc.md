@@ -1,33 +1,33 @@
 ---
-title: "ReTHink: Bypassing DKMS and Virtualizing the AX8850 NPU in Proxmox LXC"
+title: "ReThink: Bypassing DKMS and Virtualizing the AX8850 NPU in NextGenPVE LXC"
 date: "2026-06-24"
 author: "Joe Brinkley"
-description: "How we decoupled the Axera AX8850 NPU from bare-metal, resolved Proxmox LXC DKMS compiler conflicts, and cleared stale CMM allocations to host localized reasoning LLMs."
+description: "How we decoupled the Axera AX8850 NPU from bare-metal, resolved NextGenPVE LXC DKMS compiler conflicts, and cleared stale CMM allocations to host localized reasoning LLMs."
 ---
 
-# ReTHink: Bypassing DKMS and Virtualizing the AX8850 NPU in Proxmox LXC
+# ReThink: Bypassing DKMS and Virtualizing the AX8850 NPU in NextGenPVE LXC
 
-![ReTHink: Bypassing DKMS and Virtualizing the AX8850 NPU in Proxmox LXC](../assets/rethink_npu_lxc.png)
+![ReThink: Bypassing DKMS and Virtualizing the AX8850 NPU in NextGenPVE LXC](../assets/rethink_npu_lxc.png)
 
 Deploying hardware accelerators in virtualized environments is never just a walk in the park, but our recent journey with the **Axera AX8850 (LAMBERT) NPU** proved to be an exceptionally deep dive into Linux container internals, driver architecture, and AI model quantization.
 
-This is the story of how we successfully decoupled a high-performance edge NPU from its bare-metal constraints, passed it into a lightweight Proxmox LXC, bypassed kernel-level limitations, and ultimately deployed an OpenAI-compatible API running a localized, quantized reasoning model.
+This is the story of how we successfully decoupled a high-performance edge NPU from its bare-metal constraints, passed it into a lightweight NextGenPVE LXC, bypassed kernel-level limitations, and ultimately deployed an OpenAI-compatible API running a localized, quantized reasoning model.
 
 ---
 
 ## The Objective
 
-Our goal was clear: take our bare-metal Proxmox host, which natively had the Axera NPU drivers (`axcl-dkms`) and firmware installed, and serve an LLM from within a privileged Linux Container (LXC). We wanted an isolated API gateway that could directly tap into the NPU hardware without polluting the host environment with Python dependencies or HTTP servers.
+Our goal was clear: take our bare-metal NextGenPVE host, which natively had the Axera NPU drivers (`axcl-dkms`) and firmware installed, and serve an LLM from within a Linux Container (LXC). We wanted an isolated API gateway that could directly tap into the NPU hardware without polluting the host environment with Python dependencies or HTTP servers.
 
-We targeted the **Qwen3-1.7B-GPTQ-Int4** model—a small, highly capable reasoning model that perfectly fits within the "Sweet Spot" of the AX8850's hardware constraints.
+We targeted the **Qwen3-1.7B-GPTQ-Int4** model—a small, highly capable reasoning model that perfectly fits within the \"Sweet Spot\" of the AX8850's hardware constraints.
 
 ---
 
 ## The Blind Spot: Why We Rebooted and Read the Docs
 
-Initially, we attempted a standard installation within the LXC. However, we quickly hit a massive roadblock: the official Radxa documentation assumes you are running the software on a bare-metal Linux OS. 
+Initially, we attempted a standard installation within the LXC. However, we quickly hit a massive roadblock: the official documentation assumes you are running the software on a bare-metal Linux OS. 
 
-When you run inside a Proxmox LXC, the container shares the host's kernel. This means **you cannot compile kernel modules (DKMS)** inside the container. We watched our container's package manager (`dpkg`) completely shatter as it tried to install the `axcl-dkms` package, triggering phantom kernel header mismatch errors that brought our deployment to a screeching halt.
+When you run inside a NextGenPVE LXC, the container shares the host's kernel. This means **you cannot compile kernel modules (DKMS)** inside the container. We watched our container's package manager (`dpkg`) completely shatter as it tried to install the `axcl-dkms` package, triggering phantom kernel header mismatch errors that brought our deployment to a screeching halt.
 
 We had to stop, clean up the broken dpkg state, reboot our processes, and go back to the drawing board. After meticulously reading through the Axera documentation and dissecting the driver payload, we realized a crucial separation of concerns: **the host must handle the hardware, and the container only needs the user-space API.**
 
@@ -39,7 +39,7 @@ Here is what we actually had to do—things that are buried deep or entirely mis
 
 ### 1. The `cgroup2` Passthrough
 
-To give the LXC access to the NPU without giving it the driver payload, we used `cgroup2` rules in the Proxmox configuration. We identified the Major character device number (which turned out to be `10` for misc devices) for the NPU on the host and mapped the required character devices directly into the container:
+To give the LXC access to the NPU without giving it the driver payload, we used `cgroup2` rules in the NextGenPVE configuration. We identified the Major character device number (which turned out to be `10` for misc devices) for the NPU on the host and mapped the required character devices directly into the container:
 
 ```text
 # Append to /etc/pve/lxc/<LXC_ID>.conf on the host:
@@ -64,7 +64,7 @@ Why? It turns out that because the NPU's Continuous Memory Management (CMM) part
 
 ## Software and Hardware Stack
 
-* **Host**: Proxmox VE (Linux Kernel)
+* **Host**: NextGenPVE (Linux Kernel)
 * **Container**: Privileged LXC (Debian/Ubuntu)
 * **NPU**: Axera AX8850 (LAMBERT)
 * **NPU Driver/Firmware**: V3.6.5
@@ -100,7 +100,6 @@ They are all pre-compiled with **GPTQ-Int4** quantization (4-bit integer weights
 
 ---
 
-
 ## The Benchmark: Pushing the Metal
 
 Once the CMM was cleared, the `axllm serve` gateway seamlessly allocated all 31 layers of the Qwen model directly into the AX8850's high-speed SRAM and bound to port 8000.
@@ -108,7 +107,7 @@ Once the CMM was cleared, the `axllm serve` gateway seamlessly allocated all 31 
 We pointed our LiteLLM router to the new API and sent it a prompt to test both its reasoning capabilities and its raw generation speed.
 
 **The Prompt:**
-> "Write a short 100-word story about a robot discovering magic."
+> \"Write a short 100-word story about a robot discovering magic.\"
 
 **The Result:**
 The NPU executed its internal `<think>` tokens flawlessly before generating the prose.
