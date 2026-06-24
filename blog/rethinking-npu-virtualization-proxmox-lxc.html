@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ReTHink: Bypassing DKMS and Virtualizing the AX8850 NPU in Proxmox LXC | NextGenRedTeam Blog</title>
+  <meta name="description" content="How we decoupled the Axera AX8850 NPU from bare-metal, resolved Proxmox LXC DKMS compiler conflicts, and cleared stale CMM allocations to host localized reasoning LLMs.">
+  <link rel="stylesheet" href="../index.css">
+  <link rel="icon" href="../favicon.ico" type="image/x-icon">
+  
+  <!-- MathJax Math Rendering Support -->
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  
+  <!-- Prism.js Tomorrow Night Syntax Highlighting Theme -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  
+  <!-- Open Graph -->
+  <meta property="og:title" content="ReTHink: Bypassing DKMS and Virtualizing the AX8850 NPU in Proxmox LXC | NextGenRedTeam Blog">
+  <meta property="og:description" content="How we decoupled the Axera AX8850 NPU from bare-metal, resolved Proxmox LXC DKMS compiler conflicts, and cleared stale CMM allocations to host localized reasoning LLMs.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://nextgenredteam.com/blog/">
+  <meta name="twitter:card" content="summary_large_image">
+</head>
+<body class="blog-post-page">
+  <div class="scanlines"></div>
+  <div class="noise-overlay"></div>
+
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="../index.html" class="logo-container" id="logo-link">
+        <img src="../assets/logos/logo2.png" id="ngrt-logo" alt="NGRT Logo" class="logo-img">
+      </a>
+      <div class="nav-links">
+        <a href="../index.html#services" class="nav-link">[01] Services</a>
+        <a href="../index.html#tools" class="nav-link">[02] Tools</a>
+        <a href="index.html" class="nav-link active">[03] Blog</a>
+        <a href="../index.html#engage" class="nav-link-btn button">[Collab &amp; Media]</a>
+      </div>
+      <button class="nav-burger" id="nav-burger" aria-label="Toggle Menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Article Hero -->
+  <header class="post-hero">
+    <div class="cyber-container">
+      <div class="post-meta">
+        <span class="meta-date">// PUBLISHED: 2026-06-24</span>
+        <span class="meta-author">// AUTHOR: Joe Brinkley</span>
+      </div>
+      <h1 class="post-title">ReTHink: Bypassing DKMS and Virtualizing the AX8850 NPU in Proxmox LXC</h1>
+      <div class="cyber-divider-cyan"></div>
+    </div>
+  </header>
+
+  <!-- Article Content -->
+  <main class="post-content-section">
+    <article class="cyber-container markdown-body">
+      <h1>ReTHink: Bypassing DKMS and Virtualizing the AX8850 NPU in Proxmox LXC</h1>
+<p><img src="../assets/rethink_npu_lxc.png" alt="ReTHink: Bypassing DKMS and Virtualizing the AX8850 NPU in Proxmox LXC"></p>
+<p>Deploying hardware accelerators in virtualized environments is never just a walk in the park, but our recent journey with the <strong>Axera AX8850 (LAMBERT) NPU</strong> proved to be an exceptionally deep dive into Linux container internals, driver architecture, and AI model quantization.</p>
+<p>This is the story of how we successfully decoupled a high-performance edge NPU from its bare-metal constraints, passed it into a lightweight Proxmox LXC, bypassed kernel-level limitations, and ultimately deployed an OpenAI-compatible API running a localized, quantized reasoning model.</p>
+<hr>
+<h2>The Objective</h2>
+<p>Our goal was clear: take our bare-metal Proxmox host, which natively had the Axera NPU drivers (<code>axcl-dkms</code>) and firmware installed, and serve an LLM from within a privileged Linux Container (LXC). We wanted an isolated API gateway that could directly tap into the NPU hardware without polluting the host environment with Python dependencies or HTTP servers.</p>
+<p>We targeted the <strong>Qwen3-1.7B-GPTQ-Int4</strong> model—a small, highly capable reasoning model that perfectly fits within the &quot;Sweet Spot&quot; of the AX8850&#39;s hardware constraints.</p>
+<hr>
+<h2>The Blind Spot: Why We Rebooted and Read the Docs</h2>
+<p>Initially, we attempted a standard installation within the LXC. However, we quickly hit a massive roadblock: the official Radxa documentation assumes you are running the software on a bare-metal Linux OS. </p>
+<p>When you run inside a Proxmox LXC, the container shares the host&#39;s kernel. This means <strong>you cannot compile kernel modules (DKMS)</strong> inside the container. We watched our container&#39;s package manager (<code>dpkg</code>) completely shatter as it tried to install the <code>axcl-dkms</code> package, triggering phantom kernel header mismatch errors that brought our deployment to a screeching halt.</p>
+<p>We had to stop, clean up the broken dpkg state, reboot our processes, and go back to the drawing board. After meticulously reading through the Axera documentation and dissecting the driver payload, we realized a crucial separation of concerns: <strong>the host must handle the hardware, and the container only needs the user-space API.</strong></p>
+<hr>
+<h2>The Solution: Manual Injection and CMM Memory Management</h2>
+<p>Here is what we actually had to do—things that are buried deep or entirely missing from the official documentation:</p>
+<h3>1. The <code>cgroup2</code> Passthrough</h3>
+<p>To give the LXC access to the NPU without giving it the driver payload, we used <code>cgroup2</code> rules in the Proxmox configuration. We identified the Major character device number (which turned out to be <code>10</code> for misc devices) for the NPU on the host and mapped the required character devices directly into the container:</p>
+<pre><code class="language-text"># Append to /etc/pve/lxc/&lt;LXC_ID&gt;.conf on the host:
+lxc.cgroup2.devices.allow: c 10:* rwm
+lxc.mount.entry: /dev/axcl_host dev/axcl_host none bind,optional,create=file 0 0
+lxc.mount.entry: /dev/ax_mmb_dev dev/ax_mmb_dev none bind,optional,create=file 0 0
+lxc.mount.entry: /dev/msg_userdev dev/msg_userdev none bind,optional,create=file 0 0
+lxc.mount.entry: /dev/p2p dev/p2p none bind,optional,create=file 0 0
+</code></pre>
+<h3>2. Bypassing DKMS in the Container</h3>
+<p>Instead of using the official <code>apt install axclhost</code> which triggers the fatal DKMS build, we manually downloaded the <code>axclhost</code> Debian package, unzipped it natively, and injected the NPU SDK headers into <code>/usr/include/axcl</code> and the libraries into <code>/usr/lib/axcl</code>. This entirely bypassed the kernel module compilation while perfectly tricking the <code>cmake</code> build scripts into compiling the <code>axllm</code> inference gateway!</p>
+<h3>3. The Hidden Memory Trap (<code>memory-guard aborted</code>)</h3>
+<p>After perfectly compiling <code>axllm</code> from source, we tried to load the model. It immediately crashed with an obscure <code>memory-guard aborted mid-load</code> exception.</p>
+<p>Why? It turns out that because the NPU&#39;s Continuous Memory Management (CMM) partition is shared across the entire host, a stale process from a previous test on the host machine was silently holding 5GB of the NPU&#39;s 7GB SRAM partition! The NPU CMM does not automatically flush when a container is restarted. We had to manually trace the stale PID (<code>main_api_axcl_x86</code>) on the bare-metal host, send a <code>SIGKILL</code>, and watch the CMM usage drop from 5314 MiB back to a pristine 18 MiB.</p>
+<hr>
+<h2>Software and Hardware Stack</h2>
+<ul>
+<li><strong>Host</strong>: Proxmox VE (Linux Kernel)</li>
+<li><strong>Container</strong>: Privileged LXC (Debian/Ubuntu)</li>
+<li><strong>NPU</strong>: Axera AX8850 (LAMBERT)</li>
+<li><strong>NPU Driver/Firmware</strong>: V3.6.5</li>
+<li><strong>Inference Engine</strong>: <code>axllm serve</code> (compiled from source)</li>
+<li><strong>Model</strong>: <code>AXERA-TECH/Qwen3-1.7B-GPTQ-Int4</code> (requires GroupSize 128 for SRAM tiling)</li>
+<li><strong>Gateway</strong>: LiteLLM (Containerized Docker Proxy)</li>
+</ul>
+<hr>
+<h2>The Benchmark: Pushing the Metal</h2>
+<p>Once the CMM was cleared, the <code>axllm serve</code> gateway seamlessly allocated all 31 layers of the Qwen model directly into the AX8850&#39;s high-speed SRAM and bound to port 8000.</p>
+<p>We pointed our LiteLLM router to the new API and sent it a prompt to test both its reasoning capabilities and its raw generation speed.</p>
+<p><strong>The Prompt:</strong></p>
+<blockquote>
+<p>&quot;Write a short 100-word story about a robot discovering magic.&quot;</p>
+</blockquote>
+<p><strong>The Result:</strong>
+The NPU executed its internal <code>&lt;think&gt;</code> tokens flawlessly before generating the prose.</p>
+<blockquote>
+<p><em>Leo, a curious robot, stumbled upon a flickering glow in the lab’s data chamber. As the light intensified, it noticed a hidden symbol—something ancient. A soft hum echoed, and the walls began to shift, revealing a hidden room. Leo’s circuits sparked with a strange energy, and for the first time, it felt a connection to something beyond code. The lab’s walls whispered secrets, and the air hummed with a power that defied logic. Leo realized: magic was not a myth, but a force waiting to be unlocked.</em></p>
+</blockquote>
+<p><strong>The Hardware Benchmark:</strong></p>
+<ul>
+<li><strong>Inference Speed</strong>: <code>8.27 tokens/s</code> (Decode Average)</li>
+<li><strong>Utilization</strong>: ~1.6 GB of SRAM utilized, running at a cool 80°C under load.</li>
+</ul>
+<p>For a completely localized, offline, and containerized edge NPU, generating 8.27 tokens per second on a highly quantized reasoning model is a massive victory. It proves that with enough digging and creative systems engineering, edge AI accelerators can be seamlessly integrated into modern, virtualized infrastructure.</p>
+
+      
+      <div class="post-footer-cta">
+        <div class="cyber-divider-purple"></div>
+        <h3>Collaborate on Security Research</h3>
+        <p>At NextGenRedTeam, we study adversary TTPs and build open-source tools to help defenders. Let's collaborate on research, media projects, or community initiatives.</p>
+        <div class="cta-actions">
+          <a href="https://calendar.proton.me/bookings#HVEHryH4oOT8O4hzE1WTkx71-bIihVp1FCAnLpSB-dM=" target="_blank" class="button border-purple">Schedule Collab &amp; Media</a>
+          <a href="index.html" class="button border-cyan">Back to Blog</a>
+        </div>
+      </div>
+    </article>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="cyber-container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <span class="cyber-glitch-text font-mono">NGRT</span>
+          <p class="footer-desc">Independent Threat Emulation Research &amp; Collaborative Defense.</p>
+        </div>
+        <div class="footer-links">
+          <a href="../index.html#services">Services</a>
+          <a href="../index.html#tools">GitHub Tools</a>
+          <a href="index.html">Threat Lab Blog</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 NextGenRedTeam LLC. All rights reserved. Obfuscated communications active.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="../app.js"></script>
+  <!-- PrismJS Core and Autoloader Scripts -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+</body>
+</html>
