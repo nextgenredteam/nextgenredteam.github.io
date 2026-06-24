@@ -103,6 +103,32 @@ lxc.mount.entry: /dev/p2p dev/p2p none bind,optional,create=file 0 0
 <li><strong>Gateway</strong>: LiteLLM (Containerized Docker Proxy)</li>
 </ul>
 <hr>
+<h2>Target Model Library &amp; Storage Footprints</h2>
+<p>We currently have 9 model checkpoints completely downloaded and cached in <code>/opt/axera/models</code> inside the container. </p>
+<p>They are all pre-compiled with <strong>GPTQ-Int4</strong> quantization (4-bit integer weights grouped at <code>128</code> to fit the NPU&#39;s SRAM tiler). Here is the exact list and their footprint on the disk:</p>
+<h3>Reasoning &amp; Instruct Models</h3>
+<ul>
+<li><strong>Qwen3-0.6B-GPTQ-Int4</strong> - <code>1.6 GB</code></li>
+<li><strong>Qwen3-1.7B-GPTQ-Int4</strong> - <code>3.8 GB</code> <em>(Currently active in LiteLLM)</em></li>
+<li><strong>Qwen2.5-1.5B-Instruct-GPTQ-Int4</strong> - <code>1.5 GB</code></li>
+<li><strong>Qwen2.5-3B-Instruct-GPTQ-Int4</strong> - <code>5.2 GB</code></li>
+<li><strong>Qwen2.5-7B-Instruct-GPTQ-Int4</strong> - <code>5.1 GB</code></li>
+</ul>
+<h3>Distilled Thinking Models</h3>
+<ul>
+<li><strong>DeepSeek-R1-Distill-Qwen-1.5B-GPTQ-Int4</strong> - <code>1.5 GB</code></li>
+<li><strong>DeepSeek-R1-Distill-Qwen-7B-GPTQ-Int4</strong> - <code>5.1 GB</code></li>
+</ul>
+<h3>Vision/Multimodal Models</h3>
+<ul>
+<li><strong>FastVLM-1.5B-GPTQ-Int4</strong> - <code>1.8 GB</code></li>
+<li><strong>SmolVLM2-500M-Video-Instruct</strong> - <code>606 MB</code></li>
+</ul>
+<blockquote>
+<p>[!NOTE]
+Since the AX8850 has 7GB of CMM (Continuous Memory Management) dedicated to the NPU, any of the models above 5GB (like <code>Qwen2.5-7B</code> or <code>DeepSeek-7B</code>) will consume almost all available memory space. The active <code>Qwen3-1.7B</code> uses about <code>1.6GB</code> of SRAM at runtime, leaving plenty of room for concurrent embeddings or a second smaller model!</p>
+</blockquote>
+<hr>
 <h2>The Benchmark: Pushing the Metal</h2>
 <p>Once the CMM was cleared, the <code>axllm serve</code> gateway seamlessly allocated all 31 layers of the Qwen model directly into the AX8850&#39;s high-speed SRAM and bound to port 8000.</p>
 <p>We pointed our LiteLLM router to the new API and sent it a prompt to test both its reasoning capabilities and its raw generation speed.</p>

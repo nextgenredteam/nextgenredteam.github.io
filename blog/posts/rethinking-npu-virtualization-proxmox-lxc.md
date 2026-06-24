@@ -74,6 +74,33 @@ Why? It turns out that because the NPU's Continuous Memory Management (CMM) part
 
 ---
 
+## Target Model Library & Storage Footprints
+
+We currently have 9 model checkpoints completely downloaded and cached in `/opt/axera/models` inside the container. 
+
+They are all pre-compiled with **GPTQ-Int4** quantization (4-bit integer weights grouped at `128` to fit the NPU's SRAM tiler). Here is the exact list and their footprint on the disk:
+
+### Reasoning & Instruct Models
+* **Qwen3-0.6B-GPTQ-Int4** - `1.6 GB`
+* **Qwen3-1.7B-GPTQ-Int4** - `3.8 GB` *(Currently active in LiteLLM)*
+* **Qwen2.5-1.5B-Instruct-GPTQ-Int4** - `1.5 GB`
+* **Qwen2.5-3B-Instruct-GPTQ-Int4** - `5.2 GB`
+* **Qwen2.5-7B-Instruct-GPTQ-Int4** - `5.1 GB`
+
+### Distilled Thinking Models
+* **DeepSeek-R1-Distill-Qwen-1.5B-GPTQ-Int4** - `1.5 GB`
+* **DeepSeek-R1-Distill-Qwen-7B-GPTQ-Int4** - `5.1 GB`
+
+### Vision/Multimodal Models
+* **FastVLM-1.5B-GPTQ-Int4** - `1.8 GB`
+* **SmolVLM2-500M-Video-Instruct** - `606 MB`
+
+> [!NOTE]
+> Since the AX8850 has 7GB of CMM (Continuous Memory Management) dedicated to the NPU, any of the models above 5GB (like `Qwen2.5-7B` or `DeepSeek-7B`) will consume almost all available memory space. The active `Qwen3-1.7B` uses about `1.6GB` of SRAM at runtime, leaving plenty of room for concurrent embeddings or a second smaller model!
+
+---
+
+
 ## The Benchmark: Pushing the Metal
 
 Once the CMM was cleared, the `axllm serve` gateway seamlessly allocated all 31 layers of the Qwen model directly into the AX8850's high-speed SRAM and bound to port 8000.
