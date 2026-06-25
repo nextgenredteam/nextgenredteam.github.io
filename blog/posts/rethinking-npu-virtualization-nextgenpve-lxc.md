@@ -119,3 +119,47 @@ The NPU executed its internal `<think>` tokens flawlessly before generating the 
 * **Utilization**: ~1.6 GB of SRAM utilized, running at a cool 80°C under load.
 
 For a completely localized, offline, and containerized edge NPU, generating 8.27 tokens per second on a highly quantized reasoning model is a massive victory. It proves that with enough digging and creative systems engineering, edge AI accelerators can be seamlessly integrated into modern, virtualized infrastructure.
+
+---
+
+## NPU Native Hardware Benchmark & Limits Report
+
+To map the exact native hardware limitations, API boundary constraints, and memory crash scenarios of the AX8850 (LAMBERT) edge NPU, we ran an observation benchmark. The pipeline iteratively flushed the CMM partition, enforced the necessary 120-second cold-boot hardware wait to prevent driver exhaustion, and attempted to initialize our cached text models.
+
+### 1. Initialization and Tokenizer Failures
+Several of the pre-compiled models from the upstream repository are fundamentally broken at the structural level (featuring malformed JSON files or missing compiled tokenizers). When `axllm serve` attempted to parse and load these weights into the SRAM tiler, the hardware gateway crashed with `AXCLWorker exit with devid 0` during tokenizer initialization:
+
+| Model | Boot Status | Reason |
+| :--- | :--- | :--- |
+| **DeepSeek-R1-Distill-Qwen-1.5B** | ❌ FAILED | `parse error at line 1, column 1: attempting to parse an empty input` on `config.json`. Tokenizer init aborted. |
+| **DeepSeek-R1-Distill-Qwen-7B** | ❌ FAILED | Tokenizer / JSON parse failure. |
+| **Qwen2.5-1.5B-Instruct** | ❌ FAILED | Tokenizer / JSON parse failure. |
+| **Qwen2.5-3B-Instruct** | ❌ FAILED | Tokenizer / JSON parse failure. |
+
+### 2. Successful Hardware Initializations
+Three models successfully initialized into the NPU's SRAM without triggering the `memory-guard aborted` OOM (Out Of Memory) trap:
+
+| Model | Boot Status | Memory Footprint (Approx) |
+| :--- | :--- | :--- |
+| **Qwen2.5-7B-Instruct** | ✅ SUCCESS | 5.2 GB Static + Constrained KV |
+| **Qwen3-0.6B** | ✅ SUCCESS | 1.6 GB |
+| **Qwen3-1.7B** | ✅ SUCCESS | 3.8 GB |
+
+> [!IMPORTANT]
+> The boot of **Qwen2.5-7B-Instruct** was only possible because we applied a strict KV Cache constraint limit flag during the compilation/build stage (`--kv_cache_len 1024`). Without restricting the KV cache window, the 5.2GB static weights combined with the NPU runtime's default context buffer would have immediately exceeded the 7GB CMM threshold, triggering an OOM crash.
+
+### 3. Strict API Namespace Boundary Enforcement
+Despite the hardware successfully initializing the three models above, our context benchmarks (Cyber Security, Stock Market, and Random Poem prompts) triggered exactly **3 crashes per model** during REST invocation tests.
+
+* **The Cause:** The `axllm serve` API enforces strict namespace validation against the `model_name` specified in its configuration. When our script sent `{"model": "Qwen3-1.7B-GPTQ-Int4"}` instead of the exact configuration namespace `{"model": "AXERA-TECH/Qwen3-1.7B-GPTQ-Int4"}`, the server returned a hard `400 Bad Request: invalid_request_error`.
+* **The Takeaway:** The upstream API parser is unforgiving. Frontends (such as LiteLLM or routing gateways) must route queries using the exact namespace declaration or the requests will be flatly rejected.
+
+### 4. Thermal Telemetry
+Physical fan curves configured on the NextGenPVE host kept the hardware cool. During our 20-minute execution block—which involved sustained PCIe bus swapping, model loads, and CMM flushing—the NPU remained stable:
+
+* **Peak Observed NPU Temperature:** `74°C` (well below thermal throttling limits, confirming stability under heavy sustained workloads).
+
+### Future Development Implications
+1. **Compilation Exclusivity:** The Axera `ax-llm` runtime engine favors Qwen and Llama architectures. Manual `pulsar2` builds must continue to target these variants.
+2. **Tokenizer Quality Assurance:** We cannot rely on vendor-provided pre-compiled weights (as seen with the DeepSeek and Qwen2.5-3B tokenizer failures). We must compile model tokenizers manually using the upstream `convert_tokenizer.py` utility to guarantee structural integrity.
+

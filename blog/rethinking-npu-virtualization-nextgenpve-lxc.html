@@ -147,6 +147,86 @@ The NPU executed its internal <code>&lt;think&gt;</code> tokens flawlessly befor
 <li><strong>Utilization</strong>: ~1.6 GB of SRAM utilized, running at a cool 80°C under load.</li>
 </ul>
 <p>For a completely localized, offline, and containerized edge NPU, generating 8.27 tokens per second on a highly quantized reasoning model is a massive victory. It proves that with enough digging and creative systems engineering, edge AI accelerators can be seamlessly integrated into modern, virtualized infrastructure.</p>
+<hr>
+<h2>NPU Native Hardware Benchmark &amp; Limits Report</h2>
+<p>To map the exact native hardware limitations, API boundary constraints, and memory crash scenarios of the AX8850 (LAMBERT) edge NPU, we ran an observation benchmark. The pipeline iteratively flushed the CMM partition, enforced the necessary 120-second cold-boot hardware wait to prevent driver exhaustion, and attempted to initialize our cached text models.</p>
+<h3>1. Initialization and Tokenizer Failures</h3>
+<p>Several of the pre-compiled models from the upstream repository are fundamentally broken at the structural level (featuring malformed JSON files or missing compiled tokenizers). When <code>axllm serve</code> attempted to parse and load these weights into the SRAM tiler, the hardware gateway crashed with <code>AXCLWorker exit with devid 0</code> during tokenizer initialization:</p>
+<table>
+<thead>
+<tr>
+<th align="left">Model</th>
+<th align="left">Boot Status</th>
+<th align="left">Reason</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><strong>DeepSeek-R1-Distill-Qwen-1.5B</strong></td>
+<td align="left">❌ FAILED</td>
+<td align="left"><code>parse error at line 1, column 1: attempting to parse an empty input</code> on <code>config.json</code>. Tokenizer init aborted.</td>
+</tr>
+<tr>
+<td align="left"><strong>DeepSeek-R1-Distill-Qwen-7B</strong></td>
+<td align="left">❌ FAILED</td>
+<td align="left">Tokenizer / JSON parse failure.</td>
+</tr>
+<tr>
+<td align="left"><strong>Qwen2.5-1.5B-Instruct</strong></td>
+<td align="left">❌ FAILED</td>
+<td align="left">Tokenizer / JSON parse failure.</td>
+</tr>
+<tr>
+<td align="left"><strong>Qwen2.5-3B-Instruct</strong></td>
+<td align="left">❌ FAILED</td>
+<td align="left">Tokenizer / JSON parse failure.</td>
+</tr>
+</tbody></table>
+<h3>2. Successful Hardware Initializations</h3>
+<p>Three models successfully initialized into the NPU&#39;s SRAM without triggering the <code>memory-guard aborted</code> OOM (Out Of Memory) trap:</p>
+<table>
+<thead>
+<tr>
+<th align="left">Model</th>
+<th align="left">Boot Status</th>
+<th align="left">Memory Footprint (Approx)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><strong>Qwen2.5-7B-Instruct</strong></td>
+<td align="left">✅ SUCCESS</td>
+<td align="left">5.2 GB Static + Constrained KV</td>
+</tr>
+<tr>
+<td align="left"><strong>Qwen3-0.6B</strong></td>
+<td align="left">✅ SUCCESS</td>
+<td align="left">1.6 GB</td>
+</tr>
+<tr>
+<td align="left"><strong>Qwen3-1.7B</strong></td>
+<td align="left">✅ SUCCESS</td>
+<td align="left">3.8 GB</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p>[!IMPORTANT]
+The boot of <strong>Qwen2.5-7B-Instruct</strong> was only possible because we applied a strict KV Cache constraint limit flag during the compilation/build stage (<code>--kv_cache_len 1024</code>). Without restricting the KV cache window, the 5.2GB static weights combined with the NPU runtime&#39;s default context buffer would have immediately exceeded the 7GB CMM threshold, triggering an OOM crash.</p>
+</blockquote>
+<h3>3. Strict API Namespace Boundary Enforcement</h3>
+<p>Despite the hardware successfully initializing the three models above, our context benchmarks (Cyber Security, Stock Market, and Random Poem prompts) triggered exactly <strong>3 crashes per model</strong> during REST invocation tests.</p>
+<ul>
+<li><strong>The Cause:</strong> The <code>axllm serve</code> API enforces strict namespace validation against the <code>model_name</code> specified in its configuration. When our script sent <code>{&quot;model&quot;: &quot;Qwen3-1.7B-GPTQ-Int4&quot;}</code> instead of the exact configuration namespace <code>{&quot;model&quot;: &quot;AXERA-TECH/Qwen3-1.7B-GPTQ-Int4&quot;}</code>, the server returned a hard <code>400 Bad Request: invalid_request_error</code>.</li>
+<li><strong>The Takeaway:</strong> The upstream API parser is unforgiving. Frontends (such as LiteLLM or routing gateways) must route queries using the exact namespace declaration or the requests will be flatly rejected.</li>
+</ul>
+<h3>4. Thermal Telemetry</h3>
+<p>Physical fan curves configured on the NextGenPVE host kept the hardware cool. During our 20-minute execution block—which involved sustained PCIe bus swapping, model loads, and CMM flushing—the NPU remained stable:</p>
+<ul>
+<li><strong>Peak Observed NPU Temperature:</strong> <code>74°C</code> (well below thermal throttling limits, confirming stability under heavy sustained workloads).</li>
+</ul>
+<h3>Future Development Implications</h3>
+<ol>
+<li><strong>Compilation Exclusivity:</strong> The Axera <code>ax-llm</code> runtime engine favors Qwen and Llama architectures. Manual <code>pulsar2</code> builds must continue to target these variants.</li>
+<li><strong>Tokenizer Quality Assurance:</strong> We cannot rely on vendor-provided pre-compiled weights (as seen with the DeepSeek and Qwen2.5-3B tokenizer failures). We must compile model tokenizers manually using the upstream <code>convert_tokenizer.py</code> utility to guarantee structural integrity.</li>
+</ol>
 
       
       <div class="post-footer-cta">
