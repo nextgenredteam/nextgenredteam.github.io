@@ -5,7 +5,8 @@ const { execSync } = require('child_process');
 const sourceToolsDir = path.join(__dirname, '../tools/joebro');
 const sourceBlogDir = path.join(__dirname, '../blog');
 
-const destBaseDir = path.join(__dirname, '../../NGRT/Website');
+const defaultDestDir = path.join(__dirname, '../../NGRT/Website');
+const destBaseDir = process.argv[2] || process.env.NGRT_DEST_DIR || defaultDestDir;
 const destToolsDir = path.join(destBaseDir, 'tools/joebro');
 const destBlogDir = path.join(destBaseDir, 'blog');
 
@@ -31,7 +32,7 @@ function copyRecursiveSync(src, dest) {
 }
 
 // 1. Sync tools/joebro
-if (fs.existsSync(destToolsDir)) {
+if (fs.existsSync(destToolsDir) || fs.existsSync(destBaseDir)) {
   console.log(`[*] Syncing tools/joebro from ${sourceToolsDir} to ${destToolsDir}...`);
   copyRecursiveSync(sourceToolsDir, destToolsDir);
   console.log("[+] Tools sync complete!");
@@ -40,7 +41,7 @@ if (fs.existsSync(destToolsDir)) {
 }
 
 // 2. Sync blog posts & compiled output
-if (fs.existsSync(destBlogDir)) {
+if (fs.existsSync(destBlogDir) || fs.existsSync(destBaseDir)) {
   console.log(`[*] Syncing blog from ${sourceBlogDir} to ${destBlogDir}...`);
   copyRecursiveSync(sourceBlogDir, destBlogDir);
   console.log("[+] Blog sync complete!");
