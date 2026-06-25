@@ -62,6 +62,18 @@
   <main class="post-content-section">
     <article class="cyber-container markdown-body">
       <h1>Taming the Edge: Bypassing Axera AX8850 NPU Compiler Constraints</h1>
+<blockquote>
+<p>[!IMPORTANT]
+<strong>RETROSPECTIVE &amp; CORRECTION:</strong> 
+When we wrote this post, we believed we were fighting hard silicon/compiler constraints that required reverse-engineering closed-source PyArmor binaries and writing custom <code>pexpect</code> wrappers. 
+We were wrong. 
+We later discovered that the issues were caused entirely by simple packaging path resolution bugs in the vendor shell scripts and a buggy JSON tokenizer parser that failed on EOS array IDs.
+For the accurate, clean, and native way to deploy LLMs on this hardware, read:</p>
+<ul>
+<li><a href="npu-journey-part-1-taming-axera-ax8850.html">The NPU Journey Part 1: Taming the Axera AX8850 (And Why We Reverse-Engineered Everything for Nothing)</a></li>
+<li><a href="npu-journey-part-2-deploying-llms.html">The NPU Journey Part 2: The True Guide to Deploying LLMs on the Axera AX8850</a></li>
+</ul>
+</blockquote>
 <p><img src="../assets/axera_edge_npu.png" alt="Taming the Edge: Bypassing Axera AX8850 NPU Compiler Constraints"></p>
 <p>Edge Neural Processing Units (NPUs) represent a massive leap in deploying local, air-gapped LLMs for tactical offensive security operations. However, navigating the closed-source, highly rigid vendor compilers required to run models on bare silicon can feel like hacking a black box.</p>
 <p>Recently, our team targeted the <strong>Radxa AI Core AX-M1</strong> board, which features the <strong>Axera AX8850 (LAMBERT)</strong> architecture. While the chip has hardware parity with recent edge modules, its vendor software stack remains outdated. Attempting to compile dense and Mixture-of-Experts (MoE) transformer models onto its Contiguous Memory (CMM) blocks using the proprietary <code>pulsar2</code> compiler suite led us directly into the weeds of reverse-engineering closed-source Python binaries.</p>

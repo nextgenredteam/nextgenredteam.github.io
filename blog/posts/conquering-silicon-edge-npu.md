@@ -7,6 +7,15 @@ description: "How we bypassed broken vendor API servers, solved logit collapse w
 
 # Conquering the Silicon: Building a Custom "Ollama" Orchestrator for the AX8850 NPU (Part II)
 
+> [!IMPORTANT]
+> **RETROSPECTIVE & CORRECTION:** 
+> When we wrote this post, we believed we were fighting hard silicon/compiler constraints that required reverse-engineering closed-source PyArmor binaries and writing custom `pexpect` wrappers. 
+> We were wrong. 
+> We later discovered that the issues were caused entirely by simple packaging path resolution bugs in the vendor shell scripts and a buggy JSON tokenizer parser that failed on EOS array IDs.
+> For the accurate, clean, and native way to deploy LLMs on this hardware, read:
+> - [The NPU Journey Part 1: Taming the Axera AX8850 (And Why We Reverse-Engineered Everything for Nothing)](npu-journey-part-1-taming-axera-ax8850.html)
+> - [The NPU Journey Part 2: The True Guide to Deploying LLMs on the Axera AX8850](npu-journey-part-2-deploying-llms.html)
+
 ![Conquering the Silicon: Building a Custom "Ollama" Orchestrator for the AX8850 NPU](../assets/conquering_silicon_npu.png)
 
 The promise of Edge AI hardware is intoxicating: running blazing-fast, power-efficient local inference without tying up a $1,000+ workstation GPU or bleeding money to cloud API providers. 

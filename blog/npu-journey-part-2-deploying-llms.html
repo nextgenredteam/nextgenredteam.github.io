@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The NPU Journey Part 2: The True Guide to Deploying LLMs on the Axera AX8850 | NextGenRedTeam Blog</title>
+  <meta name="description" content="The definitive, step-by-step technical guide to native LLM deployment on the AX8850 NPU via PCIe passthrough inside an unprivileged LXC container.">
+  <link rel="stylesheet" href="../index.css">
+  <link rel="icon" href="../favicon.ico" type="image/x-icon">
+  
+  <!-- MathJax Math Rendering Support -->
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  
+  <!-- Prism.js Tomorrow Night Syntax Highlighting Theme -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  
+  <!-- Open Graph -->
+  <meta property="og:title" content="The NPU Journey Part 2: The True Guide to Deploying LLMs on the Axera AX8850 | NextGenRedTeam Blog">
+  <meta property="og:description" content="The definitive, step-by-step technical guide to native LLM deployment on the AX8850 NPU via PCIe passthrough inside an unprivileged LXC container.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://nextgenredteam.com/blog/">
+  <meta name="twitter:card" content="summary_large_image">
+</head>
+<body class="blog-post-page">
+  <div class="scanlines"></div>
+  <div class="noise-overlay"></div>
+
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="../index.html" class="logo-container" id="logo-link">
+        <img src="../assets/logos/logo2.png" id="ngrt-logo" alt="NGRT Logo" class="logo-img">
+      </a>
+      <div class="nav-links">
+        <a href="../index.html#services" class="nav-link">[01] Services</a>
+        <a href="../index.html#tools" class="nav-link">[02] Tools</a>
+        <a href="index.html" class="nav-link active">[03] Blog</a>
+        <a href="../index.html#engage" class="nav-link-btn button">[Collab &amp; Media]</a>
+      </div>
+      <button class="nav-burger" id="nav-burger" aria-label="Toggle Menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Article Hero -->
+  <header class="post-hero">
+    <div class="cyber-container">
+      <div class="post-meta">
+        <span class="meta-date">// PUBLISHED: 2026-06-25</span>
+        <span class="meta-author">// AUTHOR: NextGenRedTeam</span>
+      </div>
+      <h1 class="post-title">The NPU Journey Part 2: The True Guide to Deploying LLMs on the Axera AX8850</h1>
+      <div class="cyber-divider-cyan"></div>
+    </div>
+  </header>
+
+  <!-- Article Content -->
+  <main class="post-content-section">
+    <article class="cyber-container markdown-body">
+      <h1>The NPU Journey Part 2: The True Guide to Deploying LLMs on the Axera AX8850</h1>
+<p><img src="../assets/npu_journey_part2.png" alt="The NPU Journey Part 2: The True Guide to Deploying LLMs on the Axera AX8850"></p>
+<p>In Part 1, we came clean about our over-engineered journey to tame the Radxa AI Core AX-M1 (Axera AX8850). We fought bad software, broken paths, and buggy JSON parsers, mistaking them for hard silicon locks.</p>
+<p>Now that the dust has settled, we want to provide the <em>accurate</em>, step-by-step guide to deploying a local LLM on the AX8850. No PyArmor intercepts. No custom orchestrator hacks. Just clean, native deployment.</p>
+<h2>The Environment</h2>
+<ul>
+<li><strong>Host:</strong> Proxmox VE Server</li>
+<li><strong>Workload:</strong> Unprivileged LXC Container with PCIe Passthrough</li>
+<li><strong>NPU:</strong> Radxa AI Core AX-M1 (AX8850)</li>
+</ul>
+<h2>Step 1: The Hardware Passthrough</h2>
+<p>First, ensure the PCIe NPU is visible on the Proxmox host (<code>lspci | grep -i accel</code>) and that the host kernel drivers (<code>axcl_host</code>, <code>ax_pcie</code>) are loaded. </p>
+<p>To give your LXC container access, append these direct device mappings to your container config (<code>/etc/pve/lxc/&lt;ID&gt;.conf</code>):</p>
+<pre><code class="language-text">lxc.cgroup2.devices.allow: c 10:* rwm
+lxc.mount.entry: /dev/axcl_host dev/axcl_host none bind,optional,create=file 0 0
+lxc.mount.entry: /dev/ax_mmb_dev dev/ax_mmb_dev none bind,optional,create=file 0 0
+lxc.mount.entry: /dev/msg_userdev dev/msg_userdev none bind,optional,create=file 0 0
+lxc.mount.entry: /dev/p2p dev/p2p none bind,optional,create=file 0 0
+</code></pre>
+<h2>Step 2: Compiling the Native Server</h2>
+<p>Forget the vendor&#39;s bloated interactive CLI. We are going to build the clean <code>axllm</code> Zero-Copy server from source inside the LXC container.</p>
+<pre><code class="language-bash"># Install dependencies
+sudo apt update &amp;&amp; sudo apt install -y build-essential cmake git python3 python3-venv wget curl
+
+# Clone the native server
+mkdir -p /opt/axera/source &amp;&amp; cd /opt/axera/source
+git clone --recursive https://github.com/AXERA-TECH/ax-llm
+cd ax-llm &amp;&amp; mkdir build &amp;&amp; cd build
+
+# Build it
+cmake .. -DAX_TARGET_ARCH=x86 -DAX_BUILD_API=ON
+make -j$(nproc)
+sudo cp axllm /usr/local/bin/axllm
+</code></pre>
+<h2>Step 3: The AX650 Shortcut (The Big Secret)</h2>
+<p>Here is the secret that caused us so much grief: <strong>You don&#39;t need to compile models for the AX8850.</strong> </p>
+<p>The AX8850 native memory allocator flawlessly executes <code>.axmodel</code> graph files compiled for the older <strong>AX650</strong> architecture. You can entirely bypass the broken local compiler (<code>pulsar2</code>) by just downloading pre-compiled AX650 binaries from Hugging Face (e.g., <code>Qwen3.5-2B-AX650-GPTQ-Int4</code> or <code>gemma-4-E2B-it-GPTQ-INT4</code>).</p>
+<p>Place your downloaded model folder into <code>/opt/axera/models/</code>.</p>
+<h2>Step 4: Fixing the JSON Bugs</h2>
+<p>Before launching the server, you must fix the vendor software bugs on disk.</p>
+<p>If you are running Gemma or any model with multiple End-Of-Sentence (EOS) tokens, the vendor parser will crash and output infinite garbage loops (<code>factfactfact...</code>). You must manually edit the model&#39;s <code>config.json</code> (both the root one and the tokenizer&#39;s) and enforce a single integer for the EOS token:</p>
+<pre><code class="language-json">// Change this:
+&quot;eos_token_id&quot;: [1, 106]
+
+// To this:
+&quot;eos_token_id&quot;: 106
+</code></pre>
+<p><em>(You can also use a quick Python script to strip it out entirely if needed).</em></p>
+<h2>Step 5: Launching the Inference Server</h2>
+<p>With the LXC container mapped and the model patched, you can spin up the OpenAI-compliant server directly.</p>
+<p>Before starting, it is highly recommended to flush the driver to avoid memory address mapping collisions from previous runs:</p>
+<pre><code class="language-bash"># Flush NPU PCIe driver and release CMM memory
+sudo rm -rf /tmp/axcl
+sudo mkdir -p /tmp/axcl
+sudo chmod 777 /tmp/axcl
+</code></pre>
+<p>Then, launch the server:</p>
+<pre><code class="language-bash">nohup axllm serve /opt/axera/models/Qwen3.5-2B-AX650-GPTQ-Int4-C128-P1152-CTX2047 \
+  --host 0.0.0.0 --port 8000 &gt; /opt/axera/models/axllm_server.log 2&gt;&amp;1 &amp;
+</code></pre>
+<p>The NPU will load the model directly into its Contiguous Memory (CMM) blocks, and your standard OpenAI API gateway will be alive on port <code>8000</code>.</p>
+<h2>Conclusion</h2>
+<p>We now have a dedicated, hardware-accelerated LLM API running natively on an edge NPU. It streams tokens in under a second and requires very little power, making it the perfect sanity-check node for autonomous red team pipelines. </p>
+<p>By stepping back and diagnosing the actual software bugs instead of immediately reverse engineering the entire stack, we achieved a much cleaner, native integration. </p>
+<p>Sometimes, the system isn&#39;t fortified against you—it&#39;s just broken.</p>
+
+      
+      <div class="post-footer-cta">
+        <div class="cyber-divider-purple"></div>
+        <h3>Collaborate on Security Research</h3>
+        <p>At NextGenRedTeam, we study adversary TTPs and build open-source tools to help defenders. Let's collaborate on research, media projects, or community initiatives.</p>
+        <div class="cta-actions">
+          <a href="https://calendar.proton.me/bookings#HVEHryH4oOT8O4hzE1WTkx71-bIihVp1FCAnLpSB-dM=" target="_blank" class="button border-purple">Schedule Collab &amp; Media</a>
+          <a href="index.html" class="button border-cyan">Back to Blog</a>
+        </div>
+      </div>
+    </article>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="cyber-container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <span class="cyber-glitch-text font-mono">NGRT</span>
+          <p class="footer-desc">Independent Threat Emulation Research &amp; Collaborative Defense.</p>
+        </div>
+        <div class="footer-links">
+          <a href="../index.html#services">Services</a>
+          <a href="../index.html#tools">GitHub Tools</a>
+          <a href="index.html">Threat Lab Blog</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 NextGenRedTeam LLC. All rights reserved. Obfuscated communications active.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="../app.js"></script>
+  <!-- PrismJS Core and Autoloader Scripts -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+</body>
+</html>

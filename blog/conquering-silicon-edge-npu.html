@@ -62,6 +62,18 @@
   <main class="post-content-section">
     <article class="cyber-container markdown-body">
       <h1>Conquering the Silicon: Building a Custom &quot;Ollama&quot; Orchestrator for the AX8850 NPU (Part II)</h1>
+<blockquote>
+<p>[!IMPORTANT]
+<strong>RETROSPECTIVE &amp; CORRECTION:</strong> 
+When we wrote this post, we believed we were fighting hard silicon/compiler constraints that required reverse-engineering closed-source PyArmor binaries and writing custom <code>pexpect</code> wrappers. 
+We were wrong. 
+We later discovered that the issues were caused entirely by simple packaging path resolution bugs in the vendor shell scripts and a buggy JSON tokenizer parser that failed on EOS array IDs.
+For the accurate, clean, and native way to deploy LLMs on this hardware, read:</p>
+<ul>
+<li><a href="npu-journey-part-1-taming-axera-ax8850.html">The NPU Journey Part 1: Taming the Axera AX8850 (And Why We Reverse-Engineered Everything for Nothing)</a></li>
+<li><a href="npu-journey-part-2-deploying-llms.html">The NPU Journey Part 2: The True Guide to Deploying LLMs on the Axera AX8850</a></li>
+</ul>
+</blockquote>
 <p><img src="../assets/conquering_silicon_npu.png" alt="Conquering the Silicon: Building a Custom &quot;Ollama&quot; Orchestrator for the AX8850 NPU"></p>
 <p>The promise of Edge AI hardware is intoxicating: running blazing-fast, power-efficient local inference without tying up a $1,000+ workstation GPU or bleeding money to cloud API providers. </p>
 <p>In <a href="/blog/taming-ax8850-edge-npu.html">Part I of this series</a>, we deep-dived into reverse-engineering the Axera Pulsar2 compiler, patching PyArmor binaries in-flight, and leveraging the Radxa AX-M1 board&#39;s hardware compatibility with older AX650 binaries to host models natively on silicon. </p>

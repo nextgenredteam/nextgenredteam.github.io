@@ -7,6 +7,15 @@ description: "A technical deep-dive into reverse-engineering the Pulsar2 compile
 
 # Taming the Edge: Bypassing Axera AX8850 NPU Compiler Constraints
 
+> [!IMPORTANT]
+> **RETROSPECTIVE & CORRECTION:** 
+> When we wrote this post, we believed we were fighting hard silicon/compiler constraints that required reverse-engineering closed-source PyArmor binaries and writing custom `pexpect` wrappers. 
+> We were wrong. 
+> We later discovered that the issues were caused entirely by simple packaging path resolution bugs in the vendor shell scripts and a buggy JSON tokenizer parser that failed on EOS array IDs.
+> For the accurate, clean, and native way to deploy LLMs on this hardware, read:
+> - [The NPU Journey Part 1: Taming the Axera AX8850 (And Why We Reverse-Engineered Everything for Nothing)](npu-journey-part-1-taming-axera-ax8850.html)
+> - [The NPU Journey Part 2: The True Guide to Deploying LLMs on the Axera AX8850](npu-journey-part-2-deploying-llms.html)
+
 ![Taming the Edge: Bypassing Axera AX8850 NPU Compiler Constraints](../assets/axera_edge_npu.png)
 
 Edge Neural Processing Units (NPUs) represent a massive leap in deploying local, air-gapped LLMs for tactical offensive security operations. However, navigating the closed-source, highly rigid vendor compilers required to run models on bare silicon can feel like hacking a black box.

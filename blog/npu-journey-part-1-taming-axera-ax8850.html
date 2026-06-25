@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The NPU Journey Part 1: Taming the Axera AX8850 (And Why We Reverse-Engineered Everything for Nothing) | NextGenRedTeam Blog</title>
+  <meta name="description" content="Admitting our over-engineering mistakes: how broken vendor paths and JSON parser bugs led us to reverse engineer everything for nothing, and the reality of taming the Axera AX8850 NPU.">
+  <link rel="stylesheet" href="../index.css">
+  <link rel="icon" href="../favicon.ico" type="image/x-icon">
+  
+  <!-- MathJax Math Rendering Support -->
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  
+  <!-- Prism.js Tomorrow Night Syntax Highlighting Theme -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  
+  <!-- Open Graph -->
+  <meta property="og:title" content="The NPU Journey Part 1: Taming the Axera AX8850 (And Why We Reverse-Engineered Everything for Nothing) | NextGenRedTeam Blog">
+  <meta property="og:description" content="Admitting our over-engineering mistakes: how broken vendor paths and JSON parser bugs led us to reverse engineer everything for nothing, and the reality of taming the Axera AX8850 NPU.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://nextgenredteam.com/blog/">
+  <meta name="twitter:card" content="summary_large_image">
+</head>
+<body class="blog-post-page">
+  <div class="scanlines"></div>
+  <div class="noise-overlay"></div>
+
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="../index.html" class="logo-container" id="logo-link">
+        <img src="../assets/logos/logo2.png" id="ngrt-logo" alt="NGRT Logo" class="logo-img">
+      </a>
+      <div class="nav-links">
+        <a href="../index.html#services" class="nav-link">[01] Services</a>
+        <a href="../index.html#tools" class="nav-link">[02] Tools</a>
+        <a href="index.html" class="nav-link active">[03] Blog</a>
+        <a href="../index.html#engage" class="nav-link-btn button">[Collab &amp; Media]</a>
+      </div>
+      <button class="nav-burger" id="nav-burger" aria-label="Toggle Menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Article Hero -->
+  <header class="post-hero">
+    <div class="cyber-container">
+      <div class="post-meta">
+        <span class="meta-date">// PUBLISHED: 2026-06-25</span>
+        <span class="meta-author">// AUTHOR: NextGenRedTeam</span>
+      </div>
+      <h1 class="post-title">The NPU Journey Part 1: Taming the Axera AX8850 (And Why We Reverse-Engineered Everything for Nothing)</h1>
+      <div class="cyber-divider-cyan"></div>
+    </div>
+  </header>
+
+  <!-- Article Content -->
+  <main class="post-content-section">
+    <article class="cyber-container markdown-body">
+      <h1>The NPU Journey Part 1: Taming the Axera AX8850 (And Why We Reverse-Engineered Everything for Nothing)</h1>
+<p><img src="../assets/npu_journey_part1.png" alt="The NPU Journey Part 1: Taming the Axera AX8850"></p>
+<p>Edge Neural Processing Units (NPUs) represent a massive leap in deploying local, air-gapped LLMs for tactical offensive security operations. Recently, our team at the Threat Lab targeted the Radxa AI Core AX-M1 board, featuring the Axera AX8850 (LAMBERT) architecture, to use as a quick, low-power sanity-check system for our AI pipelines.</p>
+<p>If you read our previous posts on this topic, you might remember an epic saga of reverse-engineering closed-source PyArmor binaries, building custom Python orchestrators with <code>pexpect</code>, writing dynamic memory flushers, and patching <code>sitecustomize.py</code> files to bypass compiler constraints.</p>
+<p>We sounded like absolute wizards hacking the mainframe. </p>
+<p><strong>But we have a confession to make: We did all of that because we were fighting bad software, and we didn&#39;t realize it.</strong></p>
+<h2>The Reality of &quot;Bad Software&quot;</h2>
+<p>When we first started building models for the AX8850, we encountered what looked like hard hardware blocks and closed-system protections:</p>
+<ul>
+<li>The <code>pulsar2</code> compiler threw module resolution exceptions when targeting the LAMBERT architecture.</li>
+<li>The <code>axllm</code> server would spew repetitive garbage loops (<code>&quot;factfactfact...&quot;</code>) when serving models.</li>
+<li>The native compiler refused to load HuggingFace models without crashing.</li>
+</ul>
+<p>Our initial instinct was to brute-force our way through. We wrote Python wrappers to intercept the closed-source execution, built pseudo-terminals to feed data into the vendor CLI, and even patched the raw HuggingFace configuration JSONs dynamically. </p>
+<p>But as we dug deeper into the core platform, we realized the truth: the hardware wasn&#39;t locked down. The vendor software was just profoundly buggy.</p>
+<h3>The True Culprits</h3>
+<ol>
+<li><strong>Broken Symlinks and Paths:</strong> The <code>pulsar2</code> compiler wasn&#39;t intentionally blocking our builds. The bash wrapper scripts distributed by the vendor had broken path resolutions for <code>${BASH_SOURCE[0]}</code>, which broke internal Python imports.</li>
+<li><strong>Tokenizer Array Bugs:</strong> The dreaded infinite loop generation bug wasn&#39;t an NPU hardware limitation. The vendor&#39;s JSON parser simply crashed when a model&#39;s <code>eos_token_id</code> was defined as an array (e.g., <code>[1, 106]</code>) instead of a single integer. </li>
+<li><strong>Cross-Architecture Confusion:</strong> We spent days trying to compile models explicitly for the AX8850, only to discover that the NPU natively, and perfectly, executes models compiled for the older AX650 architecture without any modifications.</li>
+</ol>
+<h2>Coming Clean</h2>
+<p>As researchers, it&#39;s easy to get tunnel vision when faced with an error message and jump straight into reverse engineering. We built a beautiful, over-engineered orchestrator to bypass problems that shouldn&#39;t have existed in the first place.</p>
+<p>Now that we fully understand the software landscape of the Axera NPU environment, we are keeping our old writeups up as lessons in troubleshooting, but we&#39;ve appended retrospective updates to them. We don&#39;t want anyone else to waste their time building PyArmor patches when they don&#39;t have to.</p>
+<p>The AX8850 is a fantastic piece of silicon, and it serves perfectly as a quick sanity-check inference node for our offensive security tooling. </p>
+<p>In <strong>Part 2</strong>, we are going to show you the <em>real</em>, clean, and accurate step-by-step guide on how to tame this edge NPU—no reverse engineering required.</p>
+
+      
+      <div class="post-footer-cta">
+        <div class="cyber-divider-purple"></div>
+        <h3>Collaborate on Security Research</h3>
+        <p>At NextGenRedTeam, we study adversary TTPs and build open-source tools to help defenders. Let's collaborate on research, media projects, or community initiatives.</p>
+        <div class="cta-actions">
+          <a href="https://calendar.proton.me/bookings#HVEHryH4oOT8O4hzE1WTkx71-bIihVp1FCAnLpSB-dM=" target="_blank" class="button border-purple">Schedule Collab &amp; Media</a>
+          <a href="index.html" class="button border-cyan">Back to Blog</a>
+        </div>
+      </div>
+    </article>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="cyber-container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <span class="cyber-glitch-text font-mono">NGRT</span>
+          <p class="footer-desc">Independent Threat Emulation Research &amp; Collaborative Defense.</p>
+        </div>
+        <div class="footer-links">
+          <a href="../index.html#services">Services</a>
+          <a href="../index.html#tools">GitHub Tools</a>
+          <a href="index.html">Threat Lab Blog</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 NextGenRedTeam LLC. All rights reserved. Obfuscated communications active.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="../app.js"></script>
+  <!-- PrismJS Core and Autoloader Scripts -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+</body>
+</html>
