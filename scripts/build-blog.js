@@ -304,4 +304,10 @@ function buildBlog() {
   console.log(`Success! Rendered blog index at blog/index.html`);
 }
 
-buildBlog();
+if (require.main === module) {
+  buildBlog();
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { parseFrontmatter };
+}

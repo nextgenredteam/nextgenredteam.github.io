@@ -6,7 +6,8 @@
   "scripts": {
     "build": "node scripts/build-blog.js",
     "new-post": "node scripts/new-post.js",
-    "sync": "node scripts/sync-repos.js"
+    "sync": "node scripts/sync-repos.js",
+    "test": "node --test"
   },
   "dependencies": {
     "marked": "^9.1.6"
