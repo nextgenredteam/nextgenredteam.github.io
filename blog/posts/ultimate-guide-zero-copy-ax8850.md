@@ -1,7 +1,7 @@
 ---
 title: "Ultimate Guide: Zero-Copy Inference on the AX8850 NPU"
 date: "2026-06-23"
-author: "Joe Brinkley"
+author: "Joe B. The Blind Hacker"
 description: "How to bypass Radxa's Python CPU bottlenecks, compile a native C++ OpenAI server, and achieve stable zero-copy inference on the AX8850 NPU."
 ---
 

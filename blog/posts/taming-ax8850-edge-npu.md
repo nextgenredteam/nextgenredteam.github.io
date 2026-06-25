@@ -1,7 +1,7 @@
 ---
 title: "Taming the Edge: Bypassing Axera AX8850 NPU Compiler Constraints"
 date: "2026-06-21"
-author: "Joe Brinkley"
+author: "Joe B. The Blind Hacker"
 description: "A technical deep-dive into reverse-engineering the Pulsar2 compiler, patching PyArmor memory classes in-flight, and executing local LLMs on the Radxa AX-M1 NPU."
 ---
 

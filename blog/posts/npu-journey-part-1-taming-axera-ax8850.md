@@ -1,7 +1,7 @@
 ---
 title: "The NPU Journey Part 1: Taming the Axera AX8850 (And Why We Reverse-Engineered Everything for Nothing)"
 date: "2026-06-25"
-author: "NextGenRedTeam"
+author: "Joe B. The Blind Hacker"
 description: "Admitting our over-engineering mistakes: how broken vendor paths and JSON parser bugs led us to reverse engineer everything for nothing, and the reality of taming the Axera AX8850 NPU."
 ---
 

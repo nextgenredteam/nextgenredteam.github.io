@@ -1,7 +1,7 @@
 ---
 title: "The NPU Journey Part 2: The True Guide to Deploying LLMs on the Axera AX8850"
 date: "2026-06-25"
-author: "NextGenRedTeam"
+author: "Joe B. The Blind Hacker"
 description: "The definitive, step-by-step technical guide to native LLM deployment on the AX8850 NPU via PCIe passthrough inside an unprivileged LXC container."
 ---
 

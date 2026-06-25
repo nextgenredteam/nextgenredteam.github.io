@@ -1,7 +1,7 @@
 ---
 title: "Benchmarking NextGenRedPVE: Running Local Offensive AI Agents on Proxmox"
 date: "2026-06-19"
-author: "Joe Brinkley"
+author: "Joe B. The Blind Hacker"
 description: "How we tested, why we tested, and what we learned benchmarking local abliterated LLMs for red team operations on our NextGenRedPVE cluster."
 ---
 

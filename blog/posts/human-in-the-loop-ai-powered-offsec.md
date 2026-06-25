@@ -1,7 +1,7 @@
 ---
 title: "Human-in-the-Loop: The Future of AI-Powered Offensive Security"
 date: "2026-06-09"
-author: "Joe Brinkley"
+author: "Joe B. The Blind Hacker"
 description: "Why fully automated AI security scanners fail, and how NextGenRedTeam combines rapid AI threat simulation with elite human validation."
 ---
 

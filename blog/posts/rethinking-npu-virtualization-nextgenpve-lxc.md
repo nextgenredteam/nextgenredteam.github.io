@@ -1,7 +1,7 @@
 ---
 title: "ReThink: Bypassing DKMS and Virtualizing the AX8850 NPU in NextGenPVE LXC"
 date: "2026-06-24"
-author: "Joe Brinkley"
+author: "Joe B. The Blind Hacker"
 description: "How we decoupled the Axera AX8850 NPU from bare-metal, resolved NextGenPVE LXC DKMS compiler conflicts, and cleared stale CMM allocations to host localized reasoning LLMs."
 ---
 

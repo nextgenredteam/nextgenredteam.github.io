@@ -753,6 +753,20 @@ body {
   font-size: 0.8rem;
   color: var(--text-muted);
   margin-bottom: 16px;
+  align-items: center;
+}
+
+.social-icon-link {
+  color: inherit;
+  opacity: 0.7;
+  transition: all 0.2s ease-in-out;
+  display: inline-flex;
+  align-items: center;
+}
+
+.social-icon-link:hover {
+  color: var(--cyan) !important;
+  opacity: 1;
 }
 
 .post-title {

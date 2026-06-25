@@ -1,7 +1,7 @@
 ---
 title: "Conquering the Silicon: Building a Custom 'Ollama' Orchestrator for the AX8850 NPU (Part II)"
 date: "2026-06-22"
-author: "Joe Brinkley"
+author: "Joe B. The Blind Hacker"
 description: "How we bypassed broken vendor API servers, solved logit collapse with a physical SRAM context-window hack, and built an on-the-fly model hot-swapping daemon."
 ---
 

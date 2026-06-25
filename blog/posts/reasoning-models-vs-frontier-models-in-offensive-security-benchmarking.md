@@ -1,7 +1,7 @@
 ---
 title: "Reasoning Models vs. Frontier Models in Offensive Security Benchmarking"
 date: "2026-06-19"
-author: "Joe Brinkley"
+author: "Joe B. The Blind Hacker"
 description: "An in-depth evaluation of local reasoning models versus commercial frontier models, alignment and safety refusal bottlenecks, and agent frameworks like Swarm-AI in offensive security benchmarking."
 ---
 

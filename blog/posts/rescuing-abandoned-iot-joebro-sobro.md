@@ -1,7 +1,7 @@
 ---
 title: "Rescuing Abandoned IoT: How I Built JoeBro to Control My Smart Table"
 date: "2026-06-09"
-author: "Joe Brinkley"
+author: "Joe B. The Blind Hacker"
 description: "When manufacturers abandon their mobile apps, expensive smart hardware turns into a brick. Here is how I reverse-engineered the Ayla Networks API to build a zero-backend PWA."
 ---
 
