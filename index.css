@@ -517,6 +517,12 @@ body {
   box-shadow: 0 10px 30px rgba(0, 240, 255, 0.08);
 }
 
+@media (min-width: 992px) {
+  .mentoring-card {
+    grid-column: 1 / -1;
+  }
+}
+
 .service-card:hover::after {
   background: var(--neon-pink);
 }
