@@ -217,6 +217,42 @@
             <a href="https://github.com/nextgenredteam" target="_blank" class="button border-pink">GitHub Org</a>
           </div>
         </div>
+
+        <!-- Card 4: EventID4625 -->
+        <div class="tool-card active-border-purple">
+          <span class="tool-card-tag purple">WINDOWS DETECTION // COMPLETED</span>
+          <h3>EventID4625 Emulator</h3>
+          <p>
+            A cross-platform threat emulation tool designed to trigger Windows Security Event ID 4625 (failed logon) via automated SMB/NTLM network authentication handshakes.
+          </p>
+          <div class="tool-card-stats">
+            <div>Language: <span>Go / Python / PowerShell / Bash</span></div>
+            <div>Target Protocol: <span>SMB / NTLM (TCP 445)</span></div>
+            <div>Primary Log: <span>Event ID 4625 (Windows Security Log)</span></div>
+          </div>
+          <div class="tool-card-actions">
+            <a href="tools/EventID4625/README.md" target="_blank" class="button border-purple">View Docs</a>
+            <a href="blog/emulating-windows-linux-logon-failures.html" class="button border-pink">Read Writeup</a>
+          </div>
+        </div>
+
+        <!-- Card 5: LinuxLoginFailure -->
+        <div class="tool-card active-border-cyan">
+          <span class="tool-card-tag cyan">LINUX DETECTION // COMPLETED</span>
+          <h3>LinuxLoginFailure Emulator</h3>
+          <p>
+            A multi-language threat emulation suite that simulates failed SSH login attempts on Linux targets, programmatically testing password brute-forcing and key-based signatures.
+          </p>
+          <div class="tool-card-stats">
+            <div>Language: <span>Go / Python / PowerShell / Bash</span></div>
+            <div>Target Protocol: <span>SSH (TCP 22 / 2222)</span></div>
+            <div>Primary Log: <span>/var/log/auth.log or secure</span></div>
+          </div>
+          <div class="tool-card-actions">
+            <a href="tools/LinuxLoginFailure/README.md" target="_blank" class="button border-cyan">View Docs</a>
+            <a href="blog/emulating-windows-linux-logon-failures.html" class="button border-pink">Read Writeup</a>
+          </div>
+        </div>
       </div>
     </div>
   </section>
