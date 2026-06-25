@@ -122,6 +122,10 @@
 <li><strong>NVIDIA RTX Ada Generation GPUs (such as the RTX 2000 Ada)</strong>: Serving as our main heavy-lifting infrastructure, running larger 14B and 32B distilled reasoning models (like <code>DeepSeek-R1-Distill-Qwen</code>) with full context windows.</li>
 </ul>
 <p>This local hardware stack ensures that our autonomous agent loops can run thousands of iterative, high-speed test cycles against MITRE CALDERA targets without API latency, data leakage, or subscription costs.</p>
+<blockquote>
+<p>[!NOTE]
+<strong>NPU Model Selection:</strong> To optimize the 7GB Continuous Memory (CMM) limits of the Axera AX8850, we rely on tiny <strong>1.5B to 4B Qwen-based models</strong> (such as <code>Qwen2.5-1.5B-Instruct</code> and <code>Qwen2.5-Coder-3B</code> variants). These compact models run natively on the NPU tiler, delivering incredibly low latency for quick checks while preserving the main RTX GPU resources for our larger distilled reasoning models.</p>
+</blockquote>
 <hr>
 <h2>What&#39;s Next?</h2>
 <p>In our upcoming labs, we are testing how well our local NextGenPVE cluster handles autonomous loops. We will be analyzing how <code>DeepSeek-R1-Distill-Qwen:14B</code> and <code>Gemma-4-26B-Abliterated</code> handle an interactive ReAct environment when tasked with finding and exploiting a vulnerability in a secure container.</p>

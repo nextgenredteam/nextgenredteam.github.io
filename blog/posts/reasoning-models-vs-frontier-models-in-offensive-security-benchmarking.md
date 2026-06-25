@@ -86,6 +86,9 @@ By leveraging **NextGenPVE** (our localized Proxmox virtualization lab), we can 
 
 This local hardware stack ensures that our autonomous agent loops can run thousands of iterative, high-speed test cycles against MITRE CALDERA targets without API latency, data leakage, or subscription costs.
 
+> [!NOTE]
+> **NPU Model Selection:** To optimize the 7GB Continuous Memory (CMM) limits of the Axera AX8850, we rely on tiny **1.5B to 4B Qwen-based models** (such as `Qwen2.5-1.5B-Instruct` and `Qwen2.5-Coder-3B` variants). These compact models run natively on the NPU tiler, delivering incredibly low latency for quick checks while preserving the main RTX GPU resources for our larger distilled reasoning models.
+
 ---
 
 ## What's Next?
