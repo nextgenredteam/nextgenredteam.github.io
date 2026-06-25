@@ -27,7 +27,7 @@ const currentDate = new Date().toISOString().split('T')[0];
 const frontmatter = `---
 title: "${title}"
 date: "${currentDate}"
-author: "Joe Brinkley"
+author: "Joe B. The Blind Hacker"
 description: "Brief description of the post..."
 ---
 
