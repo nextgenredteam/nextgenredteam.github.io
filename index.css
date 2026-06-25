@@ -742,6 +742,8 @@ body {
 /* --- INDIVIDUAL BLOG POSTS --- */
 .post-hero {
   padding: 80px 0 40px;
+  position: relative;
+  z-index: 1010; /* Render above scanlines & noise-overlay for razor-sharp text */
 }
 
 .post-meta {
@@ -761,6 +763,18 @@ body {
 
 .post-content-section {
   padding-bottom: 80px;
+  position: relative;
+  z-index: 1010; /* Render above scanlines & noise-overlay for razor-sharp text */
+}
+
+.blog-post-page .markdown-body {
+  background-color: #080a0d; /* Solid backdrop to block scanline patterns */
+  border: 1px solid var(--border-cyber);
+  padding: 50px 60px;
+  border-radius: 8px;
+  max-width: 900px;
+  margin: 0 auto;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
 }
 
 .markdown-body {
