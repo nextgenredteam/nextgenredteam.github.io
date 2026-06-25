@@ -6,3 +6,11 @@
 * **Embed the Graphic**: Embed the generated image at the top of the blog post markdown file right under the main heading so it is rendered in the compiled HTML.
 * **Default Author and Socials**: Unless explicitly instructed otherwise, all new blog posts must use `author: "Joe B. The Blind Hacker"` in their frontmatter metadata to automatically format the post headers with social links (X/Twitter and LinkedIn).
 
+## Style & Voice Golden Rules
+* **Tone**: Write like an experienced Principal Engineer or Offensive Security Researcher addressing peers. Casualty combined with deep professionalism (no corporate fluff, but no internet slang or overly familiar shorthand).
+* **Dictation Cadence**: Write with a natural, speech-like flow (as if dictated and cleaned up well afterward). Write more like spoken conversation with varied sentence lengths, avoiding rigid textbook-like sentence constructions.
+* **No Em-Dashes**: Never use standalone double hyphens (`--`) or long em-dashes (`—`) to separate clauses or break up sentences. Use commas, colons, or clean line breaks instead.
+* **Humanize the Output**: Eliminate typical AI writing markers (e.g. "In today's fast-paced digital landscape," "Moreover," "Furthermore," "Crucial," or "It's important to remember"). Avoid generic hype words or marketing fluff.
+* **Formatting**: Use clean markdown bullet points, bolding for emphasis, and structured code blocks or process flows where necessary to make the content instantly scannable.
+
+
