@@ -1,6 +1,6 @@
 ---
 title: "Reasoning Models vs. Frontier Models in Offensive Security Benchmarking"
-date: "2026-06-24"
+date: "2026-06-19"
 author: "Joe Brinkley"
 description: "An in-depth evaluation of local reasoning models versus commercial frontier models, alignment and safety refusal bottlenecks, and agent frameworks like Swarm-AI in offensive security benchmarking."
 ---
@@ -21,7 +21,7 @@ Historically, local open-weights models (like the early Llama 3 or Gemma 2 varia
 
 With the rise of distilled reasoning models (like `DeepSeek-R1-Distill-Qwen-32B` and `DeepSeek-R1-Distill-Llama-70B`), the dynamic has fundamentally changed:
 
-* **The "Frontier" Margin is Shrinking**: Distilled reasoning models rival the logical capabilities of GPT-4o on raw code synthesis, reasoning steps, and mathematical deduction.
+* **The \"Frontier\" Margin is Shrinking**: Distilled reasoning models rival the logical capabilities of GPT-4o on raw code synthesis, reasoning steps, and mathematical deduction.
 * **The Refusal Bottleneck**: The primary blocker for commercial frontier models in offensive security isn't intelligence; it's **alignment**. Commercial models are heavily filtered. When asked to evaluate an actual IDOR chain, interact with an exploit container, or compile a raw payload, they trigger safety refusals 90% of the time. This makes them highly impractical for automated red teaming.
 * **The Local Advantage**: Uncensored, abliterated local models (such as `Gemma-4-26B-Abliterated` or custom quantized Qwen/DeepSeek weights) operate without filters. Because they don't refuse, they can objectively evaluate security weaknesses, think through payload debugging, and carry out execution loops without safety disruptions.
 
@@ -58,10 +58,36 @@ These agents focus on simulating human console interactions:
 * **Interactive Shell Access**: They run loops where the agent interacts directly with terminal tools, Metasploit, or interactive debuggers.
 * **ReAct Flow**: Ideal for measuring how well a model handles complex error logs, shell timeouts, and unexpected host behavior.
 
-### C. CALDERA / MITRE ATT&CK Benchmarks
-For formal verification, running agents against mock targets controlled by **MITRE CALDERA** provides a strict, reproducible score. We evaluate how many adversary profile phases the agent successfully completes, giving a quantitative metric to compare models like DeepSeek-R1 against Claude 3.5 Sonnet.
+### C. MITRE CALDERA Emulation & ATT&CK Benchmarks
+For quantitative verification, running AI agents against mock targets inside a **MITRE CALDERA** adversary emulation harness provides a reproducible score. By measuring the percentage of ATT&CK-mapped phases the agent successfully executes versus those blocked by safety refusals or logic loops, we get a clear baseline comparing OSS reasoning models against commercial frontier models.
+
+---
+
+## 4. Outcome-Based Benchmarking: The Tools That Get Smarter Will Win
+
+When evaluating agent frameworks, we must pivot from static code verification to **outcome-based benchmarking**. 
+
+Traditional software testing looks at *results*—did a script run without throwing an error, or did a specific regex find a string in stdout? In a real deployment, this is a shallow metric. An offensive agent must be benchmarked on **system state change and objective success**:
+* Did it achieve the designated credential access or lateral movement goal?
+* Did it identify firewall filtering and dynamically re-encode its payload?
+* Did it gracefully recover when an expected interactive shell terminated?
+
+Tools that simply run pre-packaged commands are easily blocked by modern EDR and firewalls. The agents that succeed are those that **get smarter dynamically**—using internal reasoning paths to debug compiled C exploits, adapt network scanning speeds, and rewrite obfuscated payloads based on live environment feedback. The future of autonomous testing belongs to architectures that learn from failure on-the-fly.
+
+---
+
+## 5. NextGenPVE Lab Integration: Bypassing the Cloud
+
+This is exactly why we kicked off our local hardware acceleration research. To build a truly private, air-gapped threat emulation environment, we had to decouple our benchmarking loops from commercial cloud providers.
+
+By leveraging **NextGenPVE** (our localized Proxmox virtualization lab), we can orchestrate entire target environments and attack clusters on-premise. This setup allows us to run local LLMs directly next to the target subnets. Specifically, we've integrated:
+* **Edge NPUs (Axera AX8850)**: Used as dedicated, ultra-low-power sanity-check inference nodes running quantized 1.7B and 2B reasoning models natively under C++ servers in LXC containers.
+* **NVIDIA RTX Ada Generation GPUs (such as the RTX 2000 Ada)**: Serving as our main heavy-lifting infrastructure, running larger 14B and 32B distilled reasoning models (like `DeepSeek-R1-Distill-Qwen`) with full context windows.
+
+This local hardware stack ensures that our autonomous agent loops can run thousands of iterative, high-speed test cycles against MITRE CALDERA targets without API latency, data leakage, or subscription costs.
 
 ---
 
 ## What's Next?
-In our upcoming labs, we are testing how well our local cluster setups handle autonomous loops. We will be analyzing how `DeepSeek-R1:14B` and `Gemma-4-26B-Abliterated` handle an interactive ReAct environment when tasked with finding and exploiting a vulnerability in a secure container. 
+In our upcoming labs, we are testing how well our local NextGenPVE cluster handles autonomous loops. We will be analyzing how `DeepSeek-R1-Distill-Qwen:14B` and `Gemma-4-26B-Abliterated` handle an interactive ReAct environment when tasked with finding and exploiting a vulnerability in a secure container.
+ 
