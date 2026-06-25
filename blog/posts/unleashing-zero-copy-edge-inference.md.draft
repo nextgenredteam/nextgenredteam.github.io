@@ -9,7 +9,7 @@ description: "How we ditched legacy Python wrappers, compiled a native C++ OpenA
 
 ![Unleashing Zero-Copy Edge Inference: Compiling a Native C++ LLM Server on the Axera AX8850 NPU](../assets/zero_copy_npu_inference.png)
 
-If you've been working with edge NPUs—specifically the Axera AX8850 or similar AX650N PCIe chips—you've probably run into the exact same wall that I just hit: **The Context Window Death Trap.** 
+If you've been working with edge NPUs, specifically the Axera AX8850 or similar AX650N PCIe chips, you've probably run into the exact same wall that I just hit: the Context Window Death Trap. 
 
 This is the story of how we completely ditched the legacy Python orchestrator wrappers, reverse-engineered the undocumented C++ initialization sequence, and deployed a pure, zero-copy native API server directly connected to the NPU's PCIe kernel driver.
 

@@ -73,7 +73,7 @@
 <p>Evaluating this is not just about raw coding capability; it requires looking at censorship, architectural integration, and how agent loops change the baseline of what is possible.</p>
 <hr>
 <h2>1. How Local Reasoning Models Hold Up Against Frontier Models</h2>
-<p>Historically, local open-weights models (like the early Llama 3 or Gemma 2 variants) were excellent at simple syntax-level tasks—such as drafting a basic exploit script or refactoring code—but they choked when faced with multi-step reasoning, pivoting across network topologies, or debugging an exploit payload when it triggered a web application firewall (WAF).</p>
+<p>Historically, local open-weights models (like the early Llama 3 or Gemma 2 variants) were excellent at simple syntax-level tasks (such as drafting a basic exploit script or refactoring code), but they choked when faced with multi-step reasoning, pivoting across network topologies, or debugging an exploit payload when it triggered a web application firewall (WAF).</p>
 <p>With the rise of distilled reasoning models (like <code>DeepSeek-R1-Distill-Qwen-32B</code> and <code>DeepSeek-R1-Distill-Llama-70B</code>), the dynamic has fundamentally changed:</p>
 <ul>
 <li><strong>The &quot;Frontier&quot; Margin is Shrinking</strong>: Distilled reasoning models rival the logical capabilities of GPT-4o on raw code synthesis, reasoning steps, and mathematical deduction.</li>
@@ -112,13 +112,13 @@
 <hr>
 <h2>4. Outcome-Based Benchmarking: The Tools That Get Smarter Will Win</h2>
 <p>When evaluating agent frameworks, we must pivot from static code verification to <strong>outcome-based benchmarking</strong>. </p>
-<p>Traditional software testing looks at <em>results</em>—did a script run without throwing an error, or did a specific regex find a string in stdout? In a real deployment, this is a shallow metric. An offensive agent must be benchmarked on <strong>system state change and objective success</strong>:</p>
+<p>Traditional software testing looks at <em>results</em>: did a script run without throwing an error, or did a specific regex find a string in stdout? In a real deployment, this is a shallow metric. An offensive agent must be benchmarked on <strong>system state change and objective success</strong>:</p>
 <ul>
 <li>Did it achieve the designated credential access or lateral movement goal?</li>
 <li>Did it identify firewall filtering and dynamically re-encode its payload?</li>
 <li>Did it gracefully recover when an expected interactive shell terminated?</li>
 </ul>
-<p>Tools that simply run pre-packaged commands are easily blocked by modern EDR and firewalls. The agents that succeed are those that <strong>get smarter dynamically</strong>—using internal reasoning paths to debug compiled C exploits, adapt network scanning speeds, and rewrite obfuscated payloads based on live environment feedback. The future of autonomous testing belongs to architectures that learn from failure on-the-fly.</p>
+<p>Tools that simply run pre-packaged commands are easily blocked by modern EDR and firewalls. The agents that succeed are those that <strong>get smarter dynamically</strong>, using internal reasoning paths to debug compiled C exploits, adapt network scanning speeds, and rewrite obfuscated payloads based on live environment feedback. The future of autonomous testing belongs to architectures that learn from failure on-the-fly.</p>
 <hr>
 <h2>5. NextGenPVE Lab Integration: Bypassing the Cloud</h2>
 <p>This is exactly why we kicked off our local hardware acceleration research. To build a truly private, air-gapped threat emulation environment, we had to decouple our benchmarking loops from commercial cloud providers.</p>

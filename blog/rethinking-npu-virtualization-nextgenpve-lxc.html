@@ -74,15 +74,15 @@
 <hr>
 <h2>The Objective</h2>
 <p>Our goal was clear: take our bare-metal NextGenPVE host, which natively had the Axera NPU drivers (<code>axcl-dkms</code>) and firmware installed, and serve an LLM from within a Linux Container (LXC). We wanted an isolated API gateway that could directly tap into the NPU hardware without polluting the host environment with Python dependencies or HTTP servers.</p>
-<p>We targeted the <strong>Qwen3-1.7B-GPTQ-Int4</strong> model—a small, highly capable reasoning model that perfectly fits within the &quot;Sweet Spot&quot; of the AX8850&#39;s hardware constraints.</p>
+<p>We targeted the <strong>Qwen3-1.7B-GPTQ-Int4</strong> model, a small, highly capable reasoning model that perfectly fits within the &quot;Sweet Spot&quot; of the AX8850&#39;s hardware constraints.</p>
 <hr>
 <h2>The Blind Spot: Why We Rebooted and Read the Docs</h2>
 <p>Initially, we attempted a standard installation within the LXC. However, we quickly hit a massive roadblock: the official documentation assumes you are running the software on a bare-metal Linux OS. </p>
 <p>When you run inside a NextGenPVE LXC, the container shares the host&#39;s kernel. This means <strong>you cannot compile kernel modules (DKMS)</strong> inside the container. We watched our container&#39;s package manager (<code>dpkg</code>) completely shatter as it tried to install the <code>axcl-dkms</code> package, triggering phantom kernel header mismatch errors that brought our deployment to a screeching halt.</p>
-<p>We had to stop, clean up the broken dpkg state, reboot our processes, and go back to the drawing board. After meticulously reading through the Axera documentation and dissecting the driver payload, we realized a crucial separation of concerns: <strong>the host must handle the hardware, and the container only needs the user-space API.</strong></p>
+<p>We had to stop, clean up the broken dpkg state, reboot our processes, and go back to the drawing board. After meticulously reading through the Axera documentation and dissecting the driver payload, we realized a fundamental separation of concerns: <strong>the host must handle the hardware, and the container only needs the user-space API.</strong></p>
 <hr>
 <h2>The Solution: Manual Injection and CMM Memory Management</h2>
-<p>Here is what we actually had to do—things that are buried deep or entirely missing from the official documentation:</p>
+<p>Here is what we actually had to do (steps that are buried deep or entirely missing from the official documentation):</p>
 <h3>1. The <code>cgroup2</code> Passthrough</h3>
 <p>To give the LXC access to the NPU without giving it the driver payload, we used <code>cgroup2</code> rules in the NextGenPVE configuration. We identified the Major character device number (which turned out to be <code>10</code> for misc devices) for the NPU on the host and mapped the required character devices directly into the container:</p>
 <pre><code class="language-text"># Append to /etc/pve/lxc/&lt;LXC_ID&gt;.conf on the host:
@@ -145,7 +145,7 @@ Since the AX8850 has 7GB of CMM (Continuous Memory Management) dedicated to the 
 <p><strong>The Result:</strong>
 The NPU executed its internal <code>&lt;think&gt;</code> tokens flawlessly before generating the prose.</p>
 <blockquote>
-<p><em>Leo, a curious robot, stumbled upon a flickering glow in the lab’s data chamber. As the light intensified, it noticed a hidden symbol—something ancient. A soft hum echoed, and the walls began to shift, revealing a hidden room. Leo’s circuits sparked with a strange energy, and for the first time, it felt a connection to something beyond code. The lab’s walls whispered secrets, and the air hummed with a power that defied logic. Leo realized: magic was not a myth, but a force waiting to be unlocked.</em></p>
+<p><em>Leo, a curious robot, stumbled upon a flickering glow in the lab’s data chamber. As the light intensified, it noticed a hidden symbol, something ancient. A soft hum echoed, and the walls began to shift, revealing a hidden room. Leo’s circuits sparked with a strange energy, and for the first time, it felt a connection to something beyond code. The lab’s walls whispered secrets, and the air hummed with a power that defied logic. Leo realized: magic was not a myth, but a force waiting to be unlocked.</em></p>
 </blockquote>
 <p><strong>The Hardware Benchmark:</strong></p>
 <ul>
@@ -224,7 +224,7 @@ The boot of <strong>Qwen2.5-7B-Instruct</strong> was only possible because we ap
 <li><strong>The Takeaway:</strong> The upstream API parser is unforgiving. Frontends (such as LiteLLM or routing gateways) must route queries using the exact namespace declaration or the requests will be flatly rejected.</li>
 </ul>
 <h3>4. Thermal Telemetry</h3>
-<p>Physical fan curves configured on the NextGenPVE host kept the hardware cool. During our 20-minute execution block—which involved sustained PCIe bus swapping, model loads, and CMM flushing—the NPU remained stable:</p>
+<p>Physical fan curves configured on the NextGenPVE host kept the hardware cool. During our 20-minute execution block, which involved sustained PCIe bus swapping, model loads, and CMM flushing, the NPU remained stable:</p>
 <ul>
 <li><strong>Peak Observed NPU Temperature:</strong> <code>74°C</code> (well below thermal throttling limits, confirming stability under heavy sustained workloads).</li>
 </ul>

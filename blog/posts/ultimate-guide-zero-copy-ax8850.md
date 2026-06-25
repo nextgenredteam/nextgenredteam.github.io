@@ -77,7 +77,7 @@ The endpoint is now exposed to your wider enterprise network at `http://<LXC_IP_
 
 ### Step 5: Hardening Driver Initialization (Mitigating Kernel Lockups)
 
-When restarting the C++ server or hot-swapping models, terminating the server process abruptly can leave the NPU kernel driver (`axcl`) in an unstable state. If the PCIe memory maps are not properly deallocated, the host kernel locks up, and subsequent runs will fail with memory boundary crashes—often misleadingly suggesting that your `.axmodel` files are corrupted.
+When restarting the C++ server or hot-swapping models, terminating the server process abruptly can leave the NPU kernel driver (`axcl`) in an unstable state. If the PCIe memory maps are not properly deallocated, the host kernel locks up, and subsequent runs will fail with memory boundary crashes, often misleadingly suggesting that your `.axmodel` files are corrupted.
 
 To guarantee months of uninterrupted runtime, use a dedicated bash wrapper (`start_server.sh`) to perform socket teardown and flush the driver before booting:
 

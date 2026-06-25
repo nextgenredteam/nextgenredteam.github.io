@@ -9,11 +9,11 @@ description: "How we tested, why we tested, and what we learned benchmarking loc
 
 ![NextGenRedPVE AI Benchmarking Banner](../assets/nextgenpve_benchmark.png)
 
-In modern offensive security operations, AI is no longer a futuristic concept—it’s an active member of the red team. However, relying on commercial cloud LLMs (like GPT-4 or Claude) presents two massive blockers for professional red teaming:
+In modern offensive security operations, AI is no longer a futuristic concept, it’s an active member of the red team. However, relying on commercial cloud LLMs (like GPT-4 or Claude) presents two massive blockers for professional red teaming:
 1. **Safety Refusal Loops**: Cloud providers enforce strict, broad-brush alignment guardrails. Asking a cloud model to analyze an IDOR chain or generate a PoC HTTP exploit request often triggers a generic refusal: *"As an AI, I cannot assist with hacking..."*
 2. **Data Privacy & OpSec**: Feeding client network layouts, custom exploitation code, or proprietary vulnerability details into external third-party APIs is a compliance and confidentiality nightmare.
 
-To solve this, we built **NextGenRedPVE**—our locally-hosted, heterogeneous Proxmox cluster dedicated to running uncensored, abliterated local LLMs. 
+To solve this, we built **NextGenRedPVE**, our locally-hosted, heterogeneous Proxmox cluster dedicated to running uncensored, abliterated local LLMs. 
 
 To ensure our AI agents can reason through complex offensive scenarios efficiently without melting our hardware, we conducted extensive benchmark testing across multiple model architectures (Dense and Mixture-of-Experts) ranging from 2B to 35B parameters.
 

@@ -63,7 +63,7 @@ With the memory boundaries aligned, we staged **DeepSeek-R1-Distill-Qwen-1.5B**.
 
 `500 Internal Server Error (type must be string, but is null)`
 
-We wrote multi-threaded test harnesses to inspect the HTTP handler's behavior and discovered that the manufacturer's C++ JSON array iterator was fundamentally broken. It was unable to handle optional parameters or nested keys common in standard modern API requests. When it encountered a key it didn't expect, the server didn't just reject the request—it leaked the socket descriptor, leading to cascading `[Errno 9]` socket deadlocks that completely froze the NPU driver.
+We wrote multi-threaded test harnesses to inspect the HTTP handler's behavior and discovered that the manufacturer's C++ JSON array iterator was fundamentally broken. It was unable to handle optional parameters or nested keys common in standard modern API requests. When it encountered a key it didn't expect, the server didn't just reject the request, it leaked the socket descriptor, leading to cascading `[Errno 9]` socket deadlocks that completely froze the NPU driver.
 
 The provided C++ server was a dead end. But we didn't need their server. We just needed their hardware CLI.
 

@@ -94,7 +94,7 @@
 <ol>
 <li><strong>Verify Local Logging:</strong> Run the emulator against a test target and check the local log files directly. Ensure Event ID <code>4625</code> is written to the Security Log on Windows, or <code>/var/log/secure</code> (RHEL) / <code>/var/log/auth.log</code> (Ubuntu) on Linux.</li>
 <li><strong>Track the Broker Path:</strong> Verify that your log forwarder immediately captures the new log line and ships it to the ingestion queue.</li>
-<li><strong>Inspect the SIEM Parser:</strong> Look at the raw indexed log inside your SIEM (Splunk, Elastic, Sentinel). Confirm that key fields—such as <code>source_ip</code>, <code>target_user</code>, <code>logon_type</code>, and <code>status_code</code>—are correctly indexed and parsed.</li>
+<li><strong>Inspect the SIEM Parser:</strong> Look at the raw indexed log inside your SIEM (Splunk, Elastic, Sentinel). Confirm that key fields (such as <code>source_ip</code>, <code>target_user</code>, <code>logon_type</code>, and <code>status_code</code>) are correctly indexed and parsed.</li>
 <li><strong>Trigger the Alert:</strong> Confirm that the threshold rules (e.g. <em>&quot;5 failures from a single IP within 10 seconds&quot;</em>) trigger the expected alert or Slack/Teams webhook.</li>
 </ol>
 <hr>

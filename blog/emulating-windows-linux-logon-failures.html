@@ -72,7 +72,7 @@
 <p>During our threat emulation research sprint in early June 2026, we focused on a critical telemetry gap that plague many security teams: <strong>reproducible login failure logging</strong>.</p>
 <p>If your SOC rules trigger on <em>&quot;10 failed logins in 60 seconds,&quot;</em> how do you actually verify that the alert fires? Do you open a command prompt and manually mistype your password ten times? Do you write a sloppy bash loop that might lock out a real service account?</p>
 <p>To solve this, we engineered two highly focused, cross-platform threat emulation modules: <strong>EventID4625</strong> (Windows Logon Failure) and <strong>LinuxLoginFailure</strong> (SSH Authentication Failure). </p>
-<p>Here is the engineering breakdown of how we built these emulators to safely trigger and validate security events on Windows and Linux targets.</p>
+<p>This guide provides the engineering breakdown of how we built these emulators to safely trigger and validate security events on Windows and Linux targets.</p>
 <hr>
 <h2>1. Emulating Windows Security Event ID 4625</h2>
 <p>On Windows systems, a failed logon attempt generates a <strong>Security Event ID 4625</strong> (An account failed to log on) in the Windows Security Log. Security analyst teams rely heavily on this event to detect password spraying, credential stuffing, and brute force attacks.</p>
@@ -106,7 +106,7 @@ if err != nil {
 <p>By keeping the script native to SMB ports (TCP 445), we ensure that standard active directory controllers and workgroup hosts log a high-fidelity Event ID 4625 containing the targeted username, source IP, and logon type (typically Logon Type 3 - Network Logon).</p>
 <hr>
 <h2>2. Emulating Linux SSH Login Failures</h2>
-<p>On Linux platforms, failed SSH authentication attempts are written to syslog—typically <code>/var/log/secure</code> on Red Hat-based systems or <code>/var/log/auth.log</code> on Debian/Ubuntu systems. </p>
+<p>On Linux platforms, failed SSH authentication attempts are written to syslog: typically <code>/var/log/secure</code> on Red Hat-based systems or <code>/var/log/auth.log</code> on Debian/Ubuntu systems. </p>
 <p>To automate the validation of SSH monitoring rules, we designed the <strong>LinuxLoginFailure</strong> module.</p>
 <h3>The &quot;Public Key&quot; Challenge</h3>
 <p>While password-based brute force is simple to script, hardened production environments often disable passwords entirely (<code>PasswordAuthentication no</code>), enforcing SSH Key-Based authentication. Under standard SSH setups, trying to trigger a password failure on a key-only SSH daemon returns a different log signature than a signature verification failure.</p>
@@ -127,7 +127,7 @@ if err == nil {
 </code></pre>
 <hr>
 <h2>3. Modular Portability</h2>
-<p>To ensure these modules can run in any environment—from modern containers to restricted enterprise hosts—we structured each module with four equivalent implementations:</p>
+<p>To ensure these modules can run in any environment, from modern containers to restricted enterprise hosts, we structured each module with four equivalent implementations:</p>
 <ul>
 <li><strong>Go:</strong> Cross-compiled into native, standalone binaries for Linux and Windows (<code>.exe</code>) with no runtime dependencies.</li>
 <li><strong>Python:</strong> Uses standard <code>paramiko</code> and socket libraries.</li>

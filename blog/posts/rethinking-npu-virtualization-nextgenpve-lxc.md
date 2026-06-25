@@ -19,7 +19,7 @@ This is the story of how we successfully decoupled a high-performance edge NPU f
 
 Our goal was clear: take our bare-metal NextGenPVE host, which natively had the Axera NPU drivers (`axcl-dkms`) and firmware installed, and serve an LLM from within a Linux Container (LXC). We wanted an isolated API gateway that could directly tap into the NPU hardware without polluting the host environment with Python dependencies or HTTP servers.
 
-We targeted the **Qwen3-1.7B-GPTQ-Int4** model—a small, highly capable reasoning model that perfectly fits within the \"Sweet Spot\" of the AX8850's hardware constraints.
+We targeted the **Qwen3-1.7B-GPTQ-Int4** model, a small, highly capable reasoning model that perfectly fits within the \"Sweet Spot\" of the AX8850's hardware constraints.
 
 ---
 
@@ -29,13 +29,13 @@ Initially, we attempted a standard installation within the LXC. However, we quic
 
 When you run inside a NextGenPVE LXC, the container shares the host's kernel. This means **you cannot compile kernel modules (DKMS)** inside the container. We watched our container's package manager (`dpkg`) completely shatter as it tried to install the `axcl-dkms` package, triggering phantom kernel header mismatch errors that brought our deployment to a screeching halt.
 
-We had to stop, clean up the broken dpkg state, reboot our processes, and go back to the drawing board. After meticulously reading through the Axera documentation and dissecting the driver payload, we realized a crucial separation of concerns: **the host must handle the hardware, and the container only needs the user-space API.**
+We had to stop, clean up the broken dpkg state, reboot our processes, and go back to the drawing board. After meticulously reading through the Axera documentation and dissecting the driver payload, we realized a fundamental separation of concerns: **the host must handle the hardware, and the container only needs the user-space API.**
 
 ---
 
 ## The Solution: Manual Injection and CMM Memory Management
 
-Here is what we actually had to do—things that are buried deep or entirely missing from the official documentation:
+Here is what we actually had to do (steps that are buried deep or entirely missing from the official documentation):
 
 ### 1. The `cgroup2` Passthrough
 
@@ -112,7 +112,7 @@ We pointed our LiteLLM router to the new API and sent it a prompt to test both i
 **The Result:**
 The NPU executed its internal `<think>` tokens flawlessly before generating the prose.
 
-> *Leo, a curious robot, stumbled upon a flickering glow in the lab’s data chamber. As the light intensified, it noticed a hidden symbol—something ancient. A soft hum echoed, and the walls began to shift, revealing a hidden room. Leo’s circuits sparked with a strange energy, and for the first time, it felt a connection to something beyond code. The lab’s walls whispered secrets, and the air hummed with a power that defied logic. Leo realized: magic was not a myth, but a force waiting to be unlocked.*
+> *Leo, a curious robot, stumbled upon a flickering glow in the lab’s data chamber. As the light intensified, it noticed a hidden symbol, something ancient. A soft hum echoed, and the walls began to shift, revealing a hidden room. Leo’s circuits sparked with a strange energy, and for the first time, it felt a connection to something beyond code. The lab’s walls whispered secrets, and the air hummed with a power that defied logic. Leo realized: magic was not a myth, but a force waiting to be unlocked.*
 
 **The Hardware Benchmark:**
 * **Inference Speed**: `8.27 tokens/s` (Decode Average)
@@ -155,7 +155,7 @@ Despite the hardware successfully initializing the three models above, our conte
 * **The Takeaway:** The upstream API parser is unforgiving. Frontends (such as LiteLLM or routing gateways) must route queries using the exact namespace declaration or the requests will be flatly rejected.
 
 ### 4. Thermal Telemetry
-Physical fan curves configured on the NextGenPVE host kept the hardware cool. During our 20-minute execution block—which involved sustained PCIe bus swapping, model loads, and CMM flushing—the NPU remained stable:
+Physical fan curves configured on the NextGenPVE host kept the hardware cool. During our 20-minute execution block, which involved sustained PCIe bus swapping, model loads, and CMM flushing, the NPU remained stable:
 
 * **Peak Observed NPU Temperature:** `74°C` (well below thermal throttling limits, confirming stability under heavy sustained workloads).
 

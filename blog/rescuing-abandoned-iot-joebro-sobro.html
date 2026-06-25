@@ -69,19 +69,19 @@
     <article class="cyber-container markdown-body">
       <h1>Rescuing Abandoned IoT: How I Built JoeBro to Control My Smart Table</h1>
 <p>There is a growing crisis in modern consumer electronics: <strong>orphaned smart hardware.</strong> </p>
-<p>You buy a premium, high-tech device—a smart refrigerator, an automated light system, or in my case, a Sobro Smart Coffee Table. A few years pass, the manufacturer shifts focus, and their official mobile app gets abandoned. Suddenly, the app crashes on modern iOS or Android versions, and you are left with a thousand-dollar piece of hardware that you can no longer control.</p>
+<p>You buy a premium, high-tech device, a smart refrigerator, an automated light system, or in my case, a Sobro Smart Coffee Table. A few years pass, the manufacturer shifts focus, and their official mobile app gets abandoned; suddenly, the app crashes on modern iOS or Android versions, and you are left with a thousand-dollar piece of hardware that you can no longer control.</p>
 <p>I refuse to let my technology be taken away from me by bad app updates. So when my Sobro table&#39;s official app completely stopped working, I decided to build my own interface: <strong>JoeBro Web Controller.</strong></p>
 <p>Here is the story of how I rescued my smart table, reverse-engineered its cloud connectivity, and how you can use my open-source tools to connect your table to the internet today.</p>
 <hr>
 <h2>The Problem: The Bricked Smart Table</h2>
 <p>The Sobro Smart Coffee Table is a great piece of furniture. It features a built-in refrigerator drawer, Bluetooth speakers, charging ports, drawer locks, and customizable RGB LED lights. </p>
-<p>However, all of the table&#39;s &quot;smart&quot; features—the lights, the drawer locks, the fridge temp controls—rely on a mobile app to function. Unfortunately, the official Sobro app is notoriously buggy and fails to run on modern Android versions. Furthermore, the local connection protocol on the table is locked behind AES encryption keys that are unique to each device, making local network control nearly impossible without extracting the key from the official app.</p>
+<p>However, all of the table&#39;s &quot;smart&quot; features (the lights, the drawer locks, the fridge temp controls) rely on a mobile app to function. Unfortunately, the official Sobro app is notoriously buggy and fails to run on modern Android versions. The local connection protocol on the table is locked behind AES encryption keys that are unique to each device, making local network control nearly impossible without extracting the key from the official app.</p>
 <p>Instead of trying to patch a broken Android APK, I looked at the network traffic.</p>
 <hr>
 <h2>Reverse Engineering the Cloud: The Ayla Networks API</h2>
 <p>Under the hood, the Sobro table&#39;s smart chip is powered by <strong>Ayla Networks</strong>, a popular IoT cloud platform. The table connects to your Wi-Fi, logs into the Ayla Cloud, and waits for commands. The mobile app doesn&#39;t actually talk to the table directly; it sends REST commands to Ayla, which relays them to the table.</p>
 <p>By sniffing the traffic of a legacy device connected to the app, I mapped out the entire Ayla Cloud REST API used by the table. Because it uses standard JSON payloads and simple HTTP requests, I realized we don&#39;t need a mobile app at all. We can control the table directly from a static web page!</p>
-<p>I built <strong>JoeBro</strong>—a zero-backend Progressive Web App (PWA) written in vanilla HTML, CSS, and Javascript. It runs 100% in your browser, communicates directly with Ayla&#39;s servers, and unlocks hidden features (like forcing Bluetooth pairing mode or fine-tuning backlight brightness) that were never exposed in the official app.</p>
+<p>I built <strong>JoeBro</strong>, a zero-backend Progressive Web App (PWA) written in vanilla HTML, CSS, and Javascript. It runs 100% in your browser, communicates directly with Ayla&#39;s servers, and unlocks hidden features (like forcing Bluetooth pairing mode or fine-tuning backlight brightness) that were never exposed in the official app.</p>
 <hr>
 <h2>Guide: Connecting Your Sobro Table to the Web</h2>
 <p>To use the JoeBro controller, your table must be connected to your local Wi-Fi. If you changed your Wi-Fi router or bought a new table, you cannot use the official app to connect it. </p>

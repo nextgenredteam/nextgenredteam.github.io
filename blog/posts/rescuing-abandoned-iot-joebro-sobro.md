@@ -9,7 +9,7 @@ description: "When manufacturers abandon their mobile apps, expensive smart hard
 
 There is a growing crisis in modern consumer electronics: **orphaned smart hardware.** 
 
-You buy a premium, high-tech device—a smart refrigerator, an automated light system, or in my case, a Sobro Smart Coffee Table. A few years pass, the manufacturer shifts focus, and their official mobile app gets abandoned. Suddenly, the app crashes on modern iOS or Android versions, and you are left with a thousand-dollar piece of hardware that you can no longer control.
+You buy a premium, high-tech device, a smart refrigerator, an automated light system, or in my case, a Sobro Smart Coffee Table. A few years pass, the manufacturer shifts focus, and their official mobile app gets abandoned; suddenly, the app crashes on modern iOS or Android versions, and you are left with a thousand-dollar piece of hardware that you can no longer control.
 
 I refuse to let my technology be taken away from me by bad app updates. So when my Sobro table's official app completely stopped working, I decided to build my own interface: **JoeBro Web Controller.**
 
@@ -21,7 +21,7 @@ Here is the story of how I rescued my smart table, reverse-engineered its cloud 
 
 The Sobro Smart Coffee Table is a great piece of furniture. It features a built-in refrigerator drawer, Bluetooth speakers, charging ports, drawer locks, and customizable RGB LED lights. 
 
-However, all of the table's "smart" features—the lights, the drawer locks, the fridge temp controls—rely on a mobile app to function. Unfortunately, the official Sobro app is notoriously buggy and fails to run on modern Android versions. Furthermore, the local connection protocol on the table is locked behind AES encryption keys that are unique to each device, making local network control nearly impossible without extracting the key from the official app.
+However, all of the table's "smart" features (the lights, the drawer locks, the fridge temp controls) rely on a mobile app to function. Unfortunately, the official Sobro app is notoriously buggy and fails to run on modern Android versions. The local connection protocol on the table is locked behind AES encryption keys that are unique to each device, making local network control nearly impossible without extracting the key from the official app.
 
 Instead of trying to patch a broken Android APK, I looked at the network traffic.
 
@@ -33,7 +33,7 @@ Under the hood, the Sobro table's smart chip is powered by **Ayla Networks**, a 
 
 By sniffing the traffic of a legacy device connected to the app, I mapped out the entire Ayla Cloud REST API used by the table. Because it uses standard JSON payloads and simple HTTP requests, I realized we don't need a mobile app at all. We can control the table directly from a static web page!
 
-I built **JoeBro**—a zero-backend Progressive Web App (PWA) written in vanilla HTML, CSS, and Javascript. It runs 100% in your browser, communicates directly with Ayla's servers, and unlocks hidden features (like forcing Bluetooth pairing mode or fine-tuning backlight brightness) that were never exposed in the official app.
+I built **JoeBro**, a zero-backend Progressive Web App (PWA) written in vanilla HTML, CSS, and Javascript. It runs 100% in your browser, communicates directly with Ayla's servers, and unlocks hidden features (like forcing Bluetooth pairing mode or fine-tuning backlight brightness) that were never exposed in the official app.
 
 ---
 

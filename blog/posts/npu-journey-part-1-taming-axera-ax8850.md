@@ -42,4 +42,4 @@ Now that we fully understand the software landscape of the Axera NPU environment
 
 The AX8850 is a fantastic piece of silicon, and it serves perfectly as a quick sanity-check inference node for our offensive security tooling. 
 
-In **Part 2**, we are going to show you the *real*, clean, and accurate step-by-step guide on how to tame this edge NPU—no reverse engineering required.
+In **Part 2**, we are going to show you the *real*, clean, and accurate step-by-step guide on how to tame this edge NPU: no reverse engineering required.

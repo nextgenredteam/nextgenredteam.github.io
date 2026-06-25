@@ -103,4 +103,4 @@ We now have a dedicated, hardware-accelerated LLM API running natively on an edg
 
 By stepping back and diagnosing the actual software bugs instead of immediately reverse engineering the entire stack, we achieved a much cleaner, native integration. 
 
-Sometimes, the system isn't fortified against you—it's just broken.
+Sometimes, the system isn't fortified against you, it's just broken.

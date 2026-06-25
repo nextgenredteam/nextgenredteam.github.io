@@ -42,7 +42,7 @@ When deploying these emulators in your environment, follow this continuous valid
 
 1. **Verify Local Logging:** Run the emulator against a test target and check the local log files directly. Ensure Event ID `4625` is written to the Security Log on Windows, or `/var/log/secure` (RHEL) / `/var/log/auth.log` (Ubuntu) on Linux.
 2. **Track the Broker Path:** Verify that your log forwarder immediately captures the new log line and ships it to the ingestion queue.
-3. **Inspect the SIEM Parser:** Look at the raw indexed log inside your SIEM (Splunk, Elastic, Sentinel). Confirm that key fields—such as `source_ip`, `target_user`, `logon_type`, and `status_code`—are correctly indexed and parsed.
+3. **Inspect the SIEM Parser:** Look at the raw indexed log inside your SIEM (Splunk, Elastic, Sentinel). Confirm that key fields (such as `source_ip`, `target_user`, `logon_type`, and `status_code`) are correctly indexed and parsed.
 4. **Trigger the Alert:** Confirm that the threshold rules (e.g. *"5 failures from a single IP within 10 seconds"*) trigger the expected alert or Slack/Teams webhook.
 
 ---

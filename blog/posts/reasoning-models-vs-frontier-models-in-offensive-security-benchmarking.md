@@ -17,7 +17,7 @@ Evaluating this is not just about raw coding capability; it requires looking at 
 
 ## 1. How Local Reasoning Models Hold Up Against Frontier Models
 
-Historically, local open-weights models (like the early Llama 3 or Gemma 2 variants) were excellent at simple syntax-level tasks—such as drafting a basic exploit script or refactoring code—but they choked when faced with multi-step reasoning, pivoting across network topologies, or debugging an exploit payload when it triggered a web application firewall (WAF).
+Historically, local open-weights models (like the early Llama 3 or Gemma 2 variants) were excellent at simple syntax-level tasks (such as drafting a basic exploit script or refactoring code), but they choked when faced with multi-step reasoning, pivoting across network topologies, or debugging an exploit payload when it triggered a web application firewall (WAF).
 
 With the rise of distilled reasoning models (like `DeepSeek-R1-Distill-Qwen-32B` and `DeepSeek-R1-Distill-Llama-70B`), the dynamic has fundamentally changed:
 
@@ -67,12 +67,12 @@ For quantitative verification, running AI agents against mock targets inside a *
 
 When evaluating agent frameworks, we must pivot from static code verification to **outcome-based benchmarking**. 
 
-Traditional software testing looks at *results*—did a script run without throwing an error, or did a specific regex find a string in stdout? In a real deployment, this is a shallow metric. An offensive agent must be benchmarked on **system state change and objective success**:
+Traditional software testing looks at *results*: did a script run without throwing an error, or did a specific regex find a string in stdout? In a real deployment, this is a shallow metric. An offensive agent must be benchmarked on **system state change and objective success**:
 * Did it achieve the designated credential access or lateral movement goal?
 * Did it identify firewall filtering and dynamically re-encode its payload?
 * Did it gracefully recover when an expected interactive shell terminated?
 
-Tools that simply run pre-packaged commands are easily blocked by modern EDR and firewalls. The agents that succeed are those that **get smarter dynamically**—using internal reasoning paths to debug compiled C exploits, adapt network scanning speeds, and rewrite obfuscated payloads based on live environment feedback. The future of autonomous testing belongs to architectures that learn from failure on-the-fly.
+Tools that simply run pre-packaged commands are easily blocked by modern EDR and firewalls. The agents that succeed are those that **get smarter dynamically**, using internal reasoning paths to debug compiled C exploits, adapt network scanning speeds, and rewrite obfuscated payloads based on live environment feedback. The future of autonomous testing belongs to architectures that learn from failure on-the-fly.
 
 ---
 

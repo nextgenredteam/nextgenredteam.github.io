@@ -15,7 +15,7 @@ If your SOC rules trigger on *"10 failed logins in 60 seconds,"* how do you actu
 
 To solve this, we engineered two highly focused, cross-platform threat emulation modules: **EventID4625** (Windows Logon Failure) and **LinuxLoginFailure** (SSH Authentication Failure). 
 
-Here is the engineering breakdown of how we built these emulators to safely trigger and validate security events on Windows and Linux targets.
+This guide provides the engineering breakdown of how we built these emulators to safely trigger and validate security events on Windows and Linux targets.
 
 ---
 
@@ -61,7 +61,7 @@ By keeping the script native to SMB ports (TCP 445), we ensure that standard act
 
 ## 2. Emulating Linux SSH Login Failures
 
-On Linux platforms, failed SSH authentication attempts are written to syslog—typically `/var/log/secure` on Red Hat-based systems or `/var/log/auth.log` on Debian/Ubuntu systems. 
+On Linux platforms, failed SSH authentication attempts are written to syslog: typically `/var/log/secure` on Red Hat-based systems or `/var/log/auth.log` on Debian/Ubuntu systems. 
 
 To automate the validation of SSH monitoring rules, we designed the **LinuxLoginFailure** module.
 
@@ -88,7 +88,7 @@ if err == nil {
 
 ## 3. Modular Portability
 
-To ensure these modules can run in any environment—from modern containers to restricted enterprise hosts—we structured each module with four equivalent implementations:
+To ensure these modules can run in any environment, from modern containers to restricted enterprise hosts, we structured each module with four equivalent implementations:
 * **Go:** Cross-compiled into native, standalone binaries for Linux and Windows (`.exe`) with no runtime dependencies.
 * **Python:** Uses standard `paramiko` and socket libraries.
 * **Bash:** A lightweight script leveraging `sshpass` or netcat for quick CLI checks.

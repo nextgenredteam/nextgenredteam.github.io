@@ -115,7 +115,7 @@ pip install transformers huggingface_hub torch
 </code></pre>
 <p>The endpoint is now exposed to your wider enterprise network at <code>http://&lt;LXC_IP_ADDRESS&gt;:8000/v1/chat/completions</code>, operating as a dedicated, hardware-accelerated OpenAI API drop-in replacement.</p>
 <h3>Step 5: Hardening Driver Initialization (Mitigating Kernel Lockups)</h3>
-<p>When restarting the C++ server or hot-swapping models, terminating the server process abruptly can leave the NPU kernel driver (<code>axcl</code>) in an unstable state. If the PCIe memory maps are not properly deallocated, the host kernel locks up, and subsequent runs will fail with memory boundary crashes—often misleadingly suggesting that your <code>.axmodel</code> files are corrupted.</p>
+<p>When restarting the C++ server or hot-swapping models, terminating the server process abruptly can leave the NPU kernel driver (<code>axcl</code>) in an unstable state. If the PCIe memory maps are not properly deallocated, the host kernel locks up, and subsequent runs will fail with memory boundary crashes, often misleadingly suggesting that your <code>.axmodel</code> files are corrupted.</p>
 <p>To guarantee months of uninterrupted runtime, use a dedicated bash wrapper (<code>start_server.sh</code>) to perform socket teardown and flush the driver before booting:</p>
 <pre><code class="language-bash">#!/bin/bash
 set -e
