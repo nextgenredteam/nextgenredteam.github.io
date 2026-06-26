@@ -13,4 +13,12 @@
 * **Humanize the Output**: Eliminate typical AI writing markers (e.g. "In today's fast-paced digital landscape," "Moreover," "Furthermore," "Crucial," or "It's important to remember"). Avoid generic hype words or marketing fluff.
 * **Formatting**: Use clean markdown bullet points, bolding for emphasis, and structured code blocks or process flows where necessary to make the content instantly scannable.
 
+## Data Leak Prevention Rules
+* **No Real IPs, Keys, or System Names**: Never leak real internal/external IP subnets or specific IP addresses (e.g., do not use `192.168.40.x`), private API tokens, or real deployment credentials.
+* **Approved Infrastructure Placeholders**: Always refer to the hypervisor host as `NextGenPVE`, and designate containers using their virtual IDs (e.g. `LXC 205`, `LXC 211`, `LXC 210`).
+* **Approved API/IP Placeholders**: Use generic documentation variables or safe default ranges:
+    *   IP placeholders: `<lxc_211_ip>`, `<lxc_210_ip>`, loopback (`127.0.0.1`), or bind-all (`0.0.0.0`).
+    *   API keys/token placeholders: `sk-gateway-master-key` or `sk-dummy-key`.
+
+
 
