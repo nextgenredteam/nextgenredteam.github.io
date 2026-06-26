@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The NPU Journey Part 4: Conquering the Final Boss (Strict JSONs, CMM Boot Windows, and Gateways) | NextGenRedTeam Blog</title>
+  <meta name="description" content="Resolving strict post_config type checks, handling the 65-second CMM boot window, and building a LiteLLM translation layer for unified edge NPU inference.">
+  <link rel="stylesheet" href="../index.css">
+  <link rel="icon" href="../favicon.ico" type="image/x-icon">
+  
+  <!-- MathJax Math Rendering Support -->
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  
+  <!-- Prism.js Tomorrow Night Syntax Highlighting Theme -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  
+  <!-- Open Graph -->
+  <meta property="og:title" content="The NPU Journey Part 4: Conquering the Final Boss (Strict JSONs, CMM Boot Windows, and Gateways) | NextGenRedTeam Blog">
+  <meta property="og:description" content="Resolving strict post_config type checks, handling the 65-second CMM boot window, and building a LiteLLM translation layer for unified edge NPU inference.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://nextgenredteam.com/blog/">
+  <meta name="twitter:card" content="summary_large_image">
+</head>
+<body class="blog-post-page">
+  <div class="scanlines"></div>
+  <div class="noise-overlay"></div>
+ 
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="../index.html" class="logo-container" id="logo-link">
+        <img src="../assets/logos/logo2.png" id="ngrt-logo" alt="NGRT Logo" class="logo-img">
+      </a>
+      <div class="nav-links">
+        <a href="../index.html#services" class="nav-link">[01] Services</a>
+        <a href="../index.html#tools" class="nav-link">[02] Tools</a>
+        <a href="index.html" class="nav-link active">[03] Blog</a>
+        <a href="../index.html#engage" class="nav-link-btn button">[Collab &amp; Media]</a>
+      </div>
+      <button class="nav-burger" id="nav-burger" aria-label="Toggle Menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+  </nav>
+ 
+  <!-- Article Hero -->
+  <header class="post-hero">
+    <div class="cyber-container">
+      <div class="post-meta">
+        <span class="meta-date">// PUBLISHED: 2026-06-28</span>
+        <span class="meta-author">// AUTHOR: Joe B. The Blind Hacker 
+      <a href="https://x.com/TheBlindHacker" target="_blank" class="social-icon-link" title="X (Twitter)">
+        <svg class="social-icon" viewBox="0 0 24 24" width="14" height="14" fill="currentColor" style="display:inline-block; vertical-align:middle; margin-left:6px; color:inherit;"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+      </a>
+      <a href="https://www.linkedin.com/in/brinkleyjoseph/" target="_blank" class="social-icon-link" title="LinkedIn">
+        <svg class="social-icon" viewBox="0 0 24 24" width="14" height="14" fill="currentColor" style="display:inline-block; vertical-align:middle; margin-left:4px; color:inherit;"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.225 0z"/></svg>
+      </a></span>
+      </div>
+      <h1 class="post-title">The NPU Journey Part 4: Conquering the Final Boss (Strict JSONs, CMM Boot Windows, and Gateways)</h1>
+      <div class="cyber-divider-cyan"></div>
+    </div>
+  </header>
+
+  <!-- Article Content -->
+  <main class="post-content-section">
+    <article class="cyber-container markdown-body">
+      <h1>The NPU Journey Part 4: Conquering the Final Boss (Strict JSONs, CMM Boot Windows, and Gateways)</h1>
+<p><img src="../assets/npu_journey_part4.png" alt="The NPU Journey Part 4: Conquering the Final Boss"></p>
+<p>Compiling your own custom model graphs (documented in Part 3) is a huge milestone. But actually serving those graphs in a production API is where you face the final boss of NPU deployment. </p>
+<p>The vendor C++ runtime is unforgiving. If a single configuration key is missing, or if a JSON type is slightly incorrect, the server crashes at the last millisecond of startup. </p>
+<p>Here is the engineering breakdown of how we fixed the runtime exceptions, handled the physical memory loading latency, and integrated the edge NPU into our central LiteLLM gateway.</p>
+<hr>
+<h2>1. The <code>post_config.json</code> Strict Typing Crash</h2>
+<p>After transfering our compiled Qwen 2.5 Coder 7B model to the inference node (LXC 211), we configured the metadata files and started the native <code>axllm serve</code> server. The binary started, loaded the model shards into the NPU, and then crashed instantly:</p>
+<pre><code class="language-text">fatal: json_abi_v3_11_3::detail::type_error: [json.exception.type_error.302] type must be boolean, but is null
+</code></pre>
+<p>We tracked this down to the C++ JSON parser (<code>nlohmann::json</code>) used by the vendor. </p>
+<p>The backend requires four specific configuration fields to be present in <code>post_config.json</code>. Because the parser uses strict type checking with no coercion, omitting these fields (or passing them as null, integers, or strings) triggers a fatal type exception that crashes the server.</p>
+<p>You must manually append these four boolean fields to your model&#39;s <code>post_config.json</code>:</p>
+<pre><code class="language-json">{
+    &quot;model_type&quot;: &quot;qwen2&quot;,
+    &quot;chat_format&quot;: &quot;chatml&quot;,
+    &quot;eos_token_id&quot;: 151645,
+    &quot;bos_token_id&quot;: 151644,
+    &quot;pad_token_id&quot;: 151643,
+    &quot;system_message&quot;: &quot;You are a helpful assistant.&quot;,
+    &quot;user_token&quot;: &quot;&lt;|im_start|&gt;user&quot;,
+    &quot;assistant_token&quot;: &quot;&lt;|im_start|&gt;assistant&quot;,
+    &quot;end_token&quot;: &quot;&lt;|im_end|&gt;&quot;,
+    &quot;stop_words&quot;: [&quot;&lt;|im_end|&gt;&quot;, &quot;&lt;|endoftext|&gt;&quot;],
+    &quot;enable_temperature&quot;: false,
+    &quot;enable_repetition_penalty&quot;: false,
+    &quot;enable_top_k_sampling&quot;: true,
+    &quot;enable_top_p_sampling&quot;: false
+}
+</code></pre>
+<p>Make sure these fields are raw JSON booleans (<code>true</code>/<code>false</code>), not quoted strings. Once we patched the template metadata, the parser initialized cleanly.</p>
+<hr>
+<h2>2. The 65-Second CMM Boot Window</h2>
+<p>When you launch <code>axllm serve</code>, the server must load the model weights from host memory into the NPU&#39;s physical Continuous Memory (CMM) blocks. </p>
+<p>For a 7B parameter model, this memory transfer takes approximately <strong>65 seconds</strong>. </p>
+<p>During this loading phase, the server&#39;s HTTP port is not open. If you send a <code>curl</code> probe or API request immediately after launching the process, the socket returns <code>Connection refused</code>. This looks exactly like a crashed service, prompting you to debug a server that is actually booting normally.</p>
+<p>Always wait a minimum of <strong>90 seconds</strong> after starting the service before checking the endpoint or routing traffic. You can monitor the CMM loading progress directly in the logs:</p>
+<pre><code class="language-text">[I] Loading shard 0/31 into CMM...
+[I] Loading shard 1/31 into CMM...
+...
+[I] axllm serve: HTTP server listening on port 8000
+</code></pre>
+<hr>
+<h2>3. Exact Model Name Namespace Enforcement</h2>
+<p>The native C++ server uses exact string comparison to route incoming API requests. </p>
+<p>When you send a request to <code>/v1/chat/completions</code>, the <code>&quot;model&quot;</code> field in your JSON payload must exactly match the HuggingFace repository ID defined in the model&#39;s <code>config.json</code>. If you send a shorthand name (like <code>&quot;qwen&quot;</code> or <code>&quot;coder-7b&quot;</code>), the server silently rejects the request with a 404 error.</p>
+<pre><code class="language-bash"># This request will fail with a 404:
+curl -X POST http://127.0.0.1:8000/v1/chat/completions \
+    -d &#39;{&quot;model&quot;: &quot;coder-7b&quot;, &quot;messages&quot;: [{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: &quot;Hi!&quot;}]}&#39;
+
+# This request will succeed:
+curl -X POST http://127.0.0.1:8000/v1/chat/completions \
+    -d &#39;{&quot;model&quot;: &quot;Qwen/Qwen2.5-Coder-7B-Instruct-GPTQ-Int4&quot;, &quot;messages&quot;: [{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: &quot;Hi!&quot;}]}&#39;
+</code></pre>
+<hr>
+<h2>4. The LiteLLM Gateway Integration</h2>
+<p>Because we cannot expect our tools and agents to format model names with long vendor namespaces, we routing all traffic through a <strong>LiteLLM proxy</strong> (LXC 210). LiteLLM handles user authentication, key rotation, and translates human-readable model names to the exact strings required by the NPU backend.</p>
+<p>Here is our routing configuration:</p>
+<pre><code class="language-yaml"># /opt/ai_gateway/config/litellm_config.yaml
+model_list:
+  - model_name: qwen2.5-3b-instruct
+    litellm_params:
+      model: openai/qwen2.5-3b-instruct
+      api_base: http://192.168.40.183:8000/v1
+      api_key: sk-axera-dummy-key
+      rpm: 1000
+
+  - model_name: qwen2.5-coder-7b
+    litellm_params:
+      model: openai/Qwen/Qwen2.5-Coder-7B-Instruct-GPTQ-Int4
+      api_base: http://192.168.40.183:8000/v1
+      api_key: sk-axera-dummy-key
+      rpm: 1000
+</code></pre>
+<p>With the proxy in place, we can address the NPU using clean tags:</p>
+<pre><code class="language-bash"># Querying the edge NPU through the LiteLLM gateway
+curl -H &quot;Authorization: Bearer sk-bluestar-master-key&quot; \
+     -X POST http://192.168.40.11:4000/v1/chat/completions \
+     -d &#39;{&quot;model&quot;: &quot;qwen2.5-coder-7b&quot;, &quot;messages&quot;: [{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: &quot;Write a quick TCP socket script.&quot;}]}&#39;
+</code></pre>
+<hr>
+<h2>Conclusion: Full Independence Achieved</h2>
+<p>We now have a fully operational, sovereign edge NPU serving a 7B parameter model natively on our homelab infrastructure. The Radxa AX-M1 pulls less than <strong>8 watts</strong> of power during active inference, streaming tokens to our orchestration pipeline without relying on external cloud APIs or proprietary code.</p>
+<p>By working through the compilation environment blocks, debugging the strict JSON parser layouts, and wrapping the API in a translation gateway, we successfully unlocked the potential of this edge accelerator. </p>
+<p>The Pico Claw is online, stable, and ready to serve.</p>
+<hr>
+<h3>The NPU Journey Series</h3>
+<ul>
+<li><strong><a href="npu-journey-part-1-taming-axera-ax8850.html">Part 1: Taming the Axera AX8850 (And Why We Reverse-Engineered Everything for Nothing)</a></strong></li>
+<li><strong><a href="npu-journey-part-2-deploying-llms.html">Part 2: The True Guide to Deploying LLMs on the Axera AX8850</a></strong></li>
+<li><strong><a href="npu-journey-part-3-compilation-breakthroughs.html">Part 3: Night Shift Compilation Breakthroughs (AppArmor, LXC Ghost Memory)</a></strong></li>
+<li><strong>Part 4: Conquering the Final Boss (Strict JSONs, CMM Boot Windows, and Gateways)</strong></li>
+</ul>
+
+      
+      <div class="post-footer-cta">
+        <div class="cyber-divider-purple"></div>
+        <h3>Collaborate on Security Research</h3>
+        <p>At NextGenRedTeam, we study adversary TTPs and build open-source tools to help defenders. Let's collaborate on research, media projects, or community initiatives.</p>
+        <div class="cta-actions">
+          <a href="https://calendar.proton.me/bookings#HVEHryH4oOT8O4hzE1WTkx71-bIihVp1FCAnLpSB-dM=" target="_blank" class="button border-purple">Schedule Collab &amp; Media</a>
+          <a href="index.html" class="button border-cyan">Back to Blog</a>
+        </div>
+      </div>
+    </article>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="cyber-container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <span class="cyber-glitch-text font-mono">NGRT</span>
+          <p class="footer-desc">Independent Threat Emulation Research &amp; Collaborative Defense.</p>
+        </div>
+        <div class="footer-links">
+          <a href="../index.html#services">Services</a>
+          <a href="../index.html#tools">GitHub Tools</a>
+          <a href="index.html">Threat Lab Blog</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 NextGenRedTeam LLC. All rights reserved. Obfuscated communications active.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="../app.js"></script>
+  <!-- PrismJS Core and Autoloader Scripts -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+</body>
+</html>

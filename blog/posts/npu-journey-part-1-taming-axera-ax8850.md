@@ -42,4 +42,13 @@ Now that we fully understand the software landscape of the Axera NPU environment
 
 The AX8850 is a fantastic piece of silicon, and it serves perfectly as a quick sanity-check inference node for our offensive security tooling. 
 
-In **Part 2**, we are going to show you the *real*, clean, and accurate step-by-step guide on how to tame this edge NPU: no reverse engineering required.
+In **Part 2**, we show the clean, accurate step-by-step guide on how to tame this edge NPU with no reverse engineering required.
+
+---
+
+### The NPU Journey Series
+*   **Part 1: Taming the Axera AX8850 (And Why We Reverse-Engineered Everything for Nothing)**
+*   **[Part 2: The True Guide to Deploying LLMs on the Axera AX8850](npu-journey-part-2-deploying-llms.html)**
+*   **[Part 3: Night Shift Compilation Breakthroughs (AppArmor, LXC Ghost Memory)](npu-journey-part-3-compilation-breakthroughs.html)**
+*   **[Part 4: Conquering the Final Boss (Strict JSONs, CMM Boot Windows, and Gateways)](npu-journey-part-4-the-final-boss.html)**
+

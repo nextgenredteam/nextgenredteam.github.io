@@ -1,6 +1,6 @@
 ---
 title: "The NPU Journey Part 2: The True Guide to Deploying LLMs on the Axera AX8850"
-date: "2026-06-25"
+date: "2026-06-26"
 author: "Joe B. The Blind Hacker"
 description: "The definitive, step-by-step technical guide to native LLM deployment on the AX8850 NPU via PCIe passthrough inside an unprivileged LXC container."
 ---
@@ -104,3 +104,12 @@ We now have a dedicated, hardware-accelerated LLM API running natively on an edg
 By stepping back and diagnosing the actual software bugs instead of immediately reverse engineering the entire stack, we achieved a much cleaner, native integration. 
 
 Sometimes, the system isn't fortified against you, it's just broken.
+
+---
+
+### The NPU Journey Series
+*   **[Part 1: Taming the Axera AX8850 (And Why We Reverse-Engineered Everything for Nothing)](npu-journey-part-1-taming-axera-ax8850.html)**
+*   **Part 2: The True Guide to Deploying LLMs on the Axera AX8850**
+*   **[Part 3: Night Shift Compilation Breakthroughs (AppArmor, LXC Ghost Memory)](npu-journey-part-3-compilation-breakthroughs.html)**
+*   **[Part 4: Conquering the Final Boss (Strict JSONs, CMM Boot Windows, and Gateways)](npu-journey-part-4-the-final-boss.html)**
+
