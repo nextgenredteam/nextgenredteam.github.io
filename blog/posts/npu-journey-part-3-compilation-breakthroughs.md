@@ -90,7 +90,48 @@ Here is the complete ledger of our night shift compilation runs. We tested six d
 
 *Note on Dolphin 3.0: The compilation failed because of a missing metadata field in the publisher's HuggingFace repository, not due to hardware constraints. The Pulsar2 python compiler backend expects strict GPTQ formatting and crashes if the `group_size` metadata key is absent.*
 
-Now that we have compiled our models into `.axmodel` graphs, we need to load them onto our inference node. In **Part 4**, we address the final hurdles of runtime deployment: strict JSON formatting, CMM boot windows, and setting up LiteLLM routing.
+---
+
+## 5. Preparing the Uncompiled Assets: Embedding Extraction
+
+Compiling the attention and feedforward layers into `.axmodel` chunks is only half the compilation task. The `pulsar2` compiler does not compile the input token embedding layer. 
+
+The NPU runtime memory-maps this file directly into SRAM. Any other datatype, or any standard PyTorch tensor header, will trigger a segmentation fault or cause the model to output garbage text. We must extract the embedding matrix from the source `.safetensors` files, cast it to raw `bfloat16`, and write it as a raw binary file (`model.embed_tokens.weight.bfloat16.bin`).
+
+Here is the helper script we use to extract this matrix:
+
+```python
+import torch
+import json
+import os
+from safetensors.torch import load_file
+
+def extract_embeddings(model_dir, output_path):
+    # Find weight map in index
+    index_path = os.path.join(model_dir, "model.safetensors.index.json")
+    if os.path.exists(index_path):
+        with open(index_path) as f:
+            index = json.load(f)
+        shard = index["weight_map"]["model.embed_tokens.weight"]
+        shard_path = os.path.join(model_dir, shard)
+    else:
+        shard_path = os.path.join(model_dir, "model.safetensors")
+    
+    print(f"Loading weights from {shard_path}...")
+    shard = load_file(shard_path)
+    embed = shard["model.embed_tokens.weight"]
+    
+    # Cast to raw bfloat16 for NPU memory-map consumption
+    embed_bf16 = embed.to(torch.bfloat16).contiguous()
+    
+    with open(output_path, "wb") as f:
+        f.write(embed_bf16.numpy().tobytes())
+    print(f"Extraction successful: {output_path}")
+```
+
+Once the binary matrix is extracted and copied to the compiled model directory, the runtime is ready to map the tokens.
+
+Now that we have compiled our models into `.axmodel` graphs and extracted the embedding files, we need to load them onto our inference node. In **Part 4**, we address the final hurdles of runtime deployment: strict JSON formatting, CMM boot windows, and setting up LiteLLM routing.
 
 ---
 
