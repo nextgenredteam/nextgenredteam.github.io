@@ -130,21 +130,21 @@ model_list:
   - model_name: qwen2.5-3b-instruct
     litellm_params:
       model: openai/qwen2.5-3b-instruct
-      api_base: http://192.168.40.183:8000/v1
-      api_key: sk-axera-dummy-key
+      api_base: http://&lt;lxc_211_ip&gt;:8000/v1
+      api_key: sk-dummy-key
       rpm: 1000
 
   - model_name: qwen2.5-coder-7b
     litellm_params:
       model: openai/Qwen/Qwen2.5-Coder-7B-Instruct-GPTQ-Int4
-      api_base: http://192.168.40.183:8000/v1
-      api_key: sk-axera-dummy-key
+      api_base: http://&lt;lxc_211_ip&gt;:8000/v1
+      api_key: sk-dummy-key
       rpm: 1000
 </code></pre>
 <p>With the proxy in place, we can address the NPU using clean tags:</p>
 <pre><code class="language-bash"># Querying the edge NPU through the LiteLLM gateway
-curl -H &quot;Authorization: Bearer sk-bluestar-master-key&quot; \
-     -X POST http://192.168.40.11:4000/v1/chat/completions \
+curl -H &quot;Authorization: Bearer sk-gateway-master-key&quot; \
+     -X POST http://&lt;lxc_210_ip&gt;:4000/v1/chat/completions \
      -d &#39;{&quot;model&quot;: &quot;qwen2.5-coder-7b&quot;, &quot;messages&quot;: [{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: &quot;Write a quick TCP socket script.&quot;}]}&#39;
 </code></pre>
 <hr>
