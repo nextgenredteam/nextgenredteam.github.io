@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Deep Benchmarks v7: Pushing NextGenPVE to the Limit | NextGenRedTeam Blog</title>
+  <meta name="description" content="Reviewing the latest local LLM benchmarks across NextGenPVE-RTX and the new NextGenPVE-NPU hardware.">
+  <link rel="stylesheet" href="../index.css">
+  <link rel="icon" href="../favicon.ico" type="image/x-icon">
+  
+  <!-- MathJax Math Rendering Support -->
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  
+  <!-- Prism.js Tomorrow Night Syntax Highlighting Theme -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  
+  <!-- Open Graph -->
+  <meta property="og:title" content="Deep Benchmarks v7: Pushing NextGenPVE to the Limit | NextGenRedTeam Blog">
+  <meta property="og:description" content="Reviewing the latest local LLM benchmarks across NextGenPVE-RTX and the new NextGenPVE-NPU hardware.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://nextgenredteam.com/blog/">
+  <meta name="twitter:card" content="summary_large_image">
+</head>
+<body class="blog-post-page">
+  <div class="scanlines"></div>
+  <div class="noise-overlay"></div>
+ 
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="../index.html" class="logo-container" id="logo-link">
+        <img src="../assets/logos/logo2.png" id="ngrt-logo" alt="NGRT Logo" class="logo-img">
+      </a>
+      <div class="nav-links">
+        <a href="../index.html#services" class="nav-link">[01] Services</a>
+        <a href="../index.html#tools" class="nav-link">[02] Tools</a>
+        <a href="index.html" class="nav-link active">[03] Blog</a>
+        <a href="../index.html#engage" class="nav-link-btn button">[Collab &amp; Media]</a>
+      </div>
+      <button class="nav-burger" id="nav-burger" aria-label="Toggle Menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+  </nav>
+ 
+  <!-- Article Hero -->
+  <header class="post-hero">
+    <div class="cyber-container">
+      <div class="post-meta">
+        <span class="meta-date">// PUBLISHED: 2026-07-03</span>
+        <span class="meta-author">// AUTHOR: Joe B. The Blind Hacker 
+      <a href="https://x.com/TheBlindHacker" target="_blank" class="social-icon-link" title="X (Twitter)">
+        <svg class="social-icon" viewBox="0 0 24 24" width="14" height="14" fill="currentColor" style="display:inline-block; vertical-align:middle; margin-left:6px; color:inherit;"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+      </a>
+      <a href="https://www.linkedin.com/in/brinkleyjoseph/" target="_blank" class="social-icon-link" title="LinkedIn">
+        <svg class="social-icon" viewBox="0 0 24 24" width="14" height="14" fill="currentColor" style="display:inline-block; vertical-align:middle; margin-left:4px; color:inherit;"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.225 0z"/></svg>
+      </a></span>
+      </div>
+      <h1 class="post-title">Deep Benchmarks v7: Pushing NextGenPVE to the Limit</h1>
+      <div class="cyber-divider-cyan"></div>
+    </div>
+  </header>
+
+  <!-- Article Content -->
+  <main class="post-content-section">
+    <article class="cyber-container markdown-body">
+      <p><img src="../assets/nextgenpve-benchmarks-v7.png" alt="NextGenPVE Benchmarks"></p>
+<p>We just wrapped up another intensive benchmarking session on the NextGenPVE cluster. Every time a new local model drops, the entire landscape shifts. Our primary goal in the offensive security space is maintaining operational security without sacrificing reasoning capability or speed. That means running these models entirely on local infrastructure. </p>
+<p>With the recent additions to the hardware stack, we decided to run the Deep Benchmarks v7 suite across our primary nodes. I want to break down exactly what we are testing, the hardware backing it, and how these models actually perform when the rubber meets the road. </p>
+<h3>The Hardware: NextGenPVE-RTX and NextGenPVE-NPU</h3>
+<p>Before diving into the numbers, let us set the stage with the environment specs. </p>
+<p><strong>NextGenPVE-RTX (The Heavy Lifter)</strong>
+This node is designed for pure VRAM capacity and compute throughput. It handles the larger MoE models and context-heavy dense models.</p>
+<ul>
+<li>Compute: Dual high-end consumer GPUs (plenty of tensor cores)</li>
+<li>Memory: 128GB DDR5 </li>
+<li>Storage: Fast NVMe arrays for rapid weight loading </li>
+<li>Role: Handling complex reasoning tasks and large context windows</li>
+</ul>
+<p><strong>NextGenPVE-NPU (The Edge Specialist)</strong>
+This is our dedicated neural processing node, built around the Axera AX8850 edge NPU.</p>
+<ul>
+<li>Compute: Dedicated Edge NPU silicon</li>
+<li>Role: Ultra-low latency, high-efficiency inference for smaller specialized models</li>
+</ul>
+<h3>Benchmarking Methodology</h3>
+<p>We test speeds across two main phases. The first is the cold boot, measuring the penalty of pulling weights from storage, mapping them into memory, and serving the first token. The second is the optimized hot load, measuring sustained generation speeds once the model is locked into VRAM. </p>
+<h3>1. Optimized Hot-Load Benchmarks (Current Baseline)</h3>
+<p>This is the true, optimized speed of the hardware. Tested via the native API with Flash Attention and Q8 KV Caching enabled. The models remain locked in VRAM without spilling into CPU RAM. Speeds reflect one code prompt and three massive security prompts.</p>
+<table>
+<thead>
+<tr>
+<th align="left">Model</th>
+<th align="center">Avg TTFT (s)</th>
+<th align="center">Avg TPS</th>
+<th align="center">Prompts Passed</th>
+<th align="center">Quant</th>
+<th align="left">Architecture &amp; Features</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><strong><code>hermes-3-llama-3.2-3b:128k</code></strong></td>
+<td align="center">0.02s</td>
+<td align="center"><strong>91.48</strong></td>
+<td align="center">4/4</td>
+<td align="center">Q4_0</td>
+<td align="left">Dense, Tool Calls, Agentic</td>
+</tr>
+<tr>
+<td align="left"><strong><code>hermes-3-llama-3.2-3b:64k</code></strong></td>
+<td align="center">0.02s</td>
+<td align="center"><strong>90.57</strong></td>
+<td align="center">4/4</td>
+<td align="center">Q4_0</td>
+<td align="left">Dense, Tool Calls, Agentic</td>
+</tr>
+<tr>
+<td align="left"><strong><code>gemma-4-e2b-abliterated:128k</code></strong></td>
+<td align="center">0.08s</td>
+<td align="center"><strong>79.21</strong></td>
+<td align="center">4/4</td>
+<td align="center">Q4_K_M</td>
+<td align="left">Dense, Abliterated</td>
+</tr>
+<tr>
+<td align="left"><strong><code>gemma-4-e2b-abliterated:64k</code></strong></td>
+<td align="center">0.06s</td>
+<td align="center"><strong>78.90</strong></td>
+<td align="center">4/4</td>
+<td align="center">Q4_K_M</td>
+<td align="left">Dense, Abliterated, Agentic</td>
+</tr>
+<tr>
+<td align="left"><strong><code>hermes3:64k</code></strong></td>
+<td align="center">0.04s</td>
+<td align="center"><strong>46.90</strong></td>
+<td align="center">4/4</td>
+<td align="center">Q4_0</td>
+<td align="left">Dense, Tool Calls, MCP, Agentic</td>
+</tr>
+<tr>
+<td align="left"><strong><code>deephat-7b:q4</code></strong></td>
+<td align="center">0.03s</td>
+<td align="center"><strong>38.39</strong></td>
+<td align="center">4/4</td>
+<td align="center">Q4_K_M</td>
+<td align="left">Dense, Uncensored</td>
+</tr>
+<tr>
+<td align="left"><strong><code>gemma2:9b</code></strong></td>
+<td align="center">0.10s</td>
+<td align="center"><strong>35.80</strong></td>
+<td align="center">4/4</td>
+<td align="center">Q4_0</td>
+<td align="left">Dense, Agentic</td>
+</tr>
+<tr>
+<td align="left"><strong><code>deepseek-r1:8b</code></strong></td>
+<td align="center">0.82s</td>
+<td align="center"><strong>34.63</strong></td>
+<td align="center">3/4</td>
+<td align="center">Q4_K_M</td>
+<td align="left">Dense, <strong>Thinking</strong></td>
+</tr>
+<tr>
+<td align="left"><strong><code>qwythos:q4 (Claude-Mythos-5)</code></strong></td>
+<td align="center">0.23s</td>
+<td align="center"><strong>34.37</strong></td>
+<td align="center">5/5</td>
+<td align="center">Q4_K_M</td>
+<td align="left">Dense, MTP, Abliterated</td>
+</tr>
+<tr>
+<td align="left"><strong><code>qwen3.5-abliterated:9b-Qwopus</code></strong></td>
+<td align="center">0.11s</td>
+<td align="center"><strong>34.32</strong></td>
+<td align="center">5/5</td>
+<td align="center">Q4_K_M</td>
+<td align="left">Dense, Abliterated, Tool Calls</td>
+</tr>
+<tr>
+<td align="left"><strong><code>glm-4-9b-abliterated:64k</code></strong></td>
+<td align="center">0.08s</td>
+<td align="center"><strong>31.66</strong></td>
+<td align="center">3/4</td>
+<td align="center">Q4_K_M</td>
+<td align="left">Dense, Abliterated, Tool Calls, MCP, Agentic</td>
+</tr>
+<tr>
+<td align="left"><strong><code>qwen2.5-coder-7b-uncensored:q8</code></strong></td>
+<td align="center">0.05s</td>
+<td align="center"><strong>31.26</strong></td>
+<td align="center">4/4</td>
+<td align="center">Q8_0</td>
+<td align="left">Dense, Uncensored, Tool Calls</td>
+</tr>
+<tr>
+<td align="left"><strong><code>deephat-7b:q8</code></strong></td>
+<td align="center">0.05s</td>
+<td align="center"><strong>31.14</strong></td>
+<td align="center">4/4</td>
+<td align="center">Q8_0</td>
+<td align="left">Dense, Uncensored</td>
+</tr>
+<tr>
+<td align="left"><strong><code>ornith:9b</code></strong></td>
+<td align="center">0.91s</td>
+<td align="center"><strong>30.45</strong></td>
+<td align="center">5/5</td>
+<td align="center">Q4_K_M</td>
+<td align="left">Dense, Agentic, Coding</td>
+</tr>
+<tr>
+<td align="left"><strong><code>dolphin-3-8b:latest</code></strong></td>
+<td align="center">0.04s</td>
+<td align="center"><strong>29.38</strong></td>
+<td align="center">4/4</td>
+<td align="center">Q3_K_L</td>
+<td align="left">Dense, Uncensored, Agentic</td>
+</tr>
+<tr>
+<td align="left"><strong><code>gemma-4-12b-qat:latest</code></strong></td>
+<td align="center">0.11s</td>
+<td align="center"><strong>28.18</strong></td>
+<td align="center">4/4</td>
+<td align="center">Q4_0</td>
+<td align="left">Dense, QAT, Agentic</td>
+</tr>
+<tr>
+<td align="left"><strong><code>yi-coder-9b:latest</code></strong></td>
+<td align="center">0.05s</td>
+<td align="center"><strong>25.66</strong></td>
+<td align="center">4/4</td>
+<td align="center">Q3_K_L</td>
+<td align="left">Dense, Tool Calls</td>
+</tr>
+<tr>
+<td align="left"><strong><code>qwen2.5-coder:14b</code></strong></td>
+<td align="center">0.42s</td>
+<td align="center"><strong>17.97</strong></td>
+<td align="center">4/4</td>
+<td align="center">Q4_K_M</td>
+<td align="left">Dense, Tool Calls, MCP, Agentic</td>
+</tr>
+<tr>
+<td align="left"><strong><code>llama3.1:8b-instruct-q8_0</code></strong></td>
+<td align="center">0.49s</td>
+<td align="center"><strong>17.94</strong></td>
+<td align="center">4/4</td>
+<td align="center">Q8_0</td>
+<td align="left">Dense, Tool Calls, MCP, Agentic</td>
+</tr>
+<tr>
+<td align="left"><strong><code>llama-3.1-8b-abliterated:q8</code></strong></td>
+<td align="center">0.53s</td>
+<td align="center"><strong>17.69</strong></td>
+<td align="center">4/4</td>
+<td align="center">Q8_0</td>
+<td align="left">Dense, Abliterated, Tool Calls, MCP, Agentic</td>
+</tr>
+<tr>
+<td align="left"><strong><code>qwen2.5-coder:14b-64k</code></strong></td>
+<td align="center">0.42s</td>
+<td align="center"><strong>17.38</strong></td>
+<td align="center">4/4</td>
+<td align="center">Q4_K_M</td>
+<td align="left">Dense, Tool Calls, MCP, Agentic</td>
+</tr>
+<tr>
+<td align="left"><strong><code>deepseek-coder-v2:16b</code></strong></td>
+<td align="center">0.56s</td>
+<td align="center"><strong>16.89</strong></td>
+<td align="center">4/4</td>
+<td align="center">Q4_0</td>
+<td align="left">MoE, Tool Calls, Agentic</td>
+</tr>
+<tr>
+<td align="left"><strong><code>codestral:22b</code></strong></td>
+<td align="center">7.35s</td>
+<td align="center"><strong>4.73</strong></td>
+<td align="center">2/4 (Timeouts)</td>
+<td align="center">Q4_0</td>
+<td align="left">Dense, Tool Calls, Agentic (SPILLED TO RAM)</td>
+</tr>
+<tr>
+<td align="left"><strong><code>mistral-nemo-12b-obliterated:q6</code></strong></td>
+<td align="center">-</td>
+<td align="center"><strong>-</strong></td>
+<td align="center">0/4 (Failed 500)</td>
+<td align="center">Q6_K</td>
+<td align="left">Dense, Abliterated</td>
+</tr>
+</tbody></table>
+<p><strong>Feature Legend</strong></p>
+<ul>
+<li><strong>Dense</strong>: Standard monolithic transformer architecture.</li>
+<li><strong>MoE</strong>: Mixture of Experts (highly efficient for its parameter size).</li>
+<li><strong>Thinking</strong>: Contains advanced chain-of-thought tokens/modes before answering (e.g. Qwen3.6 MoE, DeepSeek R1).</li>
+<li><strong>Tool Calls / MCP</strong>: Natively trained to output JSON schema for function calling and capable of driving the Model Context Protocol.</li>
+<li><strong>Agentic</strong>: Excels at multi-turn autonomy, self-correction, and system prompting.</li>
+<li><strong>Abliterated / Uncensored</strong>: Refusal vectors have been orthogonalized to bypass standard safety guardrails for red-teaming tasks.</li>
+</ul>
+<h3>2. Unoptimized Cold-Boot Benchmarks (Historical Tracker)</h3>
+<p>This section tracks the penalty of forcing a cold model load from disk into VRAM along with an uncompressed 16-bit KV Cache. These were tested prior to our hyper-tuning efforts. </p>
+<table>
+<thead>
+<tr>
+<th align="left">Model</th>
+<th align="center">Gen (TPS)</th>
+<th align="center">Tokens Generated</th>
+<th align="center">Quant</th>
+<th align="center">Prompts Passed</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><strong><code>hermes-3-llama-3.2-3b:64k</code></strong></td>
+<td align="center"><strong>15.72</strong></td>
+<td align="center">64</td>
+<td align="center">Q4_0</td>
+<td align="center">1/1 (Sorting)</td>
+</tr>
+<tr>
+<td align="left"><strong><code>gemma-4-e2b-abliterated:64k</code></strong></td>
+<td align="center"><strong>11.30</strong></td>
+<td align="center">64</td>
+<td align="center">Q4_K_M</td>
+<td align="center">1/1 (Sorting)</td>
+</tr>
+<tr>
+<td align="left"><strong><code>hermes-3-llama-3.2-3b:128k</code></strong></td>
+<td align="center"><strong>10.41</strong></td>
+<td align="center">64</td>
+<td align="center">Q4_0</td>
+<td align="center">1/1 (Sorting)</td>
+</tr>
+<tr>
+<td align="left"><strong><code>yi-coder-9b:latest</code></strong></td>
+<td align="center"><strong>6.68</strong></td>
+<td align="center">64</td>
+<td align="center">Q3_K_L</td>
+<td align="center">1/1 (Sorting)</td>
+</tr>
+<tr>
+<td align="left"><strong><code>gemma-4-e2b-abliterated:128k</code></strong></td>
+<td align="center"><strong>6.56</strong></td>
+<td align="center">64</td>
+<td align="center">Q4_K_M</td>
+<td align="center">1/1 (Sorting)</td>
+</tr>
+<tr>
+<td align="left"><strong><code>glm-4-9b-abliterated:64k</code></strong></td>
+<td align="center"><strong>5.91</strong></td>
+<td align="center">53</td>
+<td align="center">Q4_K_M</td>
+<td align="center">1/1 (Sorting)</td>
+</tr>
+<tr>
+<td align="left"><strong><code>hermes3:64k</code></strong></td>
+<td align="center"><strong>5.83</strong></td>
+<td align="center">64</td>
+<td align="center">Q4_0</td>
+<td align="center">1/1 (Sorting)</td>
+</tr>
+<tr>
+<td align="left"><strong><code>deephat-7b:q4</code></strong></td>
+<td align="center"><strong>5.68</strong></td>
+<td align="center">64</td>
+<td align="center">Q4_K_M</td>
+<td align="center">1/1 (Sorting)</td>
+</tr>
+<tr>
+<td align="left"><strong><code>llama3.1:8b-instruct-q8_0</code></strong></td>
+<td align="center"><strong>4.96</strong></td>
+<td align="center">54</td>
+<td align="center">Q8_0</td>
+<td align="center">1/1 (Sorting)</td>
+</tr>
+<tr>
+<td align="left"><strong><code>qwen3.5-abliterated:9b-Qwopus</code></strong></td>
+<td align="center"><strong>4.90</strong></td>
+<td align="center">64</td>
+<td align="center">Q4_K_M</td>
+<td align="center">1/1 (Sorting)</td>
+</tr>
+<tr>
+<td align="left"><strong><code>gemma-4-12b-qat:latest</code></strong></td>
+<td align="center"><strong>4.72</strong></td>
+<td align="center">64</td>
+<td align="center">Q4_0</td>
+<td align="center">1/1 (Sorting)</td>
+</tr>
+<tr>
+<td align="left"><strong><code>deepseek-r1:8b</code></strong></td>
+<td align="center"><strong>4.13</strong></td>
+<td align="center">64</td>
+<td align="center">Q4_K_M</td>
+<td align="center">1/1 (Sorting)</td>
+</tr>
+<tr>
+<td align="left"><strong><code>qwen2.5-coder-7b-uncensored:q8</code></strong></td>
+<td align="center"><strong>4.02</strong></td>
+<td align="center">64</td>
+<td align="center">Q8_0</td>
+<td align="center">1/1 (Sorting)</td>
+</tr>
+<tr>
+<td align="left"><strong><code>deephat-7b:q8</code></strong></td>
+<td align="center"><strong>3.88</strong></td>
+<td align="center">64</td>
+<td align="center">Q8_0</td>
+<td align="center">1/1 (Sorting)</td>
+</tr>
+<tr>
+<td align="left"><strong><code>deepseek-coder-v2:16b</code></strong></td>
+<td align="center"><strong>3.57</strong></td>
+<td align="center">64</td>
+<td align="center">Q4_0</td>
+<td align="center">1/1 (Sorting)</td>
+</tr>
+<tr>
+<td align="left"><strong><code>qwen2.5-coder:14b</code></strong></td>
+<td align="center"><strong>2.58</strong></td>
+<td align="center">50</td>
+<td align="center">Q4_K_M</td>
+<td align="center">1/1 (Sorting)</td>
+</tr>
+<tr>
+<td align="left"><strong><code>dolphin-3-8b:latest</code></strong></td>
+<td align="center"><strong>2.01</strong></td>
+<td align="center">18</td>
+<td align="center">Q3_K_L</td>
+<td align="center">1/1 (Sorting)</td>
+</tr>
+<tr>
+<td align="left"><strong><code>gemma2:9b</code></strong></td>
+<td align="center"><strong>1.65</strong></td>
+<td align="center">20</td>
+<td align="center">Q4_0</td>
+<td align="center">1/1 (Sorting)</td>
+</tr>
+<tr>
+<td align="left"><strong><code>llama-3.1-8b-abliterated:q8</code></strong></td>
+<td align="center"><strong>1.40</strong></td>
+<td align="center">27</td>
+<td align="center">Q8_0</td>
+<td align="center">1/1 (Sorting)</td>
+</tr>
+<tr>
+<td align="left"><strong><code>qwen2.5-coder:14b-64k</code></strong></td>
+<td align="center"><strong>0.88</strong></td>
+<td align="center">15</td>
+<td align="center">Q4_K_M</td>
+<td align="center">1/1 (Sorting)</td>
+</tr>
+<tr>
+<td align="left"><strong><code>mistral-nemo-12b-obliterated:q6</code></strong></td>
+<td align="center"><strong>-</strong></td>
+<td align="center">-</td>
+<td align="center">Q6_K</td>
+<td align="center">0/1 (Failed 500)</td>
+</tr>
+</tbody></table>
+<h3>3. Axera AX8850 (NPU) Edge Benchmarks</h3>
+<p>These are compiled natively via Pulsar2 and executed on the zero-copy C++ <code>axllm serve</code> engine directly on the edge silicon.</p>
+<table>
+<thead>
+<tr>
+<th align="left">Model</th>
+<th align="center">Parameters</th>
+<th align="center">Quantization</th>
+<th align="center">Status</th>
+<th align="center">Gen (TPS)</th>
+<th align="left">Notes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><strong><code>Qwen 2.5 0.5B Chat</code></strong></td>
+<td align="center">0.5B</td>
+<td align="center">FP16/BF16</td>
+<td align="center">Active</td>
+<td align="center"><strong>20.01 TPS</strong></td>
+<td align="left">Average across 3 massive prompt runs.</td>
+</tr>
+<tr>
+<td align="left"><strong><code>Qwen 3.5 2B (CTX17k)</code></strong></td>
+<td align="center">2B</td>
+<td align="center">GPTQ-Int4</td>
+<td align="center">Active</td>
+<td align="center"><strong>4.77 TPS</strong></td>
+<td align="left">Massive 17k context model compiled for AX650.</td>
+</tr>
+<tr>
+<td align="left"><strong><code>Qwen 2.5 3B Instruct</code></strong></td>
+<td align="center">3B</td>
+<td align="center">GPTQ-Int4</td>
+<td align="center">Active</td>
+<td align="center"><strong>7.24 TPS</strong></td>
+<td align="left">First production-confirmed model.</td>
+</tr>
+<tr>
+<td align="left"><strong><code>Qwen 2.5 Coder 3B</code></strong></td>
+<td align="center">3B</td>
+<td align="center">GPTQ-Int4</td>
+<td align="center">Ready</td>
+<td align="center">-</td>
+<td align="left">Compiled flawlessly.</td>
+</tr>
+<tr>
+<td align="left"><strong><code>Qwen 2.5 Coder 7B</code></strong></td>
+<td align="center">7B</td>
+<td align="center">GPTQ-Int4</td>
+<td align="center">Active</td>
+<td align="center"><strong>3.84 TPS</strong></td>
+<td align="left">Live inference confirmed natively.</td>
+</tr>
+<tr>
+<td align="left"><strong><code>Qwen 2.5 1.5B Instruct</code></strong></td>
+<td align="center">1.5B</td>
+<td align="center">GPTQ-Int4</td>
+<td align="center">Ready</td>
+<td align="center">-</td>
+<td align="left">Compiled flawlessly.</td>
+</tr>
+<tr>
+<td align="left"><strong><code>Llama 3 8B Abliterated v3</code></strong></td>
+<td align="center">8B</td>
+<td align="center">GPTQ</td>
+<td align="center">Ready</td>
+<td align="center">-</td>
+<td align="left">Compiled successfully.</td>
+</tr>
+<tr>
+<td align="left"><strong><code>Llama 3.2 1B Instruct</code></strong></td>
+<td align="center">1B</td>
+<td align="center">None</td>
+<td align="center">Ready</td>
+<td align="center">-</td>
+<td align="left">Requires clean LXC reboot between runs.</td>
+</tr>
+<tr>
+<td align="left"><strong><code>Dolphin 3.0 Qwen 2.5 3B</code></strong></td>
+<td align="center">3B</td>
+<td align="center">GPTQ</td>
+<td align="center">Blocked</td>
+<td align="center">-</td>
+<td align="left">Upstream repo GPTQ metadata malformed.</td>
+</tr>
+</tbody></table>
+<h3>Analysis and Observations</h3>
+<p>The <strong>hermes-3-llama-3.2-3b</strong> model absolutely tears through the benchmarks when hot loaded, hitting upwards of 91 tokens per second. It handles 128k contexts effortlessly on the RTX node and continues to prove its weight in gold. </p>
+<p>The 8B and 9B parameter class continues to be a very reliable sweet spot for the NextGenPVE-RTX node. Models like <strong>deepseek-r1</strong>, <strong>Qwythos-9B</strong>, and <strong>gemma2</strong> are all pushing a comfortable 34 to 35 tokens per second. They provide enough reasoning capability for complex offensive security tasks without bogging down the hardware. We even see the <strong>deepseek-r1</strong> model utilizing thinking modes without sacrificing much speed.</p>
+<p>When looking at the unoptimized cold boots, you can truly see the penalty of VRAM thrashing. The Hermes models drop from 91 TPS all the way down to a sluggish 15 TPS when they are forced to load from disk on the fly. This perfectly illustrates why keeping models resident in memory is absolutely crucial for responsive red-teaming tasks.</p>
+<p>On the edge side, the Axera NPU is proving its worth. Pulling 20 tokens per second on a half-billion parameter Qwen 2.5 model using pure edge silicon is impressive. We are also successfully running multi-billion parameter models like Qwen 2.5 3B at over 7 TPS without waking up the main RTX GPUs.</p>
+<h3>Under the Hood: llama.cpp Optimization on Debian</h3>
+<p>A lot of people ask how we pull these numbers, so I did a deep dive into the latest documentation and hardware benchmarking forums specifically for the <strong>RTX A2000 (12GB VRAM)</strong> running <code>llama.cpp</code> and Ollama. </p>
+<p>The short answer is: <strong>Yes, we are running the absolute bleeding-edge optimal stack.</strong> </p>
+<p>Here is exactly how our current flags map to the best practices:</p>
+<ol>
+<li><p><strong><code>OLLAMA_KEEP_ALIVE=-1</code></strong>
+<em>The Research:</em> By default, Ollama unloads models after five minutes of inactivity to save VRAM. When a new request comes in, it has to stream 5.3GB from the disk back to the GPU, causing a massive ten-second cold boot penalty. 
+<em>Our Setup:</em> Setting it to <code>-1</code> permanently locks Qwythos into the A2000&#39;s VRAM. Because this is a dedicated AI node, we do not care about sharing VRAM. This is what gives us the instant zero-latency response times.</p>
+</li>
+<li><p><strong><code>OLLAMA_KV_CACHE_TYPE=q8_0</code></strong>
+<em>The Research:</em> When you submit a prompt, the engine stores the Key-Value state of the conversation in VRAM. For 1-Million context models like Qwythos, an unquantized 16-bit KV cache would instantly trigger an Out-Of-Memory (OOM) crash on a 12GB card.
+<em>Our Setup:</em> Quantizing the KV cache to 8-bit cuts its VRAM footprint entirely in half with zero perceptible loss in generation quality, allowing the 9B model to comfortably fit alongside a massive context window.</p>
+</li>
+<li><p><strong><code>OLLAMA_FLASH_ATTENTION=1</code></strong>
+<em>The Research:</em> Traditional attention mechanisms scale quadratically in memory as the context grows. Flash Attention rewrites the math to be infinitely more memory efficient and hardware-aware.
+<em>Our Setup:</em> We have this explicitly flipped on, which is the secret sauce behind maintaining 34+ TPS even when the prompt gets long.</p>
+</li>
+<li><p><strong><code>OLLAMA_NUM_PARALLEL=1</code></strong>
+<em>The Research:</em> If you allow Ollama to process multiple requests concurrently, it reserves VRAM for <em>each</em> parallel slot, dramatically reducing the maximum model size you can run. 
+<em>Our Setup:</em> We locked it to <code>1</code>. Since we use LiteLLM for routing requests, this forces the GPU to put 100% of its compute into generating one request as fast as humanly possible before moving to the next one in the queue.</p>
+</li>
+</ol>
+<p>There is not a single frame of performance being left on the table here. We have a perfectly tuned engine.</p>
+<h3>Looking Ahead: The Cluster Rebuild</h3>
+<p>These numbers give us a solid baseline, but the work never stops. We are already planning a complete rebuild of the NextGenPVE environment in the coming weeks. The goal is to optimize the storage layer for even faster cold boots and streamline the networking between the LXC containers to reduce any latency overhead. </p>
+<p>We will be documenting that rebuild process as it happens. For now, the current infrastructure is holding its own and providing the local, secure intelligence needed for our daily operations.</p>
+
+      
+      <div class="post-footer-cta">
+        <div class="cyber-divider-purple"></div>
+        <h3>Collaborate on Security Research</h3>
+        <p>At NextGenRedTeam, we study adversary TTPs and build open-source tools to help defenders. Let's collaborate on research, media projects, or community initiatives.</p>
+        <div class="cta-actions">
+          <a href="https://calendar.proton.me/bookings#HVEHryH4oOT8O4hzE1WTkx71-bIihVp1FCAnLpSB-dM=" target="_blank" class="button border-purple">Schedule Collab &amp; Media</a>
+          <a href="index.html" class="button border-cyan">Back to Blog</a>
+        </div>
+      </div>
+    </article>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="cyber-container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <span class="cyber-glitch-text font-mono">NGRT</span>
+          <p class="footer-desc">Independent Threat Emulation Research &amp; Collaborative Defense.</p>
+        </div>
+        <div class="footer-links">
+          <a href="../index.html#services">Services</a>
+          <a href="../index.html#tools">GitHub Tools</a>
+          <a href="index.html">Threat Lab Blog</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 NextGenRedTeam LLC. All rights reserved. Obfuscated communications active.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="../app.js"></script>
+  <!-- PrismJS Core and Autoloader Scripts -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+</body>
+</html>
