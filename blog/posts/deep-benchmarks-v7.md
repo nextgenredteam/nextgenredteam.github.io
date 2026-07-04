@@ -17,11 +17,11 @@ With the recent additions to the hardware stack, we decided to run the Deep Benc
 Before diving into the numbers, let us set the stage with the environment specs. 
 
 **NextGenPVE-RTX (The Heavy Lifter)**
-This node is designed for pure VRAM capacity and compute throughput. It handles the larger MoE models and context-heavy dense models.
-*   Compute: Dual high-end consumer GPUs (plenty of tensor cores)
-*   Memory: 128GB DDR5 
+This node is built on a ZimaCube Pro Creator, punching well above its weight class. It handles the complex reasoning tasks while strictly managing its memory overhead.
+*   Compute: NVIDIA RTX 2000 Ada Generation (12GB VRAM)
+*   Memory: 32GB System RAM
 *   Storage: Fast NVMe arrays for rapid weight loading 
-*   Role: Handling complex reasoning tasks and large context windows
+*   Role: Handling complex reasoning tasks and context-heavy dense models
 
 **NextGenPVE-NPU (The Edge Specialist)**
 This is our dedicated neural processing node, built around the Axera AX8850 edge NPU.
