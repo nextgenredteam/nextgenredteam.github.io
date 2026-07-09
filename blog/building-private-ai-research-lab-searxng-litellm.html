@@ -123,7 +123,7 @@
 <li><code>skully-brain-medium</code></li>
 <li><code>skully-brain-heavy</code></li>
 </ul>
-<p>When an agent requests a completion from <code>skully-brain-heavy</code>, LiteLLM translates the request, appends the necessary auth keys (using <code>sk-gateway-master-key</code> placeholders), and forwards it to the correct backend endpoint (such as our local Ollama instance running abliterated weights). If a local GPU node goes offline, the proxy handles the fallback logic gracefully, ensuring the agent remains operational without code changes.</p>
+<p>When an agent requests a completion from <code>skully-brain-heavy</code>, LiteLLM translates the request, appends the necessary auth credentials, and forwards it to the correct backend endpoint (such as our local Ollama instance running abliterated weights). If a local GPU node goes offline, the proxy handles the fallback logic gracefully, ensuring the agent remains operational without code changes.</p>
 <hr>
 <h2>Bridging LLMs and SearXNG: The Intelligence Loop</h2>
 <p>Having a private LLM is useful, but its knowledge is frozen at its training cutoff. Connecting it to the live web makes it powerful. By bridging LiteLLM and SearXNG, we create an automated target research loop that respects privacy:</p>

@@ -44,7 +44,7 @@ In our configuration, the gateway exposes generic model aliases to our agents:
 * `skully-brain-medium`
 * `skully-brain-heavy`
 
-When an agent requests a completion from `skully-brain-heavy`, LiteLLM translates the request, appends the necessary auth keys (using `sk-gateway-master-key` placeholders), and forwards it to the correct backend endpoint (such as our local Ollama instance running abliterated weights). If a local GPU node goes offline, the proxy handles the fallback logic gracefully, ensuring the agent remains operational without code changes.
+When an agent requests a completion from `skully-brain-heavy`, LiteLLM translates the request, appends the necessary auth credentials, and forwards it to the correct backend endpoint (such as our local Ollama instance running abliterated weights). If a local GPU node goes offline, the proxy handles the fallback logic gracefully, ensuring the agent remains operational without code changes.
 
 ---
 
