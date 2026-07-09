@@ -1,24 +1,35 @@
-# Custom Rules for NextGenRedTeam Website
+# NextGenRedTeam Project Rules
 
-## Blog Generation Rules
-* **Always Include a Custom Graphic**: Whenever generating or creating a new blog post, you MUST generate a high-quality, topic-relevant banner image using the `generate_image` tool.
-* **Asset Location**: Save the generated image in the `assets/` directory of the website (e.g., `assets/your_post_name.png`).
-* **Embed the Graphic**: Embed the generated image at the top of the blog post markdown file right under the main heading so it is rendered in the compiled HTML.
-* **Default Author and Socials**: Unless explicitly instructed otherwise, all new blog posts must use `author: "Joe B. The Blind Hacker"` in their frontmatter metadata to automatically format the post headers with social links (X/Twitter and LinkedIn).
+## The Golden Writing Rule: Speech-to-Text Cadence
+Every blog post must read like I just talked it into a microphone and then did a quick pass to clean up the repeats and typos. That means avoiding stiff, textbook setups. 
+* **Write like you speak:** Use varied sentence lengths. Land a point with a short, punchy sentence. Then follow it up with the detailed technical explanation. 
+* **Keep AI detection low:** AI detectors trigger on predictable patterns and uniform sentence structures. Bypassing them requires high variance in sentence length, active verbs, and direct phrasing. If a sentence feels like a generic transition, delete it.
+* **Banned AI words:** Never use words like "furthermore," "moreover," "pivotal," "revolutionize," "delve," "crucial," or "it's important to remember." Drop the corporate fluff and marketing hype. We are writing for senior security engineers and offensive researchers. Speak to them directly.
+* **No Em-Dashes:** Standalone double hyphens (`--`) or long em-dashes (`—`) are banned. Use commas, colons, parentheses, or clean line breaks to separate your clauses.
 
-## Style & Voice Golden Rules
-* **Tone**: Write like an experienced Principal Engineer or Offensive Security Researcher addressing peers. Casualty combined with deep professionalism (no corporate fluff, but no internet slang or overly familiar shorthand).
-* **Dictation Cadence**: Write with a natural, speech-like flow (as if dictated and cleaned up well afterward). Write more like spoken conversation with varied sentence lengths, avoiding rigid textbook-like sentence constructions.
-* **No Em-Dashes**: Never use standalone double hyphens (`--`) or long em-dashes (`—`) to separate clauses or break up sentences. Use commas, colons, or clean line breaks instead.
-* **Humanize the Output**: Eliminate typical AI writing markers (e.g. "In today's fast-paced digital landscape," "Moreover," "Furthermore," "Crucial," or "It's important to remember"). Avoid generic hype words or marketing fluff.
-* **Formatting**: Use clean markdown bullet points, bolding for emphasis, and structured code blocks or process flows where necessary to make the content instantly scannable.
+---
 
-## Data Leak Prevention Rules
-* **No Real IPs, Keys, or System Names**: Never leak real internal/external IP subnets or specific IP addresses (e.g., do not use `192.168.40.x`), private API tokens, or real deployment credentials.
-* **Approved Infrastructure Placeholders**: Always refer to the hypervisor host as `NextGenPVE`, and designate containers using their virtual IDs (e.g. `LXC 205`, `LXC 211`, `LXC 210`).
-* **Approved API/IP Placeholders**: Use generic documentation variables or safe default ranges:
-    *   IP placeholders: `<lxc_211_ip>`, `<lxc_210_ip>`, loopback (`127.0.0.1`), or bind-all (`0.0.0.0`).
-    *   API keys/token placeholders: `sk-gateway-master-key` or `sk-dummy-key`.
+## SEO & AI Search Engine Optimization (LLMO)
+We need our posts to be found by humans on search engines and indexed cleanly by AI reasoning engines like Perplexity, Gemini, and ChatGPT.
+* **Automatic Schema Injection:** The build script must parse frontmatter and inject JSON-LD structured data into the `<head>` of every post.
+  * *TechArticle:* Automatically generated for all posts.
+  * *HowTo:* Generated if the frontmatter contains `type: "howto"`. Ensure steps, tools, and prerequisites are mapped cleanly.
+* **Auto-generated llms.txt:** Every build must compile a semantic `llms.txt` file at the root. This is a directory of our active research threads, titles, and summaries, formatted so AI crawlers can index the entire lab quickly.
+* **Troubleshooting and FAQs:** If a post details a tool setup or a hardware build, you must include a structured troubleshooting section. Frame headings as direct user questions (e.g., *"Why is my Sobro table not connecting to Wi-Fi?"*) to match high-volume organic search queries.
 
+---
 
+## Blog Graphic Rules
+* **Always Include a Custom Graphic:** Every new post must have a high-quality, topic-relevant banner image generated via the `generate_image` tool.
+* **Save Location:** Store the generated image in the `assets/` directory (e.g., `assets/your_post_name.png`).
+* **Embed Placement:** Embed the graphic at the very top of the markdown file, right under the main title header, so the compiler renders it at the start of the HTML page.
+* **Default Author details:** Use `author: "Joe B. The Blind Hacker"` in the frontmatter to ensure social links (X/Twitter and LinkedIn) format correctly in the page header.
 
+---
+
+## OpSec and Data Leak Prevention
+We do not leak our actual setup configurations, deployment IPs, or API keys.
+* **Infrastructure Placeholders:** Always refer to the hypervisor host as `NextGenPVE`. Name containers using their virtual IDs (e.g. `LXC 205`, `LXC 211`, `LXC 210`).
+* **IP and Key Placeholders:** Use generic range variables:
+  * IP ranges: `<lxc_211_ip>`, `<lxc_210_ip>`, loopback (`127.0.0.1`), or bind-all (`0.0.0.0`).
+  * API keys: `sk-gateway-master-key` or `sk-dummy-key`.
