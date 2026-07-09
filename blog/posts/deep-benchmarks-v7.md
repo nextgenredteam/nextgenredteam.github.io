@@ -121,7 +121,7 @@ The **hermes-3-llama-3.2-3b** model absolutely tears through the benchmarks when
 
 The 8B and 9B parameter class continues to be a very reliable sweet spot for the NextGenPVE-RTX node. Models like **deepseek-r1**, **Qwythos-9B**, and **gemma2** are all pushing a comfortable 34 to 35 tokens per second. They provide enough reasoning capability for complex offensive security tasks without bogging down the hardware. We even see the **deepseek-r1** model utilizing thinking modes without sacrificing much speed.
 
-When looking at the unoptimized cold boots, you can truly see the penalty of VRAM thrashing. The Hermes models drop from 91 TPS all the way down to a sluggish 15 TPS when they are forced to load from disk on the fly. This perfectly illustrates why keeping models resident in memory is absolutely crucial for responsive red-teaming tasks.
+When looking at the unoptimized cold boots, you can truly see the penalty of VRAM thrashing. The Hermes models drop from 91 TPS all the way down to a sluggish 15 TPS when they are forced to load from disk on the fly. This perfectly illustrates why keeping models resident in memory is absolutely non-negotiable for responsive red-teaming tasks.
 
 On the edge side, the Axera NPU is proving its worth. Pulling 20 tokens per second on a half-billion parameter Qwen 2.5 model using pure edge silicon is impressive. We are also successfully running multi-billion parameter models like Qwen 2.5 3B at over 7 TPS without waking up the main RTX GPUs.
 
