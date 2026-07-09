@@ -7,7 +7,13 @@ const postsDir = path.join(__dirname, '../blog/posts');
 const blogOutputDir = path.join(__dirname, '../blog');
 
 // HTML layout for individual blog posts
-function getBlogPostTemplate(title, date, author, description, contentHtml) {
+function getBlogPostTemplate(metadata, slug, contentHtml) {
+  const title = metadata.title || 'Untitled Post';
+  const date = metadata.date || 'Undated';
+  const author = metadata.author || 'Joe Brinkley';
+  const description = metadata.description || '';
+  const keywords = metadata.keywords || '';
+
   let displayAuthor = author;
   if (author.includes("Joe B. The Blind Hacker")) {
     displayAuthor = `Joe B. The Blind Hacker 
@@ -19,6 +25,82 @@ function getBlogPostTemplate(title, date, author, description, contentHtml) {
       </a>`;
   }
 
+  // Base Schema: TechArticle
+  const schemaList = [
+    {
+      "@context": "https://schema.org",
+      "@type": "TechArticle",
+      "headline": title,
+      "description": description,
+      "datePublished": date,
+      "author": {
+        "@type": "Person",
+        "name": author
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "NextGenRedTeam",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://nextgenredteam.com/assets/logos/logo2.png"
+        }
+      },
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": `https://nextgenredteam.com/blog/${slug}.html`
+      }
+    }
+  ];
+
+  // If howto, inject HowTo schema as well
+  if (metadata.type === 'howto') {
+    const howToSchema = {
+      "@context": "https://schema.org",
+      "@type": "HowTo",
+      "name": title,
+      "description": description,
+      "step": []
+    };
+
+    if (slug.includes('joebro') || slug.includes('sobro')) {
+      howToSchema.step = [
+        {
+          "@type": "HowToStep",
+          "name": "Enable AP Mode",
+          "text": "Press and hold the physical power button on the back/underside of your Sobro table until the lights flash to enter Access Point (AP) mode."
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Connect to Sobro Hotspot",
+          "text": "Open your computer's Wi-Fi menu and connect to the unsecured network broadcasted by the table (usually named Sobro_XXXX)."
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Download Handshake Scripts",
+          "text": "Get the JoeBro setup provisioning scripts from the NextGenRedTeam GitHub tools repository."
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Execute Handshake",
+          "text": "Run provision.ps1 (Windows) or provision.sh (Mac/Linux) in your terminal to inject Wi-Fi credentials into the table."
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Bind to Cloud Account",
+          "text": "Provide your Ayla Networks credentials when prompted by the script to register the table's DSN to your account."
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Access Web Controller",
+          "text": "Load the JoeBro Web Controller in your browser, log in, and control your smart table."
+        }
+      ];
+    }
+    schemaList.push(howToSchema);
+  }
+
+  const jsonLdHtml = schemaList.map(s => `  <script type="application/ld+json">\n    ${JSON.stringify(s, null, 2).replace(/\n/g, '\n    ')}\n  </script>`).join('\n');
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -26,6 +108,7 @@ function getBlogPostTemplate(title, date, author, description, contentHtml) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${title} | NextGenRedTeam Blog</title>
   <meta name="description" content="${description}">
+  ${keywords ? `<meta name="keywords" content="${keywords}">` : ''}
   <link rel="stylesheet" href="../index.css">
   <link rel="icon" href="../favicon.ico" type="image/x-icon">
   
@@ -42,6 +125,9 @@ function getBlogPostTemplate(title, date, author, description, contentHtml) {
   <meta property="og:type" content="article">
   <meta property="og:url" content="https://nextgenredteam.com/blog/">
   <meta name="twitter:card" content="summary_large_image">
+  
+  <!-- SEO JSON-LD Structured Data -->
+${jsonLdHtml}
 </head>
 <body class="blog-post-page">
   <div class="scanlines"></div>
@@ -255,10 +341,8 @@ function buildBlog() {
 
     // Save individual post HTML
     const renderedPost = getBlogPostTemplate(
-      metadata.title || 'Untitled Post',
-      metadata.date || 'Undated',
-      metadata.author || 'Joe Brinkley',
-      metadata.description || '',
+      metadata,
+      slug,
       htmlContent
     );
     fs.writeFileSync(outputPath, renderedPost, 'utf8');
@@ -302,6 +386,19 @@ function buildBlog() {
   const renderedIndex = getBlogIndexTemplate(postsCardsHtml);
   fs.writeFileSync(path.join(blogOutputDir, 'index.html'), renderedIndex, 'utf8');
   console.log(`Success! Rendered blog index at blog/index.html`);
+
+  // Generate llms.txt at root for AI engines
+  console.log('Generating llms.txt at root...');
+  const llmsTxtContent = `# NextGenRedTeam Threat Lab Blog
+
+> High-fidelity threat emulation research, hardware reverse engineering, and offensive AI orchestration.
+
+## Active Research Threads
+
+${posts.map(post => `- [${post.title}](/blog/${post.url}): ${post.description}`).join('\n')}
+`;
+  fs.writeFileSync(path.join(__dirname, '../llms.txt'), llmsTxtContent, 'utf8');
+  console.log(`Success! Generated llms.txt at root.`);
 }
 
 if (require.main === module) {

@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Rescuing Abandoned IoT: How I Built JoeBro to Control My Smart Table | NextGenRedTeam Blog</title>
   <meta name="description" content="When manufacturers abandon their mobile apps, expensive smart hardware turns into a brick. Here is how I reverse-engineered the Ayla Networks API to build a zero-backend PWA.">
+  <meta name="keywords" content="Sobro Smart Coffee Table, JoeBro Web Controller, Sobro app Android crash, Sobro Wi-Fi setup, Ayla Networks API, Smart Coffee Table Troubleshooting">
   <link rel="stylesheet" href="../index.css">
   <link rel="icon" href="../favicon.ico" type="image/x-icon">
   
@@ -21,6 +22,73 @@
   <meta property="og:type" content="article">
   <meta property="og:url" content="https://nextgenredteam.com/blog/">
   <meta name="twitter:card" content="summary_large_image">
+  
+  <!-- SEO JSON-LD Structured Data -->
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "TechArticle",
+      "headline": "Rescuing Abandoned IoT: How I Built JoeBro to Control My Smart Table",
+      "description": "When manufacturers abandon their mobile apps, expensive smart hardware turns into a brick. Here is how I reverse-engineered the Ayla Networks API to build a zero-backend PWA.",
+      "datePublished": "2026-06-09",
+      "author": {
+        "@type": "Person",
+        "name": "Joe B. The Blind Hacker"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "NextGenRedTeam",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://nextgenredteam.com/assets/logos/logo2.png"
+        }
+      },
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "https://nextgenredteam.com/blog/rescuing-abandoned-iot-joebro-sobro.html"
+      }
+    }
+  </script>
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "HowTo",
+      "name": "Rescuing Abandoned IoT: How I Built JoeBro to Control My Smart Table",
+      "description": "When manufacturers abandon their mobile apps, expensive smart hardware turns into a brick. Here is how I reverse-engineered the Ayla Networks API to build a zero-backend PWA.",
+      "step": [
+        {
+          "@type": "HowToStep",
+          "name": "Enable AP Mode",
+          "text": "Press and hold the physical power button on the back/underside of your Sobro table until the lights flash to enter Access Point (AP) mode."
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Connect to Sobro Hotspot",
+          "text": "Open your computer's Wi-Fi menu and connect to the unsecured network broadcasted by the table (usually named Sobro_XXXX)."
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Download Handshake Scripts",
+          "text": "Get the JoeBro setup provisioning scripts from the NextGenRedTeam GitHub tools repository."
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Execute Handshake",
+          "text": "Run provision.ps1 (Windows) or provision.sh (Mac/Linux) in your terminal to inject Wi-Fi credentials into the table."
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Bind to Cloud Account",
+          "text": "Provide your Ayla Networks credentials when prompted by the script to register the table's DSN to your account."
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Access Web Controller",
+          "text": "Load the JoeBro Web Controller in your browser, log in, and control your smart table."
+        }
+      ]
+    }
+  </script>
 </head>
 <body class="blog-post-page">
   <div class="scanlines"></div>
@@ -83,38 +151,58 @@
 <p>By sniffing the traffic of a legacy device connected to the app, I mapped out the entire Ayla Cloud REST API used by the table. Because it uses standard JSON payloads and simple HTTP requests, I realized we don&#39;t need a mobile app at all. We can control the table directly from a static web page!</p>
 <p>I built <strong>JoeBro</strong>, a zero-backend Progressive Web App (PWA) written in vanilla HTML, CSS, and Javascript. It runs 100% in your browser, communicates directly with Ayla&#39;s servers, and unlocks hidden features (like forcing Bluetooth pairing mode or fine-tuning backlight brightness) that were never exposed in the official app.</p>
 <hr>
-<h2>Guide: Connecting Your Sobro Table to the Web</h2>
+<h2>How to Connect Your Sobro Table to the Web</h2>
 <p>To use the JoeBro controller, your table must be connected to your local Wi-Fi. If you changed your Wi-Fi router or bought a new table, you cannot use the official app to connect it. </p>
 <p>I wrote two custom scripts, <code>provision.ps1</code> (Windows PowerShell) and <code>provision.sh</code> (Mac/Linux), which emulate the initial configuration handshake. Here is how to use them:</p>
-<h3>1. Wi-Fi Chip Network Constraints (CRITICAL)</h3>
+<h3>Prerequisites &amp; Network Constraints (CRITICAL)</h3>
 <p>The Wi-Fi chip inside the Sobro table is old and highly sensitive. If your network does not meet these requirements, the chip will crash or refuse to connect:</p>
 <ul>
 <li><strong>2.4 GHz Band Only:</strong> The table does not support 5 GHz networks. Ensure your router broadcasts a separate 2.4 GHz SSID.</li>
 <li><strong>WPA2-Personal Security:</strong> You must use WPA2-Personal (AES) encryption. <strong>Do not use WPA3 or WPA2/WPA3 Mixed mode.</strong> If the table detects a WPA3 transition element in the beacon, the chip will crash and revert to AP setup mode.</li>
 </ul>
-<h3>2. Running the Provisioning Script</h3>
+<h3>Step-by-Step Provisioning Guide</h3>
 <ol>
-<li>Press and hold the physical power button on the back/underside of your Sobro table until the lights flash. This puts the table into Access Point (AP) mode.</li>
-<li>Open your computer&#39;s Wi-Fi menu and connect to the unsecured network broadcasted by the table (usually named <code>Sobro_XXXX</code>).</li>
-<li>Download the JoeBro setup files from our <a href="https://github.com/nextgenredteam">GitHub Tools Repository</a>.</li>
-<li>Open a terminal, navigate to the folder, and run:<pre><code class="language-powershell"># Windows
-.\provision.ps1
+<li><strong>Enable Access Point (AP) Mode:</strong> Press and hold the physical power button on the back/underside of your Sobro table until the lights flash. This puts the table into AP mode.</li>
+<li><strong>Connect to Sobro Hotspot:</strong> Open your computer&#39;s Wi-Fi menu and connect to the unsecured network broadcasted by the table (usually named <code>Sobro_XXXX</code>).</li>
+<li><strong>Get Setup Scripts:</strong> Download the JoeBro setup files from our <a href="https://github.com/nextgenredteam">GitHub Tools Repository</a>.</li>
+<li><strong>Execute the Handshake Script:</strong> Open a terminal, navigate to the folder, and run:<ul>
+<li><strong>Windows:</strong><pre><code class="language-powershell">.\provision.ps1
 </code></pre>
-or<pre><code class="language-bash"># Mac/Linux
-chmod +x provision.sh
+</li>
+<li><strong>Mac/Linux:</strong><pre><code class="language-bash">chmod +x provision.sh
 ./provision.sh
 </code></pre>
 </li>
-<li>The script will perform a <strong>2-Step Handshake</strong>:<ul>
+</ul>
+</li>
+<li><strong>Reconnect and Bind:</strong> The script will perform a <strong>2-Step Handshake</strong>:<ul>
 <li><strong>Step 1:</strong> It injects your home Wi-Fi SSID and password directly into the table&#39;s local setup server. The table will reboot and connect to your home Wi-Fi.</li>
 <li><strong>Step 2:</strong> The script will pause and ask you to reconnect your computer to your home Wi-Fi. It will then prompt you for your Ayla Cloud credentials, log into your account, and bind the table&#39;s unique Serial Number (DSN) to your Ayla account.</li>
 </ul>
 </li>
-<li>Open your JoeBro controller interface, log in, and take control of your smart table!<ul>
-<li><em>Tip: If your account uses Facebook Login, or if you don&#39;t want to enter your password into the PWA, look for the <strong>&quot;Help: How to get your Token or Facebook Code&quot;</strong> button on the JoeBro login overlay. It details all the Facebook callback URL, browser DevTools, and CLI terminal API tricks to get you authenticated easily.</em></li>
-</ul>
-</li>
+<li><strong>Access Control Panel:</strong> Open your JoeBro controller interface, log in, and take control of your smart table!</li>
 </ol>
+<hr>
+<h2>Frequently Asked Questions &amp; Troubleshooting</h2>
+<h3>Why is my Sobro coffee table not connecting to Wi-Fi?</h3>
+<p>If your Sobro table fails to connect, the issue is almost always router-related:</p>
+<ul>
+<li><strong>Disable WPA3:</strong> Make sure your 2.4 GHz SSID is set to pure WPA2 security. WPA2/WPA3 mixed modes broadcast elements that crash the legacy Broadcom chip inside the table.</li>
+<li><strong>Separate SSIDs:</strong> Ensure your router has a dedicated SSID for the 2.4 GHz network instead of a unified single-SSID dual-band setup.</li>
+</ul>
+<h3>How do I fix the Sobro app crashing on Android and iOS?</h3>
+<p>The official Sobro app is abandoned and incompatible with modern OS versions. There is no official update available. To solve this:</p>
+<ol>
+<li>Reconnect your table to your local Wi-Fi using our provisioning scripts.</li>
+<li>Load the open-source JoeBro Web Controller in your browser (Chrome or Safari).</li>
+<li>Add the page to your phone&#39;s Home Screen to run it as a standalone Progressive Web App (PWA).</li>
+</ol>
+<h3>How do I get my Ayla Networks access token?</h3>
+<p>If you want to authenticate manually or write your own scripts:</p>
+<ul>
+<li><strong>Log In Directly:</strong> You can log in using your registered email and password on the JoeBro PWA interface.</li>
+<li><strong>Retrieve via Facebook Login:</strong> If your account is linked to Facebook, use the <strong>&quot;Help: How to get your Token or Facebook Code&quot;</strong> utility button on the JoeBro login overlay. It redirects you to the Facebook OAuth callback, where you can copy the authentication token directly from the callback URL or browser DevTools console.</li>
+</ul>
 <hr>
 <h2>Reclaiming Our Hardware</h2>
 <p>The success of the JoeBro app shows that we don&#39;t have to accept the planned obsolescence of smart devices. If a cloud service is active, we can reverse-engineer it. And if the cloud service ever shuts down completely, we can use local DNS redirection to fake the cloud server and run the table offline.</p>

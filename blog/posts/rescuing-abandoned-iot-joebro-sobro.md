@@ -3,6 +3,8 @@ title: "Rescuing Abandoned IoT: How I Built JoeBro to Control My Smart Table"
 date: "2026-06-09"
 author: "Joe B. The Blind Hacker"
 description: "When manufacturers abandon their mobile apps, expensive smart hardware turns into a brick. Here is how I reverse-engineered the Ayla Networks API to build a zero-backend PWA."
+type: "howto"
+keywords: "Sobro Smart Coffee Table, JoeBro Web Controller, Sobro app Android crash, Sobro Wi-Fi setup, Ayla Networks API, Smart Coffee Table Troubleshooting"
 ---
 
 # Rescuing Abandoned IoT: How I Built JoeBro to Control My Smart Table
@@ -37,37 +39,55 @@ I built **JoeBro**, a zero-backend Progressive Web App (PWA) written in vanilla 
 
 ---
 
-## Guide: Connecting Your Sobro Table to the Web
+## How to Connect Your Sobro Table to the Web
 
 To use the JoeBro controller, your table must be connected to your local Wi-Fi. If you changed your Wi-Fi router or bought a new table, you cannot use the official app to connect it. 
 
 I wrote two custom scripts, `provision.ps1` (Windows PowerShell) and `provision.sh` (Mac/Linux), which emulate the initial configuration handshake. Here is how to use them:
 
-### 1. Wi-Fi Chip Network Constraints (CRITICAL)
+### Prerequisites & Network Constraints (CRITICAL)
 The Wi-Fi chip inside the Sobro table is old and highly sensitive. If your network does not meet these requirements, the chip will crash or refuse to connect:
 * **2.4 GHz Band Only:** The table does not support 5 GHz networks. Ensure your router broadcasts a separate 2.4 GHz SSID.
 * **WPA2-Personal Security:** You must use WPA2-Personal (AES) encryption. **Do not use WPA3 or WPA2/WPA3 Mixed mode.** If the table detects a WPA3 transition element in the beacon, the chip will crash and revert to AP setup mode.
 
-### 2. Running the Provisioning Script
-1. Press and hold the physical power button on the back/underside of your Sobro table until the lights flash. This puts the table into Access Point (AP) mode.
-2. Open your computer's Wi-Fi menu and connect to the unsecured network broadcasted by the table (usually named `Sobro_XXXX`).
-3. Download the JoeBro setup files from our [GitHub Tools Repository](https://github.com/nextgenredteam).
-4. Open a terminal, navigate to the folder, and run:
-   ```powershell
-   # Windows
-   .\provision.ps1
-   ```
-   or
-   ```bash
-   # Mac/Linux
-   chmod +x provision.sh
-   ./provision.sh
-   ```
-5. The script will perform a **2-Step Handshake**:
+### Step-by-Step Provisioning Guide
+1. **Enable Access Point (AP) Mode:** Press and hold the physical power button on the back/underside of your Sobro table until the lights flash. This puts the table into AP mode.
+2. **Connect to Sobro Hotspot:** Open your computer's Wi-Fi menu and connect to the unsecured network broadcasted by the table (usually named `Sobro_XXXX`).
+3. **Get Setup Scripts:** Download the JoeBro setup files from our [GitHub Tools Repository](https://github.com/nextgenredteam).
+4. **Execute the Handshake Script:** Open a terminal, navigate to the folder, and run:
+   * **Windows:**
+     ```powershell
+     .\provision.ps1
+     ```
+   * **Mac/Linux:**
+     ```bash
+     chmod +x provision.sh
+     ./provision.sh
+     ```
+5. **Reconnect and Bind:** The script will perform a **2-Step Handshake**:
    * **Step 1:** It injects your home Wi-Fi SSID and password directly into the table's local setup server. The table will reboot and connect to your home Wi-Fi.
    * **Step 2:** The script will pause and ask you to reconnect your computer to your home Wi-Fi. It will then prompt you for your Ayla Cloud credentials, log into your account, and bind the table's unique Serial Number (DSN) to your Ayla account.
- 6. Open your JoeBro controller interface, log in, and take control of your smart table!
-    * *Tip: If your account uses Facebook Login, or if you don't want to enter your password into the PWA, look for the **"Help: How to get your Token or Facebook Code"** button on the JoeBro login overlay. It details all the Facebook callback URL, browser DevTools, and CLI terminal API tricks to get you authenticated easily.*
+6. **Access Control Panel:** Open your JoeBro controller interface, log in, and take control of your smart table!
+
+---
+
+## Frequently Asked Questions & Troubleshooting
+
+### Why is my Sobro coffee table not connecting to Wi-Fi?
+If your Sobro table fails to connect, the issue is almost always router-related:
+* **Disable WPA3:** Make sure your 2.4 GHz SSID is set to pure WPA2 security. WPA2/WPA3 mixed modes broadcast elements that crash the legacy Broadcom chip inside the table.
+* **Separate SSIDs:** Ensure your router has a dedicated SSID for the 2.4 GHz network instead of a unified single-SSID dual-band setup.
+
+### How do I fix the Sobro app crashing on Android and iOS?
+The official Sobro app is abandoned and incompatible with modern OS versions. There is no official update available. To solve this:
+1. Reconnect your table to your local Wi-Fi using our provisioning scripts.
+2. Load the open-source JoeBro Web Controller in your browser (Chrome or Safari).
+3. Add the page to your phone's Home Screen to run it as a standalone Progressive Web App (PWA).
+
+### How do I get my Ayla Networks access token?
+If you want to authenticate manually or write your own scripts:
+* **Log In Directly:** You can log in using your registered email and password on the JoeBro PWA interface.
+* **Retrieve via Facebook Login:** If your account is linked to Facebook, use the **"Help: How to get your Token or Facebook Code"** utility button on the JoeBro login overlay. It redirects you to the Facebook OAuth callback, where you can copy the authentication token directly from the callback URL or browser DevTools console.
 
 ---
 
