@@ -4,6 +4,7 @@
 
 ## Active Research Threads
 
+- [Experimental Rebuild Tuning: llama.cpp MoE Memory Gains and Dense Regressions](/blog/experimental-rebuild-tuning-llama-cpp-moe-vs-dense.html): We compiled and tested a custom llama.cpp fork on our RTX node. Here is how it optimized Mixture of Experts (MoE) memory, why it fumbled dense model speeds, and why we rolled back.
 - [Building a Private AI Research Lab: Bridging LiteLLM and SearXNG on NextGenPVE](/blog/building-private-ai-research-lab-searxng-litellm.html): How we containerized and bridged SearXNG and LiteLLM in LXC 205 on NextGenPVE for privacy-respecting threat intelligence gathering and local AI orchestration.
 - [Deep Benchmarks v7: Pushing NextGenPVE to the Limit](/blog/deep-benchmarks-v7.html): Reviewing the latest local LLM benchmarks across NextGenPVE-RTX and the new NextGenPVE-NPU hardware.
 - [Massive Environment Overhaul: Brain-RTX Hyper-Optimization & Benchmark Results](/blog/massive-environment-overhaul-brain-rtx.html): How I heavily modified the GPU daemon on my local rig to handle massive 12k+ token agentic context windows without choking.
