@@ -149,9 +149,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const contactTrigger = document.getElementById('contact-trigger');
   const closeModalBtn = document.getElementById('modal-close');
   
-  // Obfuscated Contact Data via +5 char-code shift
-  const encodedPhone = '<5828:<288=='; // Decrypts to: 703-357-3388
-  const encodedEmail = 'Otj3Gwnspqj~Esj}yljswjiyjfr3htr'; // Decrypts to: Joe.Brinkley@nextgenredteam.com
+  // Obfuscated contact data — char-code shift encoding (+5)
+  const encodedPhone = '7572;<52567 6'; // GV display number
+  const encodedWaPhone = '<5828:<288==';  // Carrier number for WhatsApp/Signal
+  const encodedEmail = 'Otj3Gwnspqj~Esj}yljswjiyjfr3htr';
 
   const decrypt = (str, shift = 5) => {
     return str.split('').map(c => String.fromCharCode(c.charCodeAt(0) - shift)).join('');
@@ -174,17 +175,15 @@ document.addEventListener('DOMContentLoaded', () => {
       const whatsappLink = document.getElementById('modal-whatsapp-link');
 
       if (emailVal) emailVal.innerText = emailDecrypted;
-      if (phoneVal) phoneVal.innerText = phoneDecrypted;
-      
+      if (phoneVal) phoneVal.innerText = decrypt(encodedPhone);
+
       // Set hyperlinks
       if (emailLink) emailLink.href = `mailto:${emailDecrypted}`;
-      
-      // WhatsApp link format: https://wa.me/17033573388
-      const numericPhone = phoneDecrypted.replace(/[^0-9]/g, '');
-      if (whatsappLink) whatsappLink.href = `https://wa.me/1${numericPhone}`;
-      
-      // Signal direct chat link (or fallback to tel prompt if no username)
-      if (signalLink) signalLink.href = `https://signal.me/#p/+1${numericPhone}`;
+
+      // WhatsApp & Signal require a real carrier number (not GV)
+      const waNumber = decrypt(encodedWaPhone).replace(/[^0-9]/g, '');
+      if (whatsappLink) whatsappLink.href = `https://wa.me/1${waNumber}`;
+      if (signalLink) signalLink.href = `https://signal.me/#p/+1${waNumber}`;
 
       contactModal.classList.add('active');
     };

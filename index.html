@@ -67,7 +67,8 @@
       <div class="nav-links">
         <a href="#services" class="nav-link">[01] Services</a>
         <a href="#tools" class="nav-link">[02] Tools</a>
-        <a href="blog/index.html" class="nav-link">[03] Blog</a>
+        <a href="#media" class="nav-link">[03] Media &amp; Press</a>
+        <a href="blog/index.html" class="nav-link">[04] Blog</a>
         <a href="https://calendar.proton.me/bookings#HVEHryH4oOT8O4hzE1WTkx71-bIihVp1FCAnLpSB-dM=" target="_blank" class="nav-link-btn button">[Collab &amp; Media]</a>
       </div>
       <button class="nav-burger" id="nav-burger" aria-label="Toggle Menu">
@@ -261,6 +262,115 @@
     </div>
   </section>
 
+  <!-- Media & Press Showcase Section -->
+  <section class="media-showcase" id="media">
+    <div class="cyber-container">
+      <div class="section-header">
+        <div class="tag">// PRESS &amp; INDUSTRY COMMENTARY</div>
+        <h2 class="section-title">Media Appearances &amp; Expert Commentary</h2>
+        <p class="section-desc">Featured technical analysis, press quotes, and threat research commentary by Joe Brinkley (Director of Offensive Security Research &amp; Community at Cobalt / The Blind Hacker).</p>
+        <div class="cyber-divider-cyan"></div>
+      </div>
+
+      <div class="media-grid">
+        <!-- Card 1: CSO Online / Rogue AI -->
+        <div class="media-card active-border-cyan">
+          <div class="media-card-header">
+            <span class="media-card-tag cyan">CSO ONLINE // CIO.COM</span>
+            <span class="media-card-date">AUG 2026</span>
+          </div>
+          <h3>Security Leaders’ Rogue AI Confidence Could Actually Be Disastrous</h3>
+          <div class="media-role-badge">Director of Offensive Security Research &amp; Community, Cobalt</div>
+          <p class="media-quote">
+            “Tracing agent impact fast is brutal. These systems do not run on fixed code paths. They use nondeterministic reasoning across a web of different APIs. Traditional logs only catch isolated events. They completely miss the full execution chain.”
+          </p>
+          <div class="media-takeaway">
+            <strong>Key Insight:</strong> Hard kill switches at the API layer (revoking OAuth tokens &amp; API access) are required to contain rogue AI agents; soft prompt guardrails fail when agents drift out of scope.
+          </div>
+          <div class="media-card-actions">
+            <a href="https://www.csoonline.com/article/4198038/security-leaders-confident-but-cooked-when-it-comes-to-rogue-ai-agents.html" target="_blank" class="button border-cyan">[Read Article on CSO]</a>
+          </div>
+        </div>
+
+        <!-- Card 2: Help Net Security / Shadow AI -->
+        <div class="media-card active-border-purple">
+          <div class="media-card-header">
+            <span class="media-card-tag purple">HELP NET SECURITY</span>
+            <span class="media-card-date">JUN 2026</span>
+          </div>
+          <h3>Companies Keep Bolting AI Onto Products &amp; Security Bill Is Due</h3>
+          <div class="media-role-badge">Director of Offensive Security Research &amp; Community, Cobalt</div>
+          <p class="media-quote">
+            “Shadow AI operates at the application layer, completely bypassing traditional infrastructure inventory tools. Scanners see normal web browsing while unvetted browser plugins communicate with third-party LLM APIs.”
+          </p>
+          <div class="media-takeaway">
+            <strong>Key Insight:</strong> Shift asset discovery from infrastructure IP scanning to application-layer telemetry, monitoring Layer 7 headers, DNS logs, and endpoint processes.
+          </div>
+          <div class="media-card-actions">
+            <a href="https://www.helpnetsecurity.com/2026/06/29/companies-keep-bolting-ai-onto-their-products-and-the-security-bill-is-coming-due/" target="_blank" class="button border-purple">[Read Feature]</a>
+          </div>
+        </div>
+
+        <!-- Card 3: Cybernews / Vulnerability Management -->
+        <div class="media-card active-border-pink">
+          <div class="media-card-header">
+            <span class="media-card-tag pink">CYBERNEWS</span>
+            <span class="media-card-date">MAY 2026</span>
+          </div>
+          <h3>Discovery Is Cheap, Validation Is Expensive: Rethinking Flaw Remediation</h3>
+          <div class="media-role-badge">Head of Threat Research, Cobalt</div>
+          <p class="media-quote">
+            “Discovery has become cheap, but validation remains incredibly expensive. Attempting to fix every single software flaw is counterproductive. Treat vulnerabilities like chronic symptoms and focus on real-world exploit paths.”
+          </p>
+          <div class="media-takeaway">
+            <strong>Key Insight:</strong> Focus vulnerability remediation on validated exploitation risks rather than chasing endless raw scanner output.
+          </div>
+          <div class="media-card-actions">
+            <a href="https://cybernews.com/editorial-perspectives/discovery-cheap-validation-expensive-software-flaws/" target="_blank" class="button border-pink">[Read Feature]</a>
+          </div>
+        </div>
+
+        <!-- Card 4: CSO Online / Financial Sector & AI Models -->
+        <div class="media-card active-border-cyan">
+          <div class="media-card-header">
+            <span class="media-card-tag cyan">CSO ONLINE</span>
+            <span class="media-card-date">APR 2026</span>
+          </div>
+          <h3>Bank Regulator Sounds Warning Over Cybersecurity Threat Posed by AI Models</h3>
+          <div class="media-role-badge">Director of Offensive Security Research, Cobalt</div>
+          <p class="media-quote">
+            “The barrier to entry for state-level cyber capabilities has now been lowered to the cost of an API key. If the financial sector fails to automate its defense, targeting will skyrocket.”
+          </p>
+          <div class="media-takeaway">
+            <strong>Key Insight:</strong> Advanced AI capabilities lower the cost of state-grade offensive tools; defense must shift from periodic pentesting to continuous, AI-integrated security operations.
+          </div>
+          <div class="media-card-actions">
+            <a href="https://www.csoonline.com/article/4185012/bank-regulator-sounds-warning-over-cybersecurity-threat-posed-by-ai-models.html" target="_blank" class="button border-cyan">[Read Commentary]</a>
+          </div>
+        </div>
+
+        <!-- Card 5: CSO Online / Lateral Movement -->
+        <div class="media-card active-border-purple">
+          <div class="media-card-header">
+            <span class="media-card-tag purple">CSO ONLINE</span>
+            <span class="media-card-date">JUL 2026</span>
+          </div>
+          <h3>Lateral Movement Risk Rises as Enterprises Emphasize Convenience</h3>
+          <div class="media-role-badge">Director of Offensive Security Research, Cobalt</div>
+          <p class="media-quote">
+            “Organizations must move beyond pure detection and prioritize deterministic containment through micro-segmentation and strict, identity-driven least privilege to counter automated lateral movement.”
+          </p>
+          <div class="media-takeaway">
+            <strong>Key Insight:</strong> Prioritize deterministic containment over passive monitoring to stop automated, AI-driven lateral spread in enterprise networks.
+          </div>
+          <div class="media-card-actions">
+            <a href="https://www.csoonline.com/article/4195230/lateral-movement-risk-rises-as-enterprises-emphasize-convenience-over-containment.html" target="_blank" class="button border-purple">[Read Commentary]</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- Engagement/Booking Section -->
   <section class="engage" id="engage">
     <div class="cyber-container">
@@ -317,6 +427,14 @@
           <a href="#services">Services</a>
           <a href="#tools">GitHub Tools</a>
           <a href="blog/index.html">Threat Lab Blog</a>
+          <div class="footer-socials">
+            <a href="https://github.com/nextgenredteam" target="_blank" aria-label="GitHub" class="footer-social-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/></svg>
+            </a>
+            <a href="https://x.com/NextGenRedTeam" target="_blank" aria-label="X / Twitter" class="footer-social-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+            </a>
+          </div>
         </div>
       </div>
       <div class="footer-bottom">
