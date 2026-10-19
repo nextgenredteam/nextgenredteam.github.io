@@ -90,26 +90,52 @@
   </script>
 </head>
 <body class="blog-post-page">
-  <div class="scanlines"></div>
-  <div class="noise-overlay"></div>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+  <div class="scanlines" aria-hidden="true"></div>
+  <div class="noise-overlay" aria-hidden="true"></div>
  
   <!-- Navigation -->
-  <nav class="navbar">
+  <nav class="navbar" aria-label="Main Navigation">
     <div class="nav-container">
-      <a href="../index.html" class="logo-container" id="logo-link">
-        <img src="../assets/logos/logo2.png" id="ngrt-logo" alt="NGRT Logo" class="logo-img">
-      </a>
-      <div class="nav-links">
+      <div class="nav-left-group">
+        <a href="../index.html" class="logo-container" id="logo-link" aria-label="NextGenRedTeam Home">
+          <img src="../assets/logos/logo2.png" id="ngrt-logo" alt="NextGenRedTeam (NGRT) Logo" class="logo-img">
+        </a>
+        <!-- Top-Left Accessibility Toolbar (Light/Dark + Text Size) -->
+        <div class="a11y-toolbar" role="region" aria-label="Accessibility Display Controls">
+          <button type="button" id="theme-toggle" class="a11y-btn" aria-pressed="false" aria-label="Switch to Light Mode" title="Toggle Dark / Light Theme">
+            <span class="theme-icon" aria-hidden="true">☀️</span>
+            <span id="theme-toggle-label">Light</span>
+          </button>
+          <div class="a11y-font-group" role="group" aria-label="Text Size Controls">
+            <button type="button" id="font-decrease" class="a11y-btn" aria-label="Decrease text size" title="Decrease text size">A-</button>
+            <button type="button" id="font-reset" class="a11y-btn" aria-label="Reset text size to 100%" title="Reset text size">100%</button>
+            <button type="button" id="font-increase" class="a11y-btn" aria-label="Increase text size" title="Increase text size">A+</button>
+          </div>
+          <span id="a11y-live-status" class="sr-only" aria-live="polite"></span>
+        </div>
+      </div>
+      <div class="nav-links" id="primary-nav-links">
         <a href="../index.html#services" class="nav-link">[01] Services</a>
         <a href="../index.html#tools" class="nav-link">[02] Tools</a>
         <a href="../index.html#media" class="nav-link">[03] Media &amp; Press</a>
         <a href="index.html" class="nav-link active">[04] Blog</a>
         <a href="../index.html#engage" class="nav-link-btn button">[Collab &amp; Media]</a>
+        <!-- Mobile Hamburger Accessibility Controls -->
+        <div class="mobile-a11y-drawer" role="group" aria-label="Mobile Accessibility Controls">
+          <span class="mobile-a11y-title">// ACCESSIBILITY &amp; DISPLAY</span>
+          <div class="mobile-a11y-actions">
+            <button type="button" id="mobile-theme-toggle" class="a11y-btn" aria-pressed="false" aria-label="Switch to Light Mode">☀️ Light Mode</button>
+            <button type="button" id="mobile-font-decrease" class="a11y-btn" aria-label="Decrease text size">A-</button>
+            <button type="button" id="mobile-font-reset" class="a11y-btn" aria-label="Reset text size">100%</button>
+            <button type="button" id="mobile-font-increase" class="a11y-btn" aria-label="Increase text size">A+</button>
+          </div>
+        </div>
       </div>
-      <button class="nav-burger" id="nav-burger" aria-label="Toggle Menu">
-        <span></span>
-        <span></span>
-        <span></span>
+      <button type="button" class="nav-burger" id="nav-burger" aria-expanded="false" aria-controls="primary-nav-links" aria-label="Toggle Navigation and Accessibility Menu">
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
       </button>
     </div>
   </nav>
@@ -136,7 +162,7 @@
   </header>
 
   <!-- Article Content -->
-  <main class="post-content-section">
+  <main id="main-content" class="post-content-section">
     <article class="cyber-container markdown-body">
       <h1>Taming the Edge: Bypassing Axera AX8850 NPU Compiler Constraints</h1>
 <blockquote>

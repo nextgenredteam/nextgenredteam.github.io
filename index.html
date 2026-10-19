@@ -776,11 +776,13 @@
     </div>
   </section>
 
+  </main>
+
   <!-- Obfuscated Contact Modal -->
-  <div class="modal-overlay" id="contact-modal">
+  <div class="modal-overlay" id="contact-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
     <div class="modal-content">
-      <button class="modal-close" id="modal-close">[X] CLOSE</button>
-      <h3>Secure Communications</h3>
+      <button type="button" class="modal-close" id="modal-close" aria-label="Close Secure Communications Modal">[X] CLOSE</button>
+      <h3 id="modal-title">Secure Communications</h3>
       <p class="modal-desc">To protect our contacts from automated web scraping crawlers, links are dynamically decrypted locally upon user click.</p>
       
       <div class="modal-links">

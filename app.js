@@ -203,14 +203,91 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // --- 4. MOBILE NAVIGATION MENU TOGGLE ---
+  // --- 4. MOBILE NAVIGATION MENU TOGGLE & ACCESSIBILITY CONTROLS ---
   const burger = document.getElementById('nav-burger');
   const navLinks = document.querySelector('.nav-links');
   if (burger && navLinks) {
     burger.addEventListener('click', () => {
-      navLinks.classList.toggle('active');
-      burger.classList.toggle('open');
+      const isOpen = navLinks.classList.toggle('active');
+      burger.classList.toggle('open', isOpen);
+      burger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
     });
   }
+
+  // --- 5. THEME TOGGLE (DARK DEFAULT) & TEXT SIZE SCALER ---
+  const htmlEl = document.documentElement;
+  const themeBtn = document.getElementById('theme-toggle');
+  const themeLabel = document.getElementById('theme-toggle-label');
+  const themeIcon = themeBtn ? themeBtn.querySelector('.theme-icon') : null;
+  const mobileThemeBtn = document.getElementById('mobile-theme-toggle');
+  const fontResetBtn = document.getElementById('font-reset');
+  const mobileFontResetBtn = document.getElementById('mobile-font-reset');
+  const liveStatus = document.getElementById('a11y-live-status');
+
+  let currentTheme = localStorage.getItem('ngrt_theme') || 'dark';
+  let currentScale = parseInt(localStorage.getItem('ngrt_font_scale') || '100', 10);
+  if (isNaN(currentScale) || currentScale < 85 || currentScale > 150) {
+    currentScale = 100;
+  }
+
+  const announce = (msg) => {
+    if (liveStatus) liveStatus.textContent = msg;
+  };
+
+  const applyTheme = (theme, shouldAnnounce = false) => {
+    currentTheme = theme;
+    htmlEl.setAttribute('data-theme', theme);
+    localStorage.setItem('ngrt_theme', theme);
+    const isLight = theme === 'light';
+    if (themeBtn && themeLabel && themeIcon) {
+      themeBtn.setAttribute('aria-pressed', isLight ? 'true' : 'false');
+      themeBtn.setAttribute('aria-label', isLight ? 'Switch to Dark Mode' : 'Switch to Light Mode');
+      themeIcon.textContent = isLight ? '🌙' : '☀️';
+      themeLabel.textContent = isLight ? 'Dark' : 'Light';
+    }
+    if (mobileThemeBtn) {
+      mobileThemeBtn.setAttribute('aria-pressed', isLight ? 'true' : 'false');
+      mobileThemeBtn.setAttribute('aria-label', isLight ? 'Switch to Dark Mode' : 'Switch to Light Mode');
+      mobileThemeBtn.textContent = isLight ? '🌙 Dark Mode' : '☀️ Light Mode';
+    }
+    if (shouldAnnounce) {
+      announce(isLight ? 'Light mode enabled' : 'Dark mode enabled');
+    }
+  };
+
+  const applyFontScale = (scale, shouldAnnounce = false) => {
+    currentScale = Math.max(85, Math.min(150, scale));
+    htmlEl.style.fontSize = `${currentScale}%`;
+    localStorage.setItem('ngrt_font_scale', String(currentScale));
+    if (fontResetBtn) {
+      fontResetBtn.textContent = `${currentScale}%`;
+      fontResetBtn.setAttribute('aria-label', `Reset text size (currently ${currentScale}%)`);
+    }
+    if (mobileFontResetBtn) {
+      mobileFontResetBtn.textContent = `${currentScale}%`;
+    }
+    if (shouldAnnounce) {
+      announce(`Text size set to ${currentScale} percent`);
+    }
+  };
+
+  applyTheme(currentTheme, false);
+  applyFontScale(currentScale, false);
+
+  const toggleTheme = () => applyTheme(currentTheme === 'dark' ? 'light' : 'dark', true);
+  if (themeBtn) themeBtn.addEventListener('click', toggleTheme);
+  if (mobileThemeBtn) mobileThemeBtn.addEventListener('click', toggleTheme);
+
+  const incBtn = document.getElementById('font-increase');
+  const decBtn = document.getElementById('font-decrease');
+  const mobIncBtn = document.getElementById('mobile-font-increase');
+  const mobDecBtn = document.getElementById('mobile-font-decrease');
+
+  if (incBtn) incBtn.addEventListener('click', () => applyFontScale(currentScale + 10, true));
+  if (decBtn) decBtn.addEventListener('click', () => applyFontScale(currentScale - 10, true));
+  if (fontResetBtn) fontResetBtn.addEventListener('click', () => applyFontScale(100, true));
+  if (mobIncBtn) mobIncBtn.addEventListener('click', () => applyFontScale(currentScale + 10, true));
+  if (mobDecBtn) mobDecBtn.addEventListener('click', () => applyFontScale(currentScale - 10, true));
+  if (mobileFontResetBtn) mobileFontResetBtn.addEventListener('click', () => applyFontScale(100, true));
 
 });
