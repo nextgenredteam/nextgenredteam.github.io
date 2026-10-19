@@ -186,38 +186,59 @@
     <div class="cyber-container">
       <div class="section-header">
         <div class="tag">// CORE CAPABILITIES</div>
-        <h2 class="section-title">Threat Emulation Research &amp; Open-Source Tooling</h2>
-        <p class="section-desc">We research emerging threat group behaviors, develop open-source playbooks, and reverse-engineer devices to help organizations validate their security posture and train defense teams.</p>
+        <h2 class="section-title">Offensive AI, Threat Emulation &amp; Hardware Research</h2>
+        <p class="section-desc">We benchmark offensive AI models, virtualize edge NPU silicon, emulate advanced threat group behaviors, and build open-source toolkits to help organizations validate their security posture and train defense teams.</p>
         <div class="cyber-divider-pink"></div>
       </div>
       
       <div class="services-grid">
-        <!-- Service 1: Threat Emulation -->
-        <div class="service-card">
-          <div class="service-icon text-pink">⚔️</div>
-          <h3>Threat Emulation Research</h3>
-          <p>Adversary emulation is the cornerstone of proactive cyber defense. We specialize in researching, modeling, and recreating advanced persistent threat (APT) campaigns and modern ransomware deployment flows. By analyzing real-world tactics, techniques, and procedures (TTPs) at the byte level, we provide organizations with the objective playbooks and telemetry footprints required to test and validate detection engineering pipelines against state-of-the-art evasive strategies.</p>
-        </div>
-
-        <!-- Service 2: Purple Teaming -->
-        <div class="service-card purple-accent">
-          <div class="service-icon text-purple">🛡️</div>
-          <h3>Purple Teaming &amp; Collaborative Defense</h3>
-          <p>True resilience is achieved when offensive insight meets defensive engineering. We develop structured purple teaming methodologies and collaborative feedback loops designed to break down security silos. Our research focuses on building open-source validation playbooks, mapping control coverage to the MITRE ATT&CK framework, and establishing continuous testing protocols that empower blue teams to identify, isolate, and remediate coverage gaps before real adversaries exploit them.</p>
-        </div>
-
-        <!-- Service 3: Threat Research -->
+        <!-- Service 1: Offensive AI & Agentic Security Research -->
         <div class="service-card cyan-accent">
-          <div class="service-icon text-cyan">🔬</div>
-          <h3>Threat Research &amp; Open-Source</h3>
-          <p>We believe that contributing back to the security community is vital for collaborative defense. Our lab actively monitors emerging threat vectors, conducts deep malware analysis, and reverse-engineers legacy/abandoned IoT devices to mitigate operational risks. From writing custom decryption utilities to developing lightweight automation scripts, we build and release open-source security toolkits designed to make robust protection accessible for security practitioners and developers alike.</p>
+          <div class="service-icon text-cyan" aria-hidden="true">🤖</div>
+          <h3>Offensive AI &amp; Agentic Security Research</h3>
+          <p>AI and LLM-integrated applications introduce high-risk vulnerabilities at 2.7x the rate of traditional software assets. Our lab benchmarks local Mixture-of-Experts (MoE) vs. dense reasoning models (<a href="blog/strata-benchmarks-zimacube-pro.html" class="text-cyan">Strata Benchmarks</a>), tests autonomous multi-agent offensive swarms (<a href="blog/reasoning-models-vs-frontier-models-in-offensive-security-benchmarking.html" class="text-cyan">Reasoning vs. Frontier Models</a>), and engineers deterministic API-layer kill switches and scope guardrails to contain rogue agentic workflows.</p>
         </div>
 
-        <!-- Service 4: Mentoring -->
+        <!-- Service 2: Edge NPU Silicon & Hardware Reverse Engineering -->
+        <div class="service-card purple-accent">
+          <div class="service-icon text-purple" aria-hidden="true">🧠</div>
+          <h3>Edge NPU Silicon &amp; Hardware Reverse Engineering</h3>
+          <p>We push offensive and defensive AI to the bare-metal silicon edge. Our research spans virtualizing 24 TOPS PCIe NPUs (such as the Axera AX8850) inside Proxmox VE LXC containers with <a href="blog/ultimate-guide-zero-copy-ax8850.html" class="text-purple">zero-copy CMM memory pipelines</a>, auditing vendor C/C++ NPU runtime SDKs for DMA and memory corruption vulnerabilities, and reverse-engineering abandoned IoT hardware ecosystems like the <a href="blog/rescuing-abandoned-iot-joebro-sobro.html" class="text-purple">JoeBro Sobro Smart Table PWA</a>.</p>
+        </div>
+
+        <!-- Service 3: Threat Emulation -->
+        <div class="service-card">
+          <div class="service-icon text-pink" aria-hidden="true">⚔️</div>
+          <h3>Threat Emulation Research</h3>
+          <p>Adversary emulation is the cornerstone of proactive cyber defense. We specialize in researching, modeling, and recreating advanced persistent threat (APT) campaigns and authentication attack flows. By analyzing real-world tactics, techniques, and procedures (TTPs) at the byte level, we provide organizations with objective playbooks and cross-platform <a href="blog/emulating-windows-linux-logon-failures.html" class="text-pink">Windows (Event ID 4625) &amp; Linux SSH telemetry emulators</a> to validate detection pipelines.</p>
+        </div>
+
+        <!-- Service 4: Purple Teaming -->
+        <div class="service-card purple-accent">
+          <div class="service-icon text-purple" aria-hidden="true">🛡️</div>
+          <h3>Purple Teaming &amp; Collaborative Defense</h3>
+          <p>True resilience is achieved when offensive insight meets defensive engineering. We develop structured purple teaming methodologies and collaborative feedback loops designed to break down security silos. Our research focuses on building open-source validation playbooks, mapping control coverage to the MITRE ATT&amp;CK framework, and establishing <a href="blog/testing-authentication-telemetry.html" class="text-purple">continuous telemetry validation protocols</a> that empower blue teams to isolate coverage gaps before adversaries exploit them.</p>
+        </div>
+
+        <!-- Service 5: Threat Research & Open-Source -->
+        <div class="service-card cyan-accent">
+          <div class="service-icon text-cyan" aria-hidden="true">🔬</div>
+          <h3>Private AI Labs &amp; Open-Source Tooling</h3>
+          <p>Contributing back to the security community is vital for collective defense. We design zero-telemetry, air-gapped offensive research environments (<a href="blog/building-private-ai-research-lab-searxng-litellm.html" class="text-cyan">SearXNG &amp; LiteLLM Gateways</a> on <a href="blog/massive-environment-overhaul-brain-rtx.html" class="text-cyan">NextGenPVE</a>) and release open-source security utilities, multi-language threat emulators, and hardware rescue tools on <a href="https://github.com/nextgenredteam" target="_blank" rel="noopener" class="text-cyan">GitHub</a>.</p>
+        </div>
+
+        <!-- Service 6: Accessible Security & Screen-Reader CLI Engineering -->
+        <div class="service-card">
+          <div class="service-icon text-pink" aria-hidden="true">♿</div>
+          <h3>Accessible Security &amp; 500-WPM Screen-Reader Engineering</h3>
+          <p>Led by <a href="https://theblindhacker.com" target="_blank" rel="noopener" class="text-pink">Joe Brinkley (The Blind Hacker)</a>, we pioneer high-velocity, screen-reader-first (<a href="blog/hacking-by-ear-at-500-wpm-screen-readers.html" class="text-pink">Hacking by Ear at 500 WPM</a>) Linux CLI methodologies for blind and visually impaired security engineers. Explore our dedicated <a href="https://theblindhacker.com/hackingwhileblind" target="_blank" rel="noopener" class="text-pink">Hacking While Blind CLI Survival Guide</a> to see how pure text streams and terminal automation outperform visual GUIs.</p>
+        </div>
+
+        <!-- Service 7: Mentoring (Full-Width Banner) -->
         <div class="service-card cyan-accent mentoring-card">
-          <div class="service-icon text-cyan">🤝</div>
-          <h3>Mentoring via Dead Pixel Sec</h3>
-          <p>At NextGen RedTeam, we believe the future of cybersecurity isn’t just built on better tools—it’s built on better people. We are deeply committed to bridging the gap between raw potential and professional mastery by providing the next generation of defenders and operators with the guidance they actually need. Through hands-on, high-impact projects alongside the <a href="https://deadpixelsec.com" target="_blank" class="text-cyan">Dead Pixel Sec (DeadPixelSec.com)</a> community, we move past surface-level theory to provide real-world technical mentorship and career navigation. Our mission is to foster a collaborative environment where emerging talent can stress-test their skills, refine their offensive methodology, and gain the confidence to lead in an increasingly complex threat landscape. We aren’t just teaching hacking; we’re cultivating a community of practitioners dedicated to excellence, integrity, and the relentless pursuit of improvement. Visit <a href="https://deadpixelsec.com" target="_blank" class="text-cyan">DeadPixelSec.com</a> or join the community on <a href="https://discord.gg/deadpixelsec" target="_blank" class="text-cyan">discord.gg/deadpixelsec</a>.</p>
+          <div class="service-icon text-cyan" aria-hidden="true">🤝</div>
+          <h3>Mentoring &amp; Community via Dead Pixel Sec</h3>
+          <p>At NextGenRedTeam, we believe the future of cybersecurity isn’t just built on better tools, it’s built on better people. We are deeply committed to bridging the gap between raw potential and professional mastery by providing the next generation of defenders and operators with the guidance they actually need. Through hands-on, high-impact projects alongside the <a href="https://deadpixelsec.com" target="_blank" rel="noopener" class="text-cyan">Dead Pixel Sec (DeadPixelSec.com)</a> community, we move past surface-level theory to provide real-world technical mentorship, resume reviews, mock interviews, and career navigation. Visit <a href="https://deadpixelsec.com" target="_blank" rel="noopener" class="text-cyan">DeadPixelSec.com</a>, join our Discord at <a href="https://discord.gg/deadpixelsec" target="_blank" rel="noopener" class="text-cyan">discord.gg/deadpixelsec</a>, or connect with Joe on <a href="https://www.linkedin.com/in/brinkleyjoseph/" target="_blank" rel="noopener" class="text-cyan">LinkedIn</a> and <a href="https://x.com/TheBlindHacker" target="_blank" rel="noopener" class="text-cyan">@TheBlindHacker on X</a>.</p>
         </div>
       </div>
     </div>
