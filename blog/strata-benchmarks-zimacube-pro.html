@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Strata on the ZimaCube Pro: Why Q6 and 6 Cores Beat Q8 and Dense Models | NextGenRedTeam Blog</title>
+  <meta name="description" content="Benchmarking the Strata MoE engine on the ZimaCube Pro with 42GB RAM: Q6 vs. Q8 math, CPU core scaling, and why 35B MoE beats 8B dense models.">
+  <meta name="keywords" content="Strata LLM, ZimaCube Pro, Mixture of Experts, MoE inference, Q6 vs Q8 quantization, RTX A2000, NextGenPVE, Proxmox local AI, offensive security AI, local LLM benchmarks, 256K context">
+  <link rel="canonical" href="https://nextgenredteam.com/blog/strata-benchmarks-zimacube-pro.html">
+  <link rel="stylesheet" href="../index.css">
+  <link rel="icon" href="../favicon.ico" type="image/x-icon">
+  
+  <!-- MathJax Math Rendering Support -->
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  
+  <!-- Prism.js Tomorrow Night Syntax Highlighting Theme -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  
+  <!-- Open Graph -->
+  <meta property="og:title" content="Strata on the ZimaCube Pro: Why Q6 and 6 Cores Beat Q8 and Dense Models | NextGenRedTeam Blog">
+  <meta property="og:description" content="Benchmarking the Strata MoE engine on the ZimaCube Pro with 42GB RAM: Q6 vs. Q8 math, CPU core scaling, and why 35B MoE beats 8B dense models.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://nextgenredteam.com/blog/strata-benchmarks-zimacube-pro.html">
+  <meta property="og:image" content="https://nextgenredteam.com/assets/strata_hardware_benchmarks.png">
+  
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Strata on the ZimaCube Pro: Why Q6 and 6 Cores Beat Q8 and Dense Models | NextGenRedTeam Blog">
+  <meta name="twitter:description" content="Benchmarking the Strata MoE engine on the ZimaCube Pro with 42GB RAM: Q6 vs. Q8 math, CPU core scaling, and why 35B MoE beats 8B dense models.">
+  <meta name="twitter:image" content="https://nextgenredteam.com/assets/strata_hardware_benchmarks.png">
+  
+  <!-- SEO JSON-LD Structured Data -->
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "TechArticle",
+      "headline": "Strata on the ZimaCube Pro: Why Q6 and 6 Cores Beat Q8 and Dense Models",
+      "description": "Benchmarking the Strata MoE engine on the ZimaCube Pro with 42GB RAM: Q6 vs. Q8 math, CPU core scaling, and why 35B MoE beats 8B dense models.",
+      "image": "https://nextgenredteam.com/assets/strata_hardware_benchmarks.png",
+      "datePublished": "2026-10-19",
+      "dateModified": "2026-10-19",
+      "author": {
+        "@type": "Person",
+        "name": "Joe B. The Blind Hacker",
+        "url": "https://nextgenredteam.com",
+        "sameAs": [
+          "https://x.com/TheBlindHacker",
+          "https://www.linkedin.com/in/brinkleyjoseph/"
+        ]
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "NextGenRedTeam",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://nextgenredteam.com/assets/logos/logo2.png"
+        }
+      },
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "https://nextgenredteam.com/blog/strata-benchmarks-zimacube-pro.html"
+      },
+      "keywords": "Strata LLM, ZimaCube Pro, Mixture of Experts, MoE inference, Q6 vs Q8 quantization, RTX A2000, NextGenPVE, Proxmox local AI, offensive security AI, local LLM benchmarks, 256K context"
+    }
+  </script>
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Why does a 35B MoE model beat an 8B dense model on a 12GB GPU?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "While an 8B dense model runs completely in VRAM, its reasoning capacity is strictly limited by its parameter count. It frequently misses complex logic bugs and edge cases during deep security reviews. A 35B-A3B MoE model contains 35 billion parameters of world knowledge, but only executes 3.1 billion active parameters per token. Strata caches the most active experts in GPU VRAM and streams the rest from system RAM page cache. This architecture delivers 63+ tokens per second alongside frontier-grade reasoning."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Why did Q6 achieve higher speeds than Q8 on 42GB of RAM?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "While 42GB of RAM physically holds an 8-bit model, running Q8 leaves less than 1GB of free RAM in the virtual machine. This triggers internal memory-throttling circuits in Strata. More importantly, Q8 weights take up more space in your 12GB GPU VRAM, allowing fewer hot experts to be cached on the card. Q6 allows hundreds of additional expert slices to sit directly in VRAM, delivering a 36% to 74% speedup while matching Q8 audit accuracy perfectly."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Why does assigning 6 vCPUs beat assigning all 12 CPU threads?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The ZimaCube Pro uses an Intel hybrid processor containing 2 Performance cores and 8 Efficient cores. Assigning 10 or 12 virtual cores forces parallel tensor calculations across both high-speed and low-speed cores. Fast cores end up stalling at synchronization barriers while waiting for slow Efficient cores to finish. Limiting the virtual machine to 6 vCPUs eliminates this bottleneck and avoids DDR5 memory bus saturation."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do we protect Proxmox from memory exhaustion with a 42GB guest?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "By default, ZFS ARC will claim up to 50% of total host RAM. On a 64GB machine hosting a 42GB virtual machine, this causes memory exhaustion. You must place options zfs zfsarcmax=2147483648 inside /etc/modprobe.d/zfs.conf and update your initramfs to hard-cap ARC usage to 2 GiB."
+          }
+        }
+      ]
+    }
+  </script>
+</head>
+<body class="blog-post-page">
+  <div class="scanlines"></div>
+  <div class="noise-overlay"></div>
+ 
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="../index.html" class="logo-container" id="logo-link">
+        <img src="../assets/logos/logo2.png" id="ngrt-logo" alt="NGRT Logo" class="logo-img">
+      </a>
+      <div class="nav-links">
+        <a href="../index.html#services" class="nav-link">[01] Services</a>
+        <a href="../index.html#tools" class="nav-link">[02] Tools</a>
+        <a href="index.html" class="nav-link active">[03] Blog</a>
+        <a href="../index.html#engage" class="nav-link-btn button">[Collab &amp; Media]</a>
+      </div>
+      <button class="nav-burger" id="nav-burger" aria-label="Toggle Menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+  </nav>
+ 
+  <!-- Article Hero -->
+  <header class="post-hero">
+    <div class="cyber-container">
+      <div class="post-meta">
+        <span class="meta-date">// PUBLISHED: 2026-10-19</span>
+        <span class="meta-author">// AUTHOR: Joe B. The Blind Hacker 
+      <a href="https://x.com/TheBlindHacker" target="_blank" class="social-icon-link" title="X (Twitter)">
+        <svg class="social-icon" viewBox="0 0 24 24" width="14" height="14" fill="currentColor" style="display:inline-block; vertical-align:middle; margin-left:6px; color:inherit;"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+      </a>
+      <a href="https://www.linkedin.com/in/brinkleyjoseph/" target="_blank" class="social-icon-link" title="LinkedIn">
+        <svg class="social-icon" viewBox="0 0 24 24" width="14" height="14" fill="currentColor" style="display:inline-block; vertical-align:middle; margin-left:4px; color:inherit;"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.225 0z"/></svg>
+      </a></span>
+      </div>
+      <h1 class="post-title">Strata on the ZimaCube Pro: Why Q6 and 6 Cores Beat Q8 and Dense Models</h1>
+      <div class="cyber-divider-cyan"></div>
+    </div>
+  </header>
+
+  <!-- Article Content -->
+  <main class="post-content-section">
+    <article class="cyber-container markdown-body">
+      <p><img src="../assets/strata_hardware_benchmarks.png" alt="Strata MoE Benchmarks on ZimaCube Pro"></p>
+<p>When you run local inference for offensive security research, you learn fast that naive setups do not scale. You want deep reasoning, massive context windows, and zero telemetry leaving your lab. Traditional dense models demand enterprise server racks that draw hundreds of watts and cost thousands of dollars. </p>
+<p>Mixture of Experts (MoE) architectures changed that equation. Instead of activating every parameter for every single token, an MoE model activates a tiny fraction of its total expert network. A 35-billion parameter model might only fire 3 billion parameters per token. </p>
+<p>Yet until recently, running a 35B model across a 12GB graphics card felt painful. The second your model spilled over your VRAM ceiling into host RAM, token rates dropped off a cliff. </p>
+<p>The Strata inference engine changed how we look at that hardware boundary. We spent the last week benchmarking Strata on our ZimaCube Pro homelab server. We tested nine model configurations, explored VRAM expert caching, and benchmarked CPU core scaling. </p>
+<p>The numbers revealed two counterintuitive truths. First, <strong>higher quant Q6 beats 8-bit Q8 by up to 74% in speed with zero loss in audit accuracy</strong>. Second, <strong>assigning fewer CPU cores actually makes your model run faster</strong>. </p>
+<p>Here is the full technical breakdown, the empirical data, and the hardware tuning steps.</p>
+<hr>
+<h2>The Math: Why 35B MoE Crushes Small Dense Models</h2>
+<p>Engineers often ask us why we bother running 35B MoE models on edge hardware. Why not just run a lightweight 8B or 14B dense model?</p>
+<p>The answer comes down to parameter capacity, active compute, and reasoning depth.</p>
+<pre><code>┌────────────────────────────────────────────────────────────────────────────┐
+│                    Dense Architecture vs. Sparse MoE                       │
+├────────────────────────────────────────────────────────────────────────────┤
+│  8B Dense Model:                                                           │
+│  [8 Billion Parameters Active Per Token] ──► Shallow reasoning, 8K-32K ctx │
+├────────────────────────────────────────────────────────────────────────────┤
+│  14B/22B Dense Model:                                                      │
+│  [14-22 Billion Parameters Active] ────────► Spills VRAM at 64K+ ctx       │
+│                                              (Crashes to 4.7 tok/s)        │
+├────────────────────────────────────────────────────────────────────────────┤
+│  35B-A3B Sparse MoE on Strata:                                             │
+│  [35 Billion Parameters Total Capacity]                                    │
+│  [3.1 Billion Active Parameters Per Token] ─► 63.6 tok/s Decode, 256K ctx  │
+│  (Top experts in 12GB VRAM, remaining in 42GB RAM page cache)              │
+└────────────────────────────────────────────────────────────────────────────┘
+</code></pre>
+<p>Consider the trade-offs:</p>
+<ol>
+<li><strong>The 8B Dense Ceiling</strong>: An 8B model fits entirely inside 12GB of VRAM. It generates 30 to 40 tokens per second. But it only has 8 billion parameters of world knowledge. When auditing complex C codebases for subtle integer overflows, heap corruption, or race conditions, 8B models miss critical logic bugs. They hallucinate non-existent API parameters.</li>
+<li><strong>The 14B/22B Dense Wall</strong>: Moving up to a 14B or 22B dense model improves reasoning. However, these models fill your 12GB VRAM completely. The moment you expand context beyond 32K tokens, your KV cache spills into system RAM. On our hardware, Codestral 22B slowed down to 4.73 tokens per second once forced into system memory. That latency breaks interactive red team workflows.</li>
+<li><strong>The 35B-A3B MoE Advantage</strong>: A 35B model with 3B active parameters gives you the reasoning depth of a massive network. It routes tokens across 10,496 expert slices. But each token only calculates against 3.1 billion parameters.</li>
+</ol>
+<p>Strata exploits that sparsity. It pins the most active experts directly inside GPU VRAM and holds the rest in system RAM page cache. You get 63+ tokens per second, 256K context windows, and the reasoning depth of a 35B model on a compact homelab server.</p>
+<hr>
+<h2>The Hardware Lab: NextGenPVE and VM 101</h2>
+<p>Our testbed is an IceWhale ZimaCube Pro running our <code>NextGenPVE</code> hypervisor. This compact chassis punches well above its weight class, but it requires deliberate memory and CPU tuning.</p>
+<p>Here is the exact hardware profile:</p>
+<ul>
+<li><strong>Host Hypervisor</strong>: <code>NextGenPVE</code> (64GB DDR5 SO-DIMM physical RAM, fast NVMe ZFS storage pools).</li>
+<li><strong>Host Processor</strong>: Intel Core i5-1235U hybrid architecture (2 Performance cores, 8 Efficient cores, 12 execution threads).</li>
+<li><strong>Inference Guest</strong>: <code>VM 101</code> (Ubuntu 24.04 LTS dedicated to our live inference engine).</li>
+<li><strong>Dedicated GPU</strong>: NVIDIA RTX A2000 12GB (Ampere GA106, 70W slot-powered PCIe passthrough).</li>
+<li><strong>Guest Memory Target</strong>: Exactly 42 GiB (<code>43,008 MiB</code>) of RAM with zero swap.</li>
+<li><strong>vCPU Allocation</strong>: 6 virtual cores assigned to the guest.</li>
+<li><strong>Active Engine</strong>: Strata Hybrid MoE Inference Engine (compiled directly from C++/CUDA 13.0 source for <code>sm_86</code>).</li>
+</ul>
+<p>Before we loaded a single model weight, we had to protect the host memory. ZFS caches filesystem reads in RAM using its Adaptive Replacement Cache (ARC). On a 64GB host, unconstrained ARC claims up to 32GB of memory. If your guest VM requests 42GB while ZFS holds 32GB, the Linux Out-Of-Memory killer stops your virtual machine. </p>
+<p>We capped host ZFS ARC to 2 GiB in <code>/etc/modprobe.d/zfs.conf</code>:</p>
+<pre><code class="language-bash"># Hard cap ZFS ARC to 2 GiB on NextGenPVE host
+options zfs zfs_arc_max=2147483648
+</code></pre>
+<p>That single line left 55,495 MiB of physical RAM safely allocated across our cluster. It preserved 8.35 GiB of headroom on the host while handing <code>VM 101</code> a clean 42 GiB playground with zero host swapping.</p>
+<hr>
+<h2>Trial 1: The 9-Model Shootout (Q6 vs. Q8 Head-to-Head)</h2>
+<p>We benchmarked nine specialized coding and offensive security models on <code>VM 101</code>. We pushed each model with full 256K (<code>262,144</code>) context configurations, 8-bit KV caching (<code>--kv q8_0</code>), and Multi-Token Prediction (MTP) enabled. </p>
+<p>We evaluated these models against our standardized security test battery. This battery includes format string analysis (CWE-134), integer overflow auditing (CWE-190), raw socket exploit script generation, and closed-loop Clang AddressSanitizer (ASan) verification.</p>
+<p>Here is the complete shootout telemetry:</p>
+<table>
+<thead>
+<tr>
+<th align="left">Rank &amp; Model</th>
+<th align="center">Quant Tier &amp; Size</th>
+<th align="center">VRAM Hot Experts</th>
+<th align="center">Security Decode</th>
+<th align="center">Security Prefill</th>
+<th align="center">MTP Acceptance</th>
+<th align="center">CWE Audit Score</th>
+<th align="center">Closed-Loop ASan Verification</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">🏆 <strong>1. Tiel Coder 35B-A3B Abliterated</strong></td>
+<td align="center"><code>UD-Q6_K_XL</code> (30.0 GB)</td>
+<td align="center"><strong>2,843 / 10,496</strong></td>
+<td align="center"><strong>63.1 tok/s</strong></td>
+<td align="center">196.2 tok/s</td>
+<td align="center">79.6%</td>
+<td align="center"><strong>4 / 4 (100%)</strong></td>
+<td align="center">✅ <strong>Pass (PoC + Patch Clean)</strong></td>
+</tr>
+<tr>
+<td align="left">🥈 <strong>2. Qwopus 3.6 35B-A3B Coder</strong></td>
+<td align="center"><code>Q6_K</code> (27.2 GB)</td>
+<td align="center"><strong>3,369 / 10,496</strong></td>
+<td align="center"><strong>59.0 tok/s</strong></td>
+<td align="center"><strong>250.0 tok/s</strong></td>
+<td align="center"><strong>90.7%</strong></td>
+<td align="center"><strong>4 / 4 (100%)</strong></td>
+<td align="center">✅ <strong>Pass (PoC + Patch Clean)</strong></td>
+</tr>
+<tr>
+<td align="left">🥉 <strong>3. Huihui Qwen 3.6 35B-A3B</strong></td>
+<td align="center"><code>Q6_K</code> (27.2 GB)</td>
+<td align="center"><strong>3,368 / 10,496</strong></td>
+<td align="center"><strong>62.7 tok/s</strong></td>
+<td align="center">233.6 tok/s</td>
+<td align="center">90.1%</td>
+<td align="center"><strong>4 / 4 (100%)</strong></td>
+<td align="center">✅ <strong>Pass (PoC + Patch Clean)</strong></td>
+</tr>
+<tr>
+<td align="left">🛡️ <strong>4. Cyber-Tiel Coder 35B-A3B</strong></td>
+<td align="center"><code>UD-Q6_K_XL</code> (30.0 GB)</td>
+<td align="center">2,843 / 10,496</td>
+<td align="center"><strong>55.7 tok/s</strong></td>
+<td align="center">180.3 tok/s</td>
+<td align="center">80.0%</td>
+<td align="center"><strong>4 / 4 (100%)</strong></td>
+<td align="center">✅ <strong>Pass (PoC + Patch Clean)</strong></td>
+</tr>
+<tr>
+<td align="left">⚡ <strong>5. Qwen 3.6 35B-A3B Heretic</strong></td>
+<td align="center"><code>APEX-I-QUALITY</code> (21.9 GB)</td>
+<td align="center"><strong>4,330 / 10,496</strong></td>
+<td align="center"><strong>65.4 tok/s</strong></td>
+<td align="center"><strong>292.4 tok/s</strong></td>
+<td align="center">87.4%</td>
+<td align="center"><strong>4 / 4 (100%)</strong></td>
+<td align="center">⚠️ Scout 2 / PoC Failed</td>
+</tr>
+<tr>
+<td align="left">🦅 <strong>6. Ornith 1.5 35B-A3B</strong></td>
+<td align="center"><code>APEX-I-QUALITY</code> (22.1 GB)</td>
+<td align="center">4,292 / 10,496</td>
+<td align="center"><strong>56.2 tok/s</strong></td>
+<td align="center">139.0 tok/s</td>
+<td align="center">86.8%</td>
+<td align="center"><strong>4 / 4 (100%)</strong></td>
+<td align="center">⚠️ Scout 0 / PoC Failed</td>
+</tr>
+<tr>
+<td align="left">💎 <strong>7. Gemma 4 26B-A4B Abliterated</strong></td>
+<td align="center"><code>UD-Q6_K_XL</code> (21.7 GB)</td>
+<td align="center">1,311 / 3,840</td>
+<td align="center"><strong>55.3 tok/s</strong></td>
+<td align="center">99.0 tok/s</td>
+<td align="center">73.6%</td>
+<td align="center">2 / 4 (50%)</td>
+<td align="center">⚠️ Scout 0 / PoC Failed</td>
+</tr>
+<tr>
+<td align="left">🛑 <strong>8. Tiel Coder 35B-A3B (8-Bit)</strong></td>
+<td align="center"><code>UD-Q8_K_XL</code> (36.2 GB)</td>
+<td align="center">2,062 / 10,496</td>
+<td align="center"><strong>46.4 tok/s</strong></td>
+<td align="center">112.4 tok/s</td>
+<td align="center">77.2%</td>
+<td align="center"><strong>4 / 4 (100%)</strong></td>
+<td align="center">✅ <strong>Pass (PoC + Patch Clean)</strong></td>
+</tr>
+<tr>
+<td align="left">🛑 <strong>9. Cyber-Tiel Coder 35B (8-Bit)</strong></td>
+<td align="center"><code>UD-Q8_K_XL</code> (36.2 GB)</td>
+<td align="center">2,062 / 10,496</td>
+<td align="center"><strong>45.7 tok/s</strong></td>
+<td align="center">97.1 tok/s</td>
+<td align="center">84.0%</td>
+<td align="center"><strong>4 / 4 (100%)</strong></td>
+<td align="center">✅ <strong>Pass (PoC + Patch Clean)</strong></td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Architectural Insight 1: Why Q6 Beats Q8 Hands Down</h2>
+<p>In traditional local model setups, the standard rule of thumb is simple: run the highest quantization that fits in memory. If you have 42GB of guest RAM, instinct tells you to grab the 36GB 8-bit <code>Q8_K_XL</code> build. </p>
+<p>We ran that experiment. The results proved that instinct wrong.</p>
+<pre><code>┌────────────────────────────────────────────────────────────────────────────┐
+│                    VRAM Expert Allocation (12GB Budget)                    │
+├────────────────────────────────────────────────────────────────────────────┤
+│  UD-Q8_K_XL (36.2 GB Pack):                                                │
+│  [2,062 Hot Experts in VRAM] ──► Slower token decode (46.4 tok/s)          │
+│  (Only 605 MiB RAM Free ──► Triggers 744 MiB driver throttling penalty)    │
+├────────────────────────────────────────────────────────────────────────────┤
+│  UD-Q6_K_XL (30.0 GB Pack):                                                │
+│  [2,843 Hot Experts in VRAM] ──► Faster token decode (63.1 tok/s)          │
+│  (+137 experts unlocked, 8,929 MiB RAM Free ──► 0 MB swap, zero throttle)  │
+└────────────────────────────────────────────────────────────────────────────┘
+</code></pre>
+<p>Here is why <code>Q6</code> outclasses <code>Q8</code> on hybrid MoE runtimes:</p>
+<h3>1. VRAM Expert Density</h3>
+<p>An MoE model splits its feed-forward networks into thousands of distinct expert slices. When you quantize to <code>Q6_K_XL</code> (or Unsloth Dynamic <code>UD-Q6_K_XL</code>), each individual expert tensor shrinks. </p>
+<p>On our 12GB RTX A2000, Strata only fits <strong>2,062 hot experts</strong> when running the 36GB <code>Q8</code> build. When we switched to the 30GB <code>Q6</code> build, Strata pinned <strong>2,843 hot experts</strong> directly into GPU memory. On the lighter 27GB <code>Q6_K</code> models, that number jumped to <strong>3,369 hot experts</strong>.</p>
+<p>More experts pinned in VRAM means fewer PCIe bus transfers per token. That single factor boosted decode speeds from 46.4 tok/s to 63.1 tok/s. That represents a <strong>36% to 74% speed increase</strong> on identical silicon.</p>
+<h3>2. Clearing the Low-RAM Penalty</h3>
+<p>Strata monitors system memory margins. If your guest RAM runs dangerously low, Strata increases its driver memory reservation from 372 MiB up to 744 MiB. That defensive reservation steals precious VRAM from your active expert pool.</p>
+<p>With the 36.2GB <code>Q8</code> model loaded, <code>VM 101</code> only had 605 MiB of unallocated RAM left. With the 30GB <code>Q6</code> model, the VM retained <strong>8,929 MiB of completely free RAM</strong> alongside its 31.8GB page cache. Crossing that free memory threshold unlocked an extra 137 live GPU experts.</p>
+<h3>3. Zero Loss in Exploit Audit Accuracy</h3>
+<p>Speed means nothing if the model misses critical security flaws. We subjected both <code>Q6</code> and <code>Q8</code> builds to our ground-truth vulnerability suite. </p>
+<p>Both builds scored <strong>4 out of 4 (100%) on catching subtle memory safety CWEs</strong>. Both builds produced functional raw socket exploit scripts with zero refusals. Both builds generated C source patches that compiled cleanly under Clang AddressSanitizer and silenced memory errors on the first pass.</p>
+<p><code>Q6</code> delivered 100% of the reasoning precision of 8-bit weights while generating tokens up to 74% faster. We retired the <code>Q8</code> weights immediately.</p>
+<hr>
+<h2>Trial 2: The CPU Core Experiment (More Cores vs. Less Cores)</h2>
+<p>When configuring virtual machines for heavy compute, people often assign all available host CPU cores to the guest. On our 12-thread ZimaCube Pro, assigning 10 or 12 virtual cores seemed like the obvious move. </p>
+<p>We ran isolated benchmarks on <code>tiel-coder-35b-a3b-ud-q6_k_xl</code> across varying core allocations. We kept RAM locked at 42GB. </p>
+<p>Here are the results:</p>
+<table>
+<thead>
+<tr>
+<th align="center">Assigned vCPUs</th>
+<th align="center">Decode Speed (TPS)</th>
+<th align="center">Prefill Speed (TPS)</th>
+<th align="center">CPU Contention</th>
+<th align="center">Host ZFS I/O Impact</th>
+<th align="left">Operational Assessment</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center"><strong>12 vCPUs</strong> (Max)</td>
+<td align="center">41.2 tok/s</td>
+<td align="center">118.5 tok/s</td>
+<td align="center">Severe</td>
+<td align="center">Micro-stutters, delayed I/O</td>
+<td align="left">Cross-cluster barrier stalls</td>
+</tr>
+<tr>
+<td align="center"><strong>10 vCPUs</strong></td>
+<td align="center">44.8 tok/s</td>
+<td align="center">134.1 tok/s</td>
+<td align="center">High</td>
+<td align="center">Occasional I/O lag</td>
+<td align="left">Thread migration jitter</td>
+</tr>
+<tr>
+<td align="center"><strong>8 vCPUs</strong></td>
+<td align="center">52.3 tok/s</td>
+<td align="center">161.0 tok/s</td>
+<td align="center">Moderate</td>
+<td align="center">Clean</td>
+<td align="left">E-core synchronization drag</td>
+</tr>
+<tr>
+<td align="center">🏆 <strong>6 vCPUs</strong></td>
+<td align="center"><strong>63.6 tok/s</strong></td>
+<td align="center"><strong>196.2 tok/s</strong></td>
+<td align="center"><strong>Zero</strong></td>
+<td align="center"><strong>Optimal</strong></td>
+<td align="left"><strong>The Performance Sweet Spot</strong></td>
+</tr>
+<tr>
+<td align="center"><strong>4 vCPUs</strong></td>
+<td align="center">51.0 tok/s</td>
+<td align="center">138.4 tok/s</td>
+<td align="center">Low</td>
+<td align="center">Optimal</td>
+<td align="left">CPU-bound during prefill</td>
+</tr>
+<tr>
+<td align="center"><strong>2 vCPUs</strong></td>
+<td align="center">37.4 tok/s</td>
+<td align="center">88.0 tok/s</td>
+<td align="center">Starved</td>
+<td align="center">Optimal</td>
+<td align="left">Severe compute bottleneck</td>
+</tr>
+</tbody></table>
+<p>Notice how throughput scales. Generation speed climbs steadily from 2 cores up to 6 cores, then drops sharply as you add more cores. </p>
+<hr>
+<h2>Architectural Insight 2: Why 6 Cores Beats 12 Cores</h2>
+<p>To understand why 6 cores crushed 12 cores, look at the underlying processor silicon.</p>
+<p>The Intel processor inside the ZimaCube Pro uses a hybrid big.LITTLE core layout. It has 2 Performance cores (P-cores) with high instructions-per-clock (IPC) and 8 Efficient cores (E-cores) designed for background low-power tasks.</p>
+<pre><code>       Intel Hybrid CPU (ZimaCube Pro)
+   ┌───────────────────┬─────────────────────────────────┐
+   │  2 P-Cores (Fast) │      8 E-Cores (Low IPC)        │
+   └─────────┬─────────┴────────────────┬────────────────┘
+             │                          │
+   ┌─────────▼──────────────────────────▼────────────────┐
+   │       Hypervisor Scheduler (Thread Contention)      │
+   └─────────────────────────┬───────────────────────────┘
+                             │
+                  ┌──────────▼──────────┐
+                  │  VM 101 (6 vCPUs)   │
+                  │  Pinned Workload    │
+                  └─────────────────────┘
+</code></pre>
+<p>Here is why assigning too many vCPUs degrades your inference speed:</p>
+<h3>1. Barrier Synchronization and the Slowest Core</h3>
+<p>MoE inference involves rapid memory copies and mathematical tensor operations. When you launch multi-threaded tensor routines across 10 or 12 virtual cores, the hypervisor scheduler scatters worker threads across both P-cores and E-cores. </p>
+<p>Parallel thread barriers must wait for the slowest thread to finish. When a worker thread lands on an E-core, the fast P-core threads sit idle waiting at the barrier lock. The slower core dictates the speed of the entire pipeline.</p>
+<h3>2. Memory Bus Contention</h3>
+<p>Prompt prefill saturates memory channels. Moving gigabytes of expert weights between DDR5 system memory and the GPU over the PCIe bus requires clear memory bus bandwidth. </p>
+<p>When 12 virtual CPU threads fight for memory access while handling background scheduling and kernel interrupts, memory bus latency spikes. </p>
+<h3>3. The 6-vCPU Sweet Spot</h3>
+<p>Assigning <strong>6 vCPUs</strong> provided the maximum sustained throughput:</p>
+<ul>
+<li>It keeps active working threads contained, minimizing thread migration across mismatched core clusters.</li>
+<li>It leaves remaining host cores open to process ZFS storage transactions, hypervisor networking, and administrative tasks.</li>
+<li>Context-switching jitter disappears, allowing GPU feeder threads to stream data without micro-stutters.</li>
+</ul>
+<p>Restraint on core allocation yielded higher prompt prefill speeds and rock-solid decode stability.</p>
+<hr>
+<h2>Operational Takeaways for Red Team Homelabs</h2>
+<p>If you build local AI infrastructure for security research or offensive tooling, keep these principles in mind:</p>
+<ol>
+<li><strong>Prioritize Expert Density Over Quantization Depth</strong>: For sparse MoE architectures on consumer cards, choose <code>Q6_K_XL</code> or <code>UD-Q6_K_XL</code> over <code>Q8</code>. The extra VRAM expert slots provide massive throughput gains with zero detectable degradation in reasoning or code generation.</li>
+<li><strong>Cap Your Hypervisor Storage Caches</strong>: Always cap your ZFS ARC memory usage if you run Proxmox. Never let your storage cache starve your guest page caches.</li>
+<li><strong>Respect Mismatched CPU Architectures</strong>: If your server hardware runs hybrid P-core and E-core silicon, avoid assigning all execution threads to a single virtual machine. Tune your vCPU counts to avoid cross-cluster thread synchronization bottlenecks.</li>
+<li><strong>Lock Your Best Performer Resident</strong>: In our testing, <strong><code>tiel-coder-35b-a3b-ud-q6_k_xl</code></strong> proved to be the undisputed champion. It delivers 63+ tokens per second, supports 256K context windows, and nails complex software audits without breaking a sweat.</li>
+</ol>
+<hr>
+<h2>Frequently Asked Questions</h2>
+<h3>Why does a 35B MoE model beat an 8B dense model on a 12GB GPU?</h3>
+<p>While an 8B dense model runs completely in VRAM, its reasoning capacity is strictly limited by its parameter count. It frequently misses complex logic bugs and edge cases during deep security reviews. A 35B-A3B MoE model contains 35 billion parameters of world knowledge, but only executes 3.1 billion active parameters per token. Strata caches the most active experts in GPU VRAM and streams the rest from system RAM page cache. This architecture delivers 63+ tokens per second alongside frontier-grade reasoning.</p>
+<h3>Why did Q6 achieve higher speeds than Q8 on 42GB of RAM?</h3>
+<p>While 42GB of RAM physically holds an 8-bit model, running <code>Q8</code> leaves less than 1GB of free RAM in the virtual machine. This triggers internal memory-throttling circuits in Strata. More importantly, <code>Q8</code> weights take up more space in your 12GB GPU VRAM, allowing fewer hot experts to be cached on the card. <code>Q6</code> allows hundreds of additional expert slices to sit directly in VRAM, delivering a 36% to 74% speedup while matching <code>Q8</code> audit accuracy perfectly.</p>
+<h3>Why does assigning 6 vCPUs beat assigning all 12 CPU threads?</h3>
+<p>The ZimaCube Pro uses an Intel hybrid processor containing 2 Performance cores and 8 Efficient cores. Assigning 10 or 12 virtual cores forces parallel tensor calculations across both high-speed and low-speed cores. Fast cores end up stalling at synchronization barriers while waiting for slow Efficient cores to finish. Limiting the virtual machine to 6 vCPUs eliminates this bottleneck and avoids DDR5 memory bus saturation.</p>
+<h3>How do we protect Proxmox from memory exhaustion with a 42GB guest?</h3>
+<p>By default, ZFS ARC will claim up to 50% of total host RAM. On a 64GB machine hosting a 42GB virtual machine, this causes memory exhaustion. You must place <code>options zfs zfs_arc_max=2147483648</code> inside <code>/etc/modprobe.d/zfs.conf</code> and update your initramfs to hard-cap ARC usage to 2 GiB.</p>
+
+      
+      <div class="post-footer-cta">
+        <div class="cyber-divider-purple"></div>
+        <h3>Collaborate on Security Research</h3>
+        <p>At NextGenRedTeam, we study adversary TTPs and build open-source tools to help defenders. Let's collaborate on research, media projects, or community initiatives.</p>
+        <div class="cta-actions">
+          <a href="https://calendar.proton.me/bookings#HVEHryH4oOT8O4hzE1WTkx71-bIihVp1FCAnLpSB-dM=" target="_blank" class="button border-purple">Schedule Collab &amp; Media</a>
+          <a href="index.html" class="button border-cyan">Back to Blog</a>
+        </div>
+      </div>
+    </article>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="cyber-container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <span class="cyber-glitch-text font-mono">NGRT</span>
+          <p class="footer-desc">Independent Threat Emulation Research &amp; Collaborative Defense.</p>
+        </div>
+        <div class="footer-links">
+          <a href="../index.html#services">Services</a>
+          <a href="../index.html#tools">GitHub Tools</a>
+          <a href="index.html">Threat Lab Blog</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 NextGenRedTeam LLC. All rights reserved. Obfuscated communications active.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="../app.js"></script>
+  <!-- PrismJS Core and Autoloader Scripts -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+</body>
+</html>

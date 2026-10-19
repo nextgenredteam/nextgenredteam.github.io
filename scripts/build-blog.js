@@ -7,12 +7,25 @@ const postsDir = path.join(__dirname, '../blog/posts');
 const blogOutputDir = path.join(__dirname, '../blog');
 
 // HTML layout for individual blog posts
-function getBlogPostTemplate(metadata, slug, contentHtml) {
+function getBlogPostTemplate(metadata, slug, contentHtml, body = '') {
   const title = metadata.title || 'Untitled Post';
   const date = metadata.date || 'Undated';
   const author = metadata.author || 'Joe Brinkley';
   const description = metadata.description || '';
   const keywords = metadata.keywords || '';
+
+  // Extract banner image for SEO and social preview cards
+  let ogImage = "https://nextgenredteam.com/assets/logos/logo2.png";
+  if (metadata.image) {
+    const cleanImg = metadata.image.replace(/^\.\.\//, '').replace(/^\//, '');
+    ogImage = metadata.image.startsWith('http') ? metadata.image : `https://nextgenredteam.com/${cleanImg}`;
+  } else if (body) {
+    const imgMatch = body.match(/!\[.*?\]\((.*?)\)/);
+    if (imgMatch) {
+      const cleanImg = imgMatch[1].replace(/^\.\.\//, '').replace(/^\//, '');
+      ogImage = imgMatch[1].startsWith('http') ? imgMatch[1] : `https://nextgenredteam.com/${cleanImg}`;
+    }
+  }
 
   let displayAuthor = author;
   if (author.includes("Joe B. The Blind Hacker")) {
@@ -32,10 +45,17 @@ function getBlogPostTemplate(metadata, slug, contentHtml) {
       "@type": "TechArticle",
       "headline": title,
       "description": description,
+      "image": ogImage,
       "datePublished": date,
+      "dateModified": date,
       "author": {
         "@type": "Person",
-        "name": author
+        "name": author,
+        "url": "https://nextgenredteam.com",
+        "sameAs": [
+          "https://x.com/TheBlindHacker",
+          "https://www.linkedin.com/in/brinkleyjoseph/"
+        ]
       },
       "publisher": {
         "@type": "Organization",
@@ -51,6 +71,41 @@ function getBlogPostTemplate(metadata, slug, contentHtml) {
       }
     }
   ];
+
+  if (keywords) {
+    schemaList[0]["keywords"] = keywords;
+  }
+
+  // Automatic FAQPage Schema generation if FAQs exist in markdown
+  if (body) {
+    const faqMatch = body.match(/## Frequently Asked Questions[\s\S]*$/i);
+    if (faqMatch) {
+      const faqSection = faqMatch[0];
+      const questionBlocks = faqSection.split(/\n###\s+/).slice(1);
+      if (questionBlocks.length > 0) {
+        const faqEntities = questionBlocks.map(block => {
+          const qLines = block.trim().split('\n');
+          const questionText = qLines[0].trim();
+          const answerText = qLines.slice(1).join(' ').trim().replace(/[*`_#]/g, '');
+          return {
+            "@type": "Question",
+            "name": questionText,
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": answerText
+            }
+          };
+        });
+        if (faqEntities.length > 0) {
+          schemaList.push({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            "mainEntity": faqEntities
+          });
+        }
+      }
+    }
+  }
 
   // If howto, inject HowTo schema as well
   if (metadata.type === 'howto') {
@@ -109,6 +164,7 @@ function getBlogPostTemplate(metadata, slug, contentHtml) {
   <title>${title} | NextGenRedTeam Blog</title>
   <meta name="description" content="${description}">
   ${keywords ? `<meta name="keywords" content="${keywords}">` : ''}
+  <link rel="canonical" href="https://nextgenredteam.com/blog/${slug}.html">
   <link rel="stylesheet" href="../index.css">
   <link rel="icon" href="../favicon.ico" type="image/x-icon">
   
@@ -123,8 +179,14 @@ function getBlogPostTemplate(metadata, slug, contentHtml) {
   <meta property="og:title" content="${title} | NextGenRedTeam Blog">
   <meta property="og:description" content="${description}">
   <meta property="og:type" content="article">
-  <meta property="og:url" content="https://nextgenredteam.com/blog/">
+  <meta property="og:url" content="https://nextgenredteam.com/blog/${slug}.html">
+  <meta property="og:image" content="${ogImage}">
+  
+  <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="${title} | NextGenRedTeam Blog">
+  <meta name="twitter:description" content="${description}">
+  <meta name="twitter:image" content="${ogImage}">
   
   <!-- SEO JSON-LD Structured Data -->
 ${jsonLdHtml}
@@ -343,7 +405,8 @@ function buildBlog() {
     const renderedPost = getBlogPostTemplate(
       metadata,
       slug,
-      htmlContent
+      htmlContent,
+      body
     );
     fs.writeFileSync(outputPath, renderedPost, 'utf8');
     console.log(`- Rendered: blog/${outputFileName}`);

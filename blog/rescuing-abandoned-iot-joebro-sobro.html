@@ -6,6 +6,7 @@
   <title>Rescuing Abandoned IoT: How I Built JoeBro to Control My Smart Table | NextGenRedTeam Blog</title>
   <meta name="description" content="When manufacturers abandon their mobile apps, expensive smart hardware turns into a brick. Here is how I reverse-engineered the Ayla Networks API to build a zero-backend PWA.">
   <meta name="keywords" content="Sobro Smart Coffee Table, JoeBro Web Controller, Sobro app Android crash, Sobro Wi-Fi setup, Ayla Networks API, Smart Coffee Table Troubleshooting">
+  <link rel="canonical" href="https://nextgenredteam.com/blog/rescuing-abandoned-iot-joebro-sobro.html">
   <link rel="stylesheet" href="../index.css">
   <link rel="icon" href="../favicon.ico" type="image/x-icon">
   
@@ -20,8 +21,14 @@
   <meta property="og:title" content="Rescuing Abandoned IoT: How I Built JoeBro to Control My Smart Table | NextGenRedTeam Blog">
   <meta property="og:description" content="When manufacturers abandon their mobile apps, expensive smart hardware turns into a brick. Here is how I reverse-engineered the Ayla Networks API to build a zero-backend PWA.">
   <meta property="og:type" content="article">
-  <meta property="og:url" content="https://nextgenredteam.com/blog/">
+  <meta property="og:url" content="https://nextgenredteam.com/blog/rescuing-abandoned-iot-joebro-sobro.html">
+  <meta property="og:image" content="https://nextgenredteam.com/assets/logos/logo2.png">
+  
+  <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Rescuing Abandoned IoT: How I Built JoeBro to Control My Smart Table | NextGenRedTeam Blog">
+  <meta name="twitter:description" content="When manufacturers abandon their mobile apps, expensive smart hardware turns into a brick. Here is how I reverse-engineered the Ayla Networks API to build a zero-backend PWA.">
+  <meta name="twitter:image" content="https://nextgenredteam.com/assets/logos/logo2.png">
   
   <!-- SEO JSON-LD Structured Data -->
   <script type="application/ld+json">
@@ -30,10 +37,17 @@
       "@type": "TechArticle",
       "headline": "Rescuing Abandoned IoT: How I Built JoeBro to Control My Smart Table",
       "description": "When manufacturers abandon their mobile apps, expensive smart hardware turns into a brick. Here is how I reverse-engineered the Ayla Networks API to build a zero-backend PWA.",
+      "image": "https://nextgenredteam.com/assets/logos/logo2.png",
       "datePublished": "2026-06-09",
+      "dateModified": "2026-06-09",
       "author": {
         "@type": "Person",
-        "name": "Joe B. The Blind Hacker"
+        "name": "Joe B. The Blind Hacker",
+        "url": "https://nextgenredteam.com",
+        "sameAs": [
+          "https://x.com/TheBlindHacker",
+          "https://www.linkedin.com/in/brinkleyjoseph/"
+        ]
       },
       "publisher": {
         "@type": "Organization",
@@ -46,7 +60,40 @@
       "mainEntityOfPage": {
         "@type": "WebPage",
         "@id": "https://nextgenredteam.com/blog/rescuing-abandoned-iot-joebro-sobro.html"
-      }
+      },
+      "keywords": "Sobro Smart Coffee Table, JoeBro Web Controller, Sobro app Android crash, Sobro Wi-Fi setup, Ayla Networks API, Smart Coffee Table Troubleshooting"
+    }
+  </script>
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Why is my Sobro coffee table not connecting to Wi-Fi?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "If your Sobro table fails to connect, the issue is almost always router-related:  Disable WPA3: Make sure your 2.4 GHz SSID is set to pure WPA2 security. WPA2/WPA3 mixed modes broadcast elements that crash the legacy Broadcom chip inside the table.  Separate SSIDs: Ensure your router has a dedicated SSID for the 2.4 GHz network instead of a unified single-SSID dual-band setup."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I fix the Sobro app crashing on Android and iOS?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The official Sobro app is abandoned and incompatible with modern OS versions. There is no official update available. To solve this: 1. Reconnect your table to your local Wi-Fi using our provisioning scripts. 2. Load the open-source JoeBro Web Controller in your browser (Chrome or Safari). 3. Add the page to your phone's Home Screen to run it as a standalone Progressive Web App (PWA)."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I get my Ayla Networks access token?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "If you want to authenticate manually or write your own scripts:  Log In Directly: You can log in using your registered email and password on the JoeBro PWA interface.  Retrieve via Facebook Login: If your account is linked to Facebook, use the \"Help: How to get your Token or Facebook Code\" utility button on the JoeBro login overlay. It redirects you to the Facebook OAuth callback, where you can copy the authentication token directly from the callback URL or browser DevTools console.  ---   Reclaiming Our Hardware  The success of the JoeBro app shows that we don't have to accept the planned obsolescence of smart devices. If a cloud service is active, we can reverse-engineer it. And if the cloud service ever shuts down completely, we can use local DNS redirection to fake the cloud server and run the table offline.  The JoeBro app code is fully open-source and hosted in our prominent repo spot. Check it out and run it yourself!  Get the code and scripts on the [NextGenRedTeam GitHub](https://github.com/nextgenredteam) or access the controller at [/tools/joebro/](file:///f:/OneDrive/NGRT/Website/tools/joebro/index.html)."
+          }
+        }
+      ]
     }
   </script>
   <script type="application/ld+json">
