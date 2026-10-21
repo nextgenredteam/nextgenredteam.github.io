@@ -203,7 +203,7 @@
         <div class="service-card purple-accent">
           <div class="service-icon text-purple" aria-hidden="true">🧠</div>
           <h3>Edge NPU Silicon &amp; Hardware Reverse Engineering</h3>
-          <p>We push offensive and defensive AI to the bare-metal silicon edge. Our research spans virtualizing 24 TOPS PCIe NPUs (such as the Axera AX8850) inside Proxmox VE LXC containers with <a href="blog/ultimate-guide-zero-copy-ax8850.html" class="text-purple">zero-copy CMM memory pipelines</a>, auditing vendor C/C++ NPU runtime SDKs for DMA and memory corruption vulnerabilities, and reverse-engineering abandoned IoT hardware ecosystems like the <a href="blog/rescuing-abandoned-iot-joebro-sobro.html" class="text-purple">JoeBro Sobro Smart Table PWA</a>.</p>
+          <p>We push offensive and defensive AI to the bare-metal silicon edge. Our research spans virtualizing 24 TOPS PCIe NPUs (such as the Axera AX8850) inside Proxmox VE LXC containers with <a href="blog/ultimate-guide-zero-copy-ax8850.html" class="text-purple">zero-copy CMM memory pipelines</a>, auditing vendor C/C++ NPU runtime SDKs for DMA and memory corruption vulnerabilities (<a href="https://www.cobalt.io/blog/dissecting-the-ax-llm-cves-why-edge-ai-memory-and-execution-boundaries-matter" target="_blank" rel="noopener" class="text-purple">Dissecting the AX-LLM CVEs</a>), and reverse-engineering abandoned IoT hardware ecosystems like the <a href="blog/rescuing-abandoned-iot-joebro-sobro.html" class="text-purple">JoeBro Sobro Smart Table PWA</a>.</p>
         </div>
 
         <!-- Service 3: Threat Emulation -->
@@ -377,6 +377,25 @@
       </div>
 
       <div class="media-grid">
+        <!-- Card 0: Cobalt Research / Dissecting the AX-LLM CVEs -->
+        <div class="media-card active-border-pink">
+          <div class="media-card-header">
+            <span class="media-card-tag pink">COBALT RESEARCH // CVE ADVISORY</span>
+            <span class="media-card-date">OCT 2026</span>
+          </div>
+          <h3>Dissecting the AX-LLM CVEs: Why Edge AI Memory and Execution Boundaries Matter</h3>
+          <div class="media-role-badge">Director of Offensive Security Research &amp; Community, Cobalt</div>
+          <p class="media-quote">
+            “When vendors port cloud LLM runtimes directly to bare-metal NPU silicon without memory isolation, unauthenticated HTTP inputs map straight to Contiguous Media Memory (CMM) DMA buffers and root shell execution.”
+          </p>
+          <div class="media-takeaway">
+            <strong>Key Insight:</strong> Coordinated disclosure of five zero-day vulnerabilities (CVE-2026-30992, CVE-2026-30993, CVE-2026-31026, CVE-2026-35402, CVE-2026-35403) in the AXERA-TECH AX-LLM edge NPU C++ inference engine.
+          </div>
+          <div class="media-card-actions">
+            <a href="https://www.cobalt.io/blog/dissecting-the-ax-llm-cves-why-edge-ai-memory-and-execution-boundaries-matter" target="_blank" class="button border-pink">[Read CVE Analysis on Cobalt]</a>
+          </div>
+        </div>
+
         <!-- Card 1: CSO Online / Rogue AI -->
         <div class="media-card active-border-cyan">
           <div class="media-card-header">
