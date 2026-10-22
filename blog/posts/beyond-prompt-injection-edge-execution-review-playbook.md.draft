@@ -1,13 +1,16 @@
 ---
 title: "Beyond Prompt Injection: The Edge Execution Review (EER) Playbook for AI Silicon"
 date: "2026-11-05"
-author: "Joe Brinkley (The Blind Hacker)"
+author: "Joe B. The Blind Hacker"
 description: "Why red teams must evolve beyond Layer 7 prompt fuzzing to audit low-level inference runtimes. A comprehensive offensive playbook combining Edge Execution Review (EER) and Source Code Review (SRC) on physical NPU silicon."
+keywords: "Edge Execution Review, EER, Source Code Review, AI Silicon Security, NPU Vulnerability Research, Axera AX8850, AX-LLM CVEs, CVE-2026-30992, CVE-2026-30993, CVE-2026-31026, CVE-2026-35402, CVE-2026-35403, Joe Brinkley, The Blind Hacker"
 ---
 
 # Beyond Prompt Injection: The Edge Execution Review (EER) Playbook for AI Silicon
 
 ![Beyond Prompt Injection](../assets/ax8850_edge_playbook.png)
+
+> **Companion Research:** Read my Cobalt advisory: **[Dissecting the AX-LLM CVEs: Why Edge AI Memory and Execution Boundaries Matter](https://www.cobalt.io/blog/dissecting-the-ax-llm-cves-why-edge-ai-memory-and-execution-boundaries-matter)**. Pair it with our lab walkthrough: **[Hunting Edge AI CVEs: From Demo Code to DMA Memory Corruption](hunting-edge-ai-cves-from-demo-code-to-dma-memory-corruption.html)**.
 
 * **Author:** Joe Brinkley (The Blind Hacker)
 * **Project:** NextGen Red Team Independent Research
@@ -29,7 +32,7 @@ On edge devices, there is no Python runtime acting as a memory barrier. There is
 
 If you are an offensive operator or application security engineer, your focus should not just be on what the model says. Your focus should be on what the inference runtime does to physical memory when processing untrusted inputs.
 
-This playbook documents our **Edge Execution Review (EER)** framework: how to take apart an edge AI runtime, identify arithmetic conversion seams, and validate binary memory corruption on physical Neural Processing Unit (NPU) hardware.
+This playbook documents our **Edge Execution Review (EER)** framework. We show how to audit an edge AI runtime, spot arithmetic conversion seams, and prove binary memory corruption on physical Neural Processing Unit (NPU) hardware.
 
 ---
 
@@ -60,7 +63,7 @@ In our threat lab, we audited the `ax-llm` runtime running on the **Axera AX8850
 ```
 
 ### Direct Physical Memory Mapping (MMZ / CMM)
-Standard operating systems use virtual memory. When a normal process encounters an out-of-bounds pointer write, the CPU Memory Management Unit (MMU) triggers a page fault, and the kernel terminates the process with `SIGSEGV`.
+Standard operating systems use virtual memory. When a normal process encounters an out-of-bounds pointer write, the CPU Memory Management Unit (MMU) triggers a page fault, and the kernel kills the process with `SIGSEGV`.
 
 Edge inference runtimes cannot tolerate virtual memory paging latency. To push 20 to 30 tokens per second on low-power silicon, they allocate physical contiguous memory blocks via Contiguous Memory Management (CMM) and Memory Management Zones (MMZ). 
 
@@ -184,17 +187,17 @@ Address 0x7fff5c290140 is located in global variable 't_mask' defined in 'src/ru
 
 ## Real-World Vulnerability Case Studies
 
-Here is how our EER + SRC methodology uncovered the 7 published CVE Candidate vulnerabilities in `ax-llm`:
+Here is how our EER + SRC workflow uncovered 7 flaws in `ax-llm`. Read **[Dissecting the AX-LLM CVEs](https://www.cobalt.io/blog/dissecting-the-ax-llm-cves-why-edge-ai-memory-and-execution-boundaries-matter)** on the Cobalt blog for the full advisory:
 
-| CAN Identifier | GitHub Issue | Internal ZD | Vulnerability Class | Flaw Mechanism | Physical Impact on Device |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **`CAN-2026-2038776`** | Issue #76 | ZD-006 / ZD-039 | CWE-787 / CWE-190 | `size_t` downcast to `int`; unclamped `memcpy` into `t_mask.nSize` | Corrupts physical NPU MMZ device memory; freezes hardware bus |
-| **`CAN-2026-2038801`** | Issue #75 | ZD-048 / RT-508 | CWE-78 | Unsanitized audio filename in `_popen("ffmpeg.exe ...")` | Remote OS command execution with root process privileges |
-| **`CAN-2026-2034987`** | Issue #80 | ZD-009 | CWE-120 / CWE-134 | Unbounded `sprintf` of shard paths into 1024-byte stack array | Stack frame return address corruption; segmentation fault |
-| **`CAN-2026-2038777`** | Issue #81 | ZD-024 | CWE-787 | Position indices loop missing check against `idx_elems` | Out-of-bounds pointer write into physical RoPE device buffers |
-| **`CAN-2026-2038778`** | Issue #82 | ZD-041 | CWE-190 / CWE-122 | Signed 32-bit stride multiplication `src_w * 4` overflows `INT_MAX` | Heap memory under-allocation; bad allocation crash (`std::bad_alloc`) |
-| **`CAN-2026-2038779`** | N/A *(Vendored)* | ZD-002 | CWE-415 | Missing copy constructor in `cmdline::parser` (Rule of Three) | Duplicate heap pointers in shallow copy trigger double-free abort |
-| **`CAN-2026-2038802`** | Issue #77 | ZD-051 | CWE-476 | Unchecked pointer in streaming callback formatted via `fprintf` | Null pointer dereference segmentation fault during streaming |
+| CVE / Tracking ID | GitHub Advisory / Issue | Vulnerability Class | Flaw Mechanism | Physical Impact on Device |
+| :--- | :--- | :--- | :--- | :--- |
+| **`CVE-2026-30992`** | `GHSA-cfch-87gh-88c5` (Issue #76) | CWE-125 / CWE-190 | `size_t` downcast to `int`; unclamped `memcpy` into CMM mask | Corrupts physical NPU CMM device memory; freezes hardware bus |
+| **`CVE-2026-30993`** | `GHSA-g4jf-32v4-cjc3` (Issue #80) | CWE-120 / CWE-134 | Unbounded `sprintf` of shard paths into 128-byte stack array | Stack frame return address corruption; segmentation fault |
+| **`CVE-2026-31026`** | `GHSA-4p8c-724v-h9ph` (Issue #81) | CWE-787 | Position indices loop missing check against `position_ids` capacity | Out-of-bounds pointer write into heap RoPE buffers |
+| **`CVE-2026-35402`** | `GHSA-73fh-rvv8-22c6` (Issue #82) | CWE-190 / CWE-122 | Signed 32-bit stride multiplication overflows `INT_MAX` | Heap memory under-allocation or bad allocation crash (`std::bad_alloc`) |
+| **`CVE-2026-35403`** | `GHSA-hmh6-8pj7-xwhh` (`cmdline.hpp`) | CWE-415 / CWE-416 | Manual pointer deletion in error handler + destructor double-free | Duplicate heap frees trigger `tcache` abort or heap corruption |
+| **Finding 6 *(Pending)*** | Issue #75 (`AudioWrapper.hpp`) | CWE-78 | Unsanitized audio filename passed to `std::system("ffmpeg ...")` | Remote OS command execution with root process privileges |
+| **Finding 7 *(Pending)*** | Issue #77 (`main_api.cpp`) | CWE-476 / CWE-125 | Check-after-use null dereference + unterminated `p_str` read | Heap out-of-bounds read into SSE stream or daemon crash |
 
 ---
 
@@ -204,9 +207,9 @@ When discussing edge AI vulnerabilities, a common misconception is: *"These are 
 
 Here is what happens when these vulnerabilities land in production hardware:
 
-1. **Smart Video Surveillance:** Many enterprise IP cameras use edge vision models to detect perimeter breaches, track license plates, or recognize faces. A malformed image dimension or oversized frame sent to the inference endpoint triggers `CAN-2026-2038778` (heap buffer overflow) or `CAN-2026-2038776` (NPU bus lockup). The camera stops processing video streams, blinding the surveillance grid until a technician physically power-cycles the camera.
-2. **Industrial Robotics and Inspection:** In manufacturing lines, edge NPUs inspect manufactured parts for defects in real time. Forcing a physical MMZ memory lockup halts the quality assurance pipeline, stopping factory production.
-3. **Voice-Enabled Gateways:** Intercoms, conference room transcribers, and voice-assisted kiosks running Whisper models are vulnerable to `CAN-2026-2038801`. An attacker supplying a crafted audio filename over the network gains an interactive root shell on the physical appliance, establishing a persistent foothold on the internal network.
+1. **Smart Video Surveillance:** Many enterprise IP cameras use edge vision models to detect perimeter breaches, track license plates, or recognize faces. A malformed image dimension or oversized frame sent to the inference endpoint triggers `CVE-2026-35402` (integer/heap overflow) or `CVE-2026-30992` (NPU CMM bus lockup). The camera stops processing video streams, blinding the surveillance grid until a technician physically power-cycles the camera.
+2. **Industrial Robotics and Inspection:** In manufacturing lines, edge NPUs inspect manufactured parts for defects in real time. Forcing a physical MMZ/CMM memory lockup halts the quality assurance pipeline, stopping factory production.
+3. **Voice-Enabled Gateways:** Intercoms, conference room transcribers, and voice-assisted kiosks running Whisper models are vulnerable to our Audio Command Injection finding (`AudioWrapper.hpp`). An attacker supplying a crafted audio filename over the network gains an interactive root shell on the physical appliance, establishing a persistent foothold on the internal network.
 
 ---
 
