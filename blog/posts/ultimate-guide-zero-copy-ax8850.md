@@ -180,3 +180,9 @@ Under a synthetic multi-turn stress test consisting of back-to-back deep reasoni
 | **API Error Rate (Multi-Turn)** | 0.00% |
 
 The native server handles back-to-back requests seamlessly. It automatically purges and resets the KV Cache matrices in CMM memory between discrete API calls, permanently neutralizing the context stall issues found in legacy software wrappers.
+
+---
+
+## Next Up: Auditing the AX-LLM NPU Runtime for Zero-Day CVEs
+
+Once we stabilized our zero-copy CMM memory pipeline on `NextGenPVE`, we turned our offensive lens onto the upstream `AXERA-TECH/ax-llm` C++ runtime itself. Read our follow-up hardware vulnerability walkthrough, **[Hunting Edge AI CVEs: From Demo Code to DMA Memory Corruption](hunting-edge-ai-cves-from-demo-code-to-dma-memory-corruption.html)**, and explore our full edge NPU research index on **[TheBlindHacker.com](https://theblindhacker.com/projects)**.

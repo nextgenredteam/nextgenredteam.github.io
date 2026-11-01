@@ -6,15 +6,13 @@ description: "Why modern web GUIs fail blind security engineers, how Progressive
 keywords: "Accessible Web Apps, Blind Hacker, Screen Reader Accessibility, Progressive Web Apps PWA, Accessible CLI, NVDA, JAWS, AI Code Generation, WCAG AAA, Web Audio API, NextGenRedTeam, Dead Pixel Sec, Joe Brinkley"
 ---
 
-# Why I Use AI to Build Accessible CLIs and Progressive Web Apps: The Blind Hacker's Blueprint
-
 ![Why I Use AI to Build Accessible CLIs and Progressive Web Apps](../assets/why_i_use_ai_accessible_clis_pwas.png)
 
-In my last post, [Hacking by Ear at 500 WPM](https://nextgenredteam.com/blog/hacking-by-ear-at-500-wpm-screen-readers.html), I broke down how blind security researchers use screen readers and custom terminal pipelines to outpace visual IDEs. Reading text through speech synthesizers at hyper-speed removes visual clutter. It forces you to operate on raw structure.
+In my last post, [Hacking by Ear at 500 WPM](https://nextgenredteam.com/blog/hacking-by-ear-at-500-wpm-screen-readers.html), and in my [Hacking While Blind CLI Survival Guide on TheBlindHacker.com](https://theblindhacker.com/hackingwhileblind), I broke down how combining full-time screen zoom and high-speed speech output outpaces visual IDEs. Reading text through speech synthesizers at hyper-speed while navigating with locked magnification removes visual clutter. It forces you to operate on raw structure.
 
 Consuming tools is only half the battle. At some point, you have to build them.
 
-Building software as a blind engineer usually means fighting an uphill battle against sighted developer habits. Most modern enterprise web apps are an absolute dumpster fire for screen readers. Buttons are unsemantic `<div>` tags with click listeners attached. Dynamic updates happen silently in the background without ARIA alerts. Modals pop open and trap your keyboard cursor in an infinite tab loop.
+Building software as a visually impaired engineer usually means fighting an uphill battle against sighted developer habits. I use screen zoom at high magnification at all times, and I listen to screen reader output constantly. Most modern enterprise web apps are an absolute dumpster fire for that workflow. Buttons are unsemantic `<div>` tags with click listeners attached. Dynamic updates happen silently in the background without ARIA alerts. Modals pop open and trap your keyboard cursor in an infinite tab loop.
 
 I stopped waiting for corporate front-end teams to fix their software. Instead, I use artificial intelligence to build my own tools. 
 
@@ -88,7 +86,7 @@ A terminal gives me complete deterministic control. I can pipe raw output into `
 ### The Progressive Web App Advantage
 When a tool needs state visualization, live target switching, or structured reporting, a desktop GUI built on Electron is usually bloated and sluggish. Electron wrappers run heavy Chromium instances that consume gigabytes of RAM and frequently drop accessibility tree hooks during DOM repaints.
 
-A well-architected PWA solves those headaches:
+A well-architected PWA (like our zero-backend [JoeBro Sobro Smart Table Controller](rescuing-abandoned-iot-joebro-sobro.html), featured on [TheBlindHacker.com Projects](https://theblindhacker.com/projects)) solves those headaches:
 * **Standalone Windowing:** A PWA installs directly onto the operating system. It runs in its own window without browser toolbars, URL address bars, or extension icons that clutter the keyboard navigation tree.
 * **Instant Offline Execution:** Service workers cache the application shell locally. When I launch the PWA, it loads from disk in five milliseconds. There is zero network lag to freeze the screen reader virtual cursor.
 * **Native Keyboard Event Routing:** You can intercept global keybindings cleanly without fighting browser shortcut collisions.
@@ -528,7 +526,9 @@ Listen for the `keydown` event inside the dialog container. Intercept the Tab ke
 
 Building accessible offensive security software is not about checking a box for human resources. It is about speed, precision, and building software that respects human cognitive bandwidth.
 
-* **Join the Movement:** Get involved with [DeadPixelSec.com](https://deadpixelsec.com) and join our Discord community at [discord.gg/deadpixelsec](https://discord.gg/deadpixelsec), where blind and disabled hackers build accessible tools together.
+* **Explore The Blind Hacker Hub:** Visit [TheBlindHacker.com](https://theblindhacker.com) for Joe Brinkley's full portfolio, [Open-Source Projects](https://theblindhacker.com/projects), and [Media & Keynote Appearances](https://theblindhacker.com/profiles).
 * **Explore The CLI Field Guide:** Read the full [Hacking While Blind Screen Reader CLI Guide](https://theblindhacker.com/hackingwhileblind) for hands-on tips on configuring Linux terminals, screen readers, and penetration testing tools.
+* **See It in Action on Silicon:** Read our follow-up hardware research, [Hunting Edge AI CVEs: From Demo Code to DMA Memory Corruption](hunting-edge-ai-cves-from-demo-code-to-dma-memory-corruption.html), where we used this exact 500-WPM CLI workflow to uncover seven vulnerabilities in the Axera AX8850 NPU runtime.
+* **Join the Movement:** Get involved with [DeadPixelSec.com](https://deadpixelsec.com) and join our Discord community at [discord.gg/deadpixelsec](https://discord.gg/deadpixelsec), where blind and disabled hackers build accessible tools together.
 * **Threat Lab Research:** Follow our continuous work on autonomous swarms, DAST architectures, and adversarial telemetry on the [NextGenRedTeam Threat Lab](https://nextgenredteam.com/blog/index.html).
 * **Connect with Joe Brinkley:** Connect on [LinkedIn (`in/brinkleyjoseph`)](https://www.linkedin.com/in/brinkleyjoseph/), [X (`@TheBlindHacker`)](https://x.com/TheBlindHacker), and [NextGenRedTeam on X (`@NextGenRedTeam`)](https://x.com/NextGenRedTeam).

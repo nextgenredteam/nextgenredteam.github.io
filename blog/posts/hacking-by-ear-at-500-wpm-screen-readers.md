@@ -387,3 +387,6 @@ That framing completely misses reality.
 When you master non-visual tools, you strip away intermediate visual layers that slow other researchers down. You do not wait for heavy GUI applications to render. You do not get trapped by misleading indentation or clean visual themes. You pipe raw data streams straight from hypervisor terminals, headless decompilers, and AST filters into your auditory processing system at triple the speed of normal human speech.
 
 Vulnerabilities exist in logic, state, and execution order, not in pixel layout. Once you learn to listen to the machine, the bugs make all the noise in the world.
+
+* **Continue the Blueprint:** Read Part 2, [Why I Use AI to Build Accessible CLIs and Progressive Web Apps](why-i-use-ai-to-build-accessible-clis-and-pwas.html), and see our 500-WPM audit workflow applied to bare-metal NPU hardware in [Hunting Edge AI CVEs: From Demo Code to DMA Memory Corruption](hunting-edge-ai-cves-from-demo-code-to-dma-memory-corruption.html).
+* **Explore The Blind Hacker Hub:** Visit [TheBlindHacker.com](https://theblindhacker.com) and the [Hacking While Blind CLI Guide](https://theblindhacker.com/hackingwhileblind) for full tool guides, [Open-Source Projects](https://theblindhacker.com/projects), and [Media & Press Appearances](https://theblindhacker.com/profiles).

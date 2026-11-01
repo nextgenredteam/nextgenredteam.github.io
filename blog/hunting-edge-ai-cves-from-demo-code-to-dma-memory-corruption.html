@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hunting Edge AI CVEs: From Demo Code to DMA Memory Corruption | The Blind Hacker &amp; NextGenRedTeam Blog</title>
+  <meta name="description" content="Inside the NextGenRedTeam hardware lab: how we wired up a Radxa AI Core AX-M1 (Axera AX8850) on NextGenPVE, audited AXERA-TECH's AX-LLM C++ NPU runtime with a screen reader at 500 WPM, and uncovered seven memory corruption and command injection flaws.">
+  <meta name="keywords" content="Edge AI CVEs, AX-LLM, Axera AX8850, Radxa AI Core AX-M1, NPU Vulnerability Research, DMA Memory Corruption, Contiguous Media Memory, CMM, CVE-2026-30992, CVE-2026-30993, CVE-2026-31026, CVE-2026-35402, CVE-2026-35403, Joe Brinkley, The Blind Hacker, NextGenRedTeam, The Blind Hacker, Blind Hacker, Blind Hakcer, Joe Brinkley, NextGenRedTeam, NGRT, Dead Pixel Sec">
+  <meta name="author" content="Joe Brinkley (The Blind Hacker)">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://nextgenredteam.com/blog/hunting-edge-ai-cves-from-demo-code-to-dma-memory-corruption.html">
+  <link rel="stylesheet" href="../index.css">
+  <link rel="icon" href="../favicon.ico" type="image/x-icon">
+  
+  <!-- MathJax Math Rendering Support -->
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  
+  <!-- Prism.js Tomorrow Night Syntax Highlighting Theme -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  
+  <!-- Open Graph -->
+  <meta property="og:title" content="Hunting Edge AI CVEs: From Demo Code to DMA Memory Corruption | NextGenRedTeam Blog">
+  <meta property="og:description" content="Inside the NextGenRedTeam hardware lab: how we wired up a Radxa AI Core AX-M1 (Axera AX8850) on NextGenPVE, audited AXERA-TECH's AX-LLM C++ NPU runtime with a screen reader at 500 WPM, and uncovered seven memory corruption and command injection flaws.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://nextgenredteam.com/blog/hunting-edge-ai-cves-from-demo-code-to-dma-memory-corruption.html">
+  <meta property="og:image" content="https://nextgenredteam.com/assets/hunting_edge_ai_cves.png">
+  
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@NextGenRedTeam">
+  <meta name="twitter:creator" content="@TheBlindHacker">
+  <meta name="twitter:title" content="Hunting Edge AI CVEs: From Demo Code to DMA Memory Corruption | NextGenRedTeam Blog">
+  <meta name="twitter:description" content="Inside the NextGenRedTeam hardware lab: how we wired up a Radxa AI Core AX-M1 (Axera AX8850) on NextGenPVE, audited AXERA-TECH's AX-LLM C++ NPU runtime with a screen reader at 500 WPM, and uncovered seven memory corruption and command injection flaws.">
+  <meta name="twitter:image" content="https://nextgenredteam.com/assets/hunting_edge_ai_cves.png">
+  
+  <!-- SEO JSON-LD Structured Data -->
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "TechArticle",
+      "headline": "Hunting Edge AI CVEs: From Demo Code to DMA Memory Corruption",
+      "description": "Inside the NextGenRedTeam hardware lab: how we wired up a Radxa AI Core AX-M1 (Axera AX8850) on NextGenPVE, audited AXERA-TECH's AX-LLM C++ NPU runtime with a screen reader at 500 WPM, and uncovered seven memory corruption and command injection flaws.",
+      "image": "https://nextgenredteam.com/assets/hunting_edge_ai_cves.png",
+      "datePublished": "2026-11-01",
+      "dateModified": "2026-11-01",
+      "author": {
+        "@type": "Person",
+        "name": "Joe B. The Blind Hacker",
+        "alternateName": [
+          "Joe Brinkley",
+          "The Blind Hacker",
+          "Blind Hacker",
+          "Blind Hakcer",
+          "TheBlindHacker",
+          "Joseph Brinkley",
+          "Joe B. The Blind Hacker",
+          "Blind Ethical Hacker"
+        ],
+        "jobTitle": "Director of Offensive Security Research & Community",
+        "url": "https://theblindhacker.com",
+        "sameAs": [
+          "https://theblindhacker.com",
+          "https://www.linkedin.com/in/brinkleyjoseph/",
+          "https://x.com/TheBlindHacker",
+          "https://x.com/NextGenRedTeam",
+          "https://nextgenredteam.com",
+          "https://deadpixelsec.com",
+          "https://discord.gg/deadpixelsec",
+          "https://github.com/TheBlindHacker",
+          "https://github.com/nextgenredteam",
+          "https://www.cobalt.io/blog/author/joe-brinkley",
+          "https://events.isc2.org/b/sp/joe-brinkley-6146"
+        ]
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "NextGenRedTeam",
+        "url": "https://nextgenredteam.com",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://nextgenredteam.com/assets/logos/logo2.png"
+        }
+      },
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "https://nextgenredteam.com/blog/hunting-edge-ai-cves-from-demo-code-to-dma-memory-corruption.html"
+      },
+      "keywords": "Edge AI CVEs, AX-LLM, Axera AX8850, Radxa AI Core AX-M1, NPU Vulnerability Research, DMA Memory Corruption, Contiguous Media Memory, CMM, CVE-2026-30992, CVE-2026-30993, CVE-2026-31026, CVE-2026-35402, CVE-2026-35403, Joe Brinkley, The Blind Hacker, NextGenRedTeam"
+    }
+  </script>
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "How do I check if my Axera AX8850 or AX650 device is vulnerable to the AX-LLM CVEs?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Check the git commit hash or binary build date of your ax-llm service (axllmrunner or mainapi). Any deployment built from AXERA-TECH/ax-llm at or before commit a0fb3f2 (v0.1.0) without the bounds-clamping and execvp patches detailed above is vulnerable to CVE-2026-30992, CVE-2026-30993, CVE-2026-31026, CVE-2026-35402, and CVE-2026-35403."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Why do edge NPU memory corruption bugs crash the whole Linux box instead of just one process?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Standard cloud CPU processes operate in isolated virtual memory pages. By contrast, edge NPU runtimes allocate Contiguous Media Memory (CMM) or Media Memory Zone (MMZ) physical RAM blocks shared directly with /dev/axnpu via DMA. When an out-of-bounds write corrupts a CMM descriptor or DMA mask, the hardware NPU engine reads invalid physical addresses, locking up the kernel driver and requiring a hard power cycle."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I run AX-LLM safely inside an unprivileged Proxmox LXC container?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Passing /dev/ax device nodes into an unprivileged LXC container (like we detailed in our [Zero-Copy AX8850 Guide](ultimate-guide-zero-copy-ax8850.html)) isolates the host filesystem, which stops an OS command injection bug from overwriting host files. However, container namespaces do not validate physical CMM DMA buffer bounds. You must still patch the C++ runtime and place an authenticating reverse proxy with strict JSON payload size limits in front of mainapi."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Where can I read the enterprise and supply-chain analysis of these AX-LLM CVEs?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Read my companion research article on the Cobalt blog: [Dissecting the AX-LLM CVEs: Why Edge AI Memory and Execution Boundaries Matter](https://www.cobalt.io/blog/dissecting-the-ax-llm-cves-why-edge-ai-memory-and-execution-boundaries-matter), and browse all our hardware and NPU research on [TheBlindHacker.com](https://theblindhacker.com/projects)."
+          }
+        }
+      ]
+    }
+  </script>
+</head>
+<body class="blog-post-page">
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+  <div class="scanlines" aria-hidden="true"></div>
+  <div class="noise-overlay" aria-hidden="true"></div>
+ 
+  <!-- Navigation -->
+  <nav class="navbar" aria-label="Main Navigation">
+    <div class="nav-container">
+      <div class="nav-left-group">
+        <a href="../index.html" class="logo-container" id="logo-link" aria-label="NextGenRedTeam Home">
+          <img src="../assets/logos/logo2.png" id="ngrt-logo" alt="NextGenRedTeam (NGRT) Logo" class="logo-img">
+        </a>
+        <!-- Top-Left Accessibility Toolbar (Light/Dark + Text Size) -->
+        <div class="a11y-toolbar" role="region" aria-label="Accessibility Display Controls">
+          <button type="button" id="theme-toggle" class="a11y-btn" aria-pressed="false" aria-label="Switch to Light Mode" title="Toggle Dark / Light Theme">
+            <span class="theme-icon" aria-hidden="true">☀️</span>
+            <span id="theme-toggle-label">Light</span>
+          </button>
+          <div class="a11y-font-group" role="group" aria-label="Text Size Controls">
+            <button type="button" id="font-decrease" class="a11y-btn" aria-label="Decrease text size" title="Decrease text size">A-</button>
+            <button type="button" id="font-reset" class="a11y-btn" aria-label="Reset text size to 100%" title="Reset text size">100%</button>
+            <button type="button" id="font-increase" class="a11y-btn" aria-label="Increase text size" title="Increase text size">A+</button>
+          </div>
+          <span id="a11y-live-status" class="sr-only" aria-live="polite"></span>
+        </div>
+      </div>
+      <div class="nav-links" id="primary-nav-links">
+        <a href="../index.html#services" class="nav-link">[01] Services</a>
+        <a href="../index.html#tools" class="nav-link">[02] Tools</a>
+        <a href="../index.html#media" class="nav-link">[03] Media &amp; Press</a>
+        <a href="index.html" class="nav-link active">[04] Blog</a>
+        <a href="../index.html#engage" class="nav-link-btn button">[Collab &amp; Media]</a>
+        <!-- Mobile Hamburger Accessibility Controls -->
+        <div class="mobile-a11y-drawer" role="group" aria-label="Mobile Accessibility Controls">
+          <span class="mobile-a11y-title">// ACCESSIBILITY &amp; DISPLAY</span>
+          <div class="mobile-a11y-actions">
+            <button type="button" id="mobile-theme-toggle" class="a11y-btn" aria-pressed="false" aria-label="Switch to Light Mode">☀️ Light Mode</button>
+            <button type="button" id="mobile-font-decrease" class="a11y-btn" aria-label="Decrease text size">A-</button>
+            <button type="button" id="mobile-font-reset" class="a11y-btn" aria-label="Reset text size">100%</button>
+            <button type="button" id="mobile-font-increase" class="a11y-btn" aria-label="Increase text size">A+</button>
+          </div>
+        </div>
+      </div>
+      <button type="button" class="nav-burger" id="nav-burger" aria-expanded="false" aria-controls="primary-nav-links" aria-label="Toggle Navigation and Accessibility Menu">
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+      </button>
+    </div>
+  </nav>
+ 
+  <!-- Article Hero -->
+  <header class="post-hero">
+    <div class="cyber-container">
+      <div class="post-meta">
+        <span class="meta-date">// PUBLISHED: 2026-11-01</span>
+        <span class="meta-author">// AUTHOR: <a href="https://theblindhacker.com" target="_blank" style="color:inherit; text-decoration:none; border-bottom:1px dashed var(--accent-pink);">Joe B. The Blind Hacker</a> 
+      <a href="https://theblindhacker.com" target="_blank" class="social-icon-link" title="TheBlindHacker.com Portfolio">
+        <svg class="social-icon" viewBox="0 0 24 24" width="14" height="14" fill="currentColor" style="display:inline-block; vertical-align:middle; margin-left:6px; color:inherit;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+      </a>
+      <a href="https://x.com/TheBlindHacker" target="_blank" class="social-icon-link" title="X (Twitter)">
+        <svg class="social-icon" viewBox="0 0 24 24" width="14" height="14" fill="currentColor" style="display:inline-block; vertical-align:middle; margin-left:4px; color:inherit;"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+      </a>
+      <a href="https://www.linkedin.com/in/brinkleyjoseph/" target="_blank" class="social-icon-link" title="LinkedIn">
+        <svg class="social-icon" viewBox="0 0 24 24" width="14" height="14" fill="currentColor" style="display:inline-block; vertical-align:middle; margin-left:4px; color:inherit;"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.225 0z"/></svg>
+      </a></span>
+      </div>
+      <h1 class="post-title">Hunting Edge AI CVEs: From Demo Code to DMA Memory Corruption</h1>
+      <div class="cyber-divider-cyan"></div>
+    </div>
+  </header>
+
+  <!-- Article Content -->
+  <main id="main-content" class="post-content-section">
+    <article class="cyber-container markdown-body">
+      <p><img src="../assets/hunting_edge_ai_cves.png" alt="Hunting Edge AI CVEs Banner"></p>
+<blockquote>
+<p><strong>Companion Architectural Advisory:</strong> This post is our hands-on hardware lab diary and exploit reproduction walkthrough. For the enterprise supply-chain analysis and memory boundary architecture breakdown, read my official advisory on the Cobalt blog: <strong><a href="https://www.cobalt.io/blog/dissecting-the-ax-llm-cves-why-edge-ai-memory-and-execution-boundaries-matter">Dissecting the AX-LLM CVEs: Why Edge AI Memory and Execution Boundaries Matter</a></strong>.</p>
+</blockquote>
+<h2>Why Our Hardware Lab Looked Past the Prompt</h2>
+<p>If you read our earlier guides on <a href="taming-ax8850-edge-npu.html">Taming the Axera AX8850 Edge NPU</a> and <a href="ultimate-guide-zero-copy-ax8850.html">Zero-Copy NPU Memory Pipelines</a>, you know how we wired a 24 TOPS PCIe NPU card into <code>NextGenPVE</code>. Once we got Qwen2.5 and DeepSeek models screaming at the silicon layer inside <code>LXC 211</code>, my red team instincts kicked in.</p>
+<p>Everyone in offensive AI talks about prompt injection. Security conferences run endless tracks on jailbreaks, system prompt extraction, and guardrail bypasses. Those bugs matter, sure.</p>
+<p>Below the prompt sits a much nastier attack surface. On edge AI hardware, your JSON payload does not stay inside a memory-safe Python sandbox in a hyperscale cloud. A lightweight C++ HTTP wrapper parses that JSON and hands raw pointers straight to <code>/dev/ax_npu</code> over Contiguous Media Memory (CMM) Direct Memory Access (DMA) channels.</p>
+<p>We decided to audit the open-source <code>AXERA-TECH/ax-llm</code> C++ inference engine running on our physical <strong>Radxa AI Core AX-M1</strong> (<code>ax650_card_v1.0</code> / Axera AX8850) testbed. By pairing fast command-line source code triage with live AddressSanitizer (ASan) and hardware DMA fault checks, we uncovered <strong>seven distinct vulnerabilities</strong> across the runtime. Five of those flaws now carry official CVE identifiers, and two additional high-impact bugs sit in the upstream queue.</p>
+<hr>
+<h2>The Vulnerability Scorecard</h2>
+<p>Before we walk through the terminal harnesses and GDB traces, here is the full breakdown of what we found inside <code>AXERA-TECH/ax-llm</code> (<code>commit a0fb3f2</code> / v0.1.0). All five assigned CVEs were reported and coordinated with <strong>AXERA-TECH</strong> and the <strong>GitHub Security Lab CNA</strong> (<code>GHSA</code>), alongside two additional unpatched findings tracked in the disclosure queue:</p>
+<table>
+<thead>
+<tr>
+<th align="left">ID / Tracking</th>
+<th align="left">Vulnerability Class</th>
+<th align="left">Location</th>
+<th align="left">Severity</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><strong>CVE-2026-30992</strong> (<code>GHSA-cfch-87gh-88c5</code>)</td>
+<td align="left">Out-of-Bounds Read + Integer Truncation in Prompt Prefill &amp; DMA Mask</td>
+<td align="left"><code>src/runner/LLM.hpp</code></td>
+<td align="left"><strong>7.5 (High)</strong></td>
+</tr>
+<tr>
+<td align="left"><strong>CVE-2026-30993</strong> (<code>GHSA-g4jf-32v4-cjc3</code>)</td>
+<td align="left">Stack-Based Buffer Overflow in Layer Filename Formatting</td>
+<td align="left"><code>src/runner/LLM.hpp</code></td>
+<td align="left"><strong>7.8 (High)</strong></td>
+</tr>
+<tr>
+<td align="left"><strong>CVE-2026-31026</strong> (<code>GHSA-4p8c-724v-h9ph</code>)</td>
+<td align="left">Heap Out-of-Bounds Write in Multimodal RoPE Position Indexing</td>
+<td align="left"><code>src/runner/LLM.hpp</code></td>
+<td align="left"><strong>8.1 (High)</strong></td>
+</tr>
+<tr>
+<td align="left"><strong>CVE-2026-35402</strong> (<code>GHSA-73fh-rvv8-22c6</code>)</td>
+<td align="left">Integer Overflow in Multimodal Vision Preprocessing</td>
+<td align="left"><code>src/runner/utils/image_processor.cpp</code></td>
+<td align="left"><strong>7.5 (High)</strong></td>
+</tr>
+<tr>
+<td align="left"><strong>CVE-2026-35403</strong> (<code>GHSA-hmh6-8pj7-xwhh</code>)</td>
+<td align="left">Double-Free &amp; Use-After-Free in CLI Argument Error Handling</td>
+<td align="left"><code>src/cmdline.hpp</code></td>
+<td align="left"><strong>7.3 (High)</strong></td>
+</tr>
+<tr>
+<td align="left"><strong>Finding 6</strong> <em>(Pending CVE)</em></td>
+<td align="left">Unauthenticated OS Command Injection in Audio Preprocessing</td>
+<td align="left"><code>src/runner/AudioWrapper.hpp</code></td>
+<td align="left"><strong>9.8 (Critical)</strong></td>
+</tr>
+<tr>
+<td align="left"><strong>Finding 7</strong> <em>(Pending CVE)</em></td>
+<td align="left">Heap Out-of-Bounds Read in Token Streaming Callback</td>
+<td align="left"><code>src/main_api.cpp</code></td>
+<td align="left"><strong>7.5 (High)</strong></td>
+</tr>
+</tbody></table>
+<p>You can read the broader industry context and why edge AI memory boundaries fail in my companion piece on Cobalt: <a href="https://www.cobalt.io/blog/dissecting-the-ax-llm-cves-why-edge-ai-memory-and-execution-boundaries-matter">Dissecting the AX-LLM CVEs: Why Edge AI Memory and Execution Boundaries Matter</a>. Down below, we are going straight into the lab methodology and the exact C++ code paths.</p>
+<hr>
+<h2>How I Hunt C++ Silicon Bugs by Ear at 500 WPM</h2>
+<p>People ask how a blind hacker audits low-level C++ NPU drivers and memory allocators. Honestly, as I broke down in <a href="hacking-by-ear-at-500-wpm-screen-readers.html">Hacking by Ear at 500 WPM</a>, <a href="why-i-use-ai-to-build-accessible-clis-and-pwas.html">Why I Use AI to Build Accessible CLIs and PWAs</a>, and my <a href="https://theblindhacker.com/hackingwhileblind">Hacking While Blind CLI Survival Guide on TheBlindHacker.com</a>, a screen reader running at 500 words per minute is an unfair advantage for source code auditing.</p>
+<p>Sighted engineers often skim C++ files visually. Their eyes jump over boilerplate <code>sprintf</code> calls, implicit <code>int</code> casts, or missing bounds checks because the code <em>looks</em> well-formatted. When you listen to code through a CLI pipeline using <code>ripgrep</code>, <code>awk</code>, and <code>sed</code>, every single type cast and pointer arithmetic operation hits your ears in strict sequence.</p>
+<p>We call our workflow <strong>SRC + EER</strong>: <strong>Source Code Review</strong> paired with <strong>Edge Execution Review</strong>.</p>
+<h3>Step 1: The Two-Step Triage Rule</h3>
+<p>Most vendor edge AI SDKs start life as quick board-support demo code (<code>ax-samples</code>). Later, downstream OEMs wrap that exact same C++ code inside <code>cpp-httplib</code> and ship it as an OpenAI-compatible <code>/v1/chat/completions</code> daemon running as <code>root</code>.</p>
+<p>When I audit an embedded AI repo from the command line, I run a two-step filter:</p>
+<ol>
+<li><strong>Trace Untrusted Network or Config Inputs:</strong> Find every place where an HTTP JSON field, an image header, an audio path, or a model config enters the binary.</li>
+<li><strong>Check the Memory Sink Before the Hardware Call:</strong> Verify whether that input touches <code>sprintf</code>, <code>std::system</code>, <code>memcpy</code>, or a hardware DMA transfer (<code>ax_engine_run_group</code> / <code>ax_cmm_alloc</code>) before a hard clamp checks its size.</li>
+</ol>
+<pre><code class="language-mermaid">flowchart TD
+    A[&quot;Untrusted Input (JSON / Image / Audio / Config)&quot;] --&gt; B{&quot;Input Boundary Check?&quot;}
+    B -- &quot;Missing Clamp&quot; --&gt; C[&quot;Host Heap / Stack Buffer&quot;]
+    B -- &quot;Unquoted Shell String&quot; --&gt; D[&quot;std::system() Execution&quot;]
+    C --&gt; E[&quot;CMM Physical DMA Transfer (/dev/ax_npu)&quot;]
+    E --&gt; F[&quot;NPU Fault / Token Corruption / Crash&quot;]
+    D --&gt; G[&quot;Root RCE on Edge Device&quot;]
+</code></pre>
+<h3>Step 2: Fast CLI Grep Sweeps</h3>
+<p>Before we even fire up the ARM64 compiler on the Radxa board, we sweep the repository for classic C/C++ footguns. Here is the exact command set we ran against <code>ax-llm</code>:</p>
+<pre><code class="language-bash"># 1. Hunt unbounded string formatting and raw shell calls
+grep -rnE &quot;sprintf\(|vsprintf\(|strcpy\(|strcat\(|system\(|popen\(&quot; src/
+
+# 2. Hunt raw memory copies and CMM/DMA buffer operations
+grep -rnE &quot;memcpy\(|memset\(|ax_cmm_|llm_Embed\(|p_vir_addr&quot; src/
+
+# 3. Hunt narrow integer casts near vector allocations
+grep -rnE &quot;static_cast&lt;int&gt;|unsigned short|\.resize\(&quot; src/
+</code></pre>
+<p>That three-minute sweep lit up the terminal like a Christmas tree. Reading the grep output is only half the job, though. To prove real impact on an embedded NPU, you have to run the binary on the silicon and watch what breaks.</p>
+<hr>
+<h2>Lab Walkthrough: Reproducing All Seven Flaws on the AX8850</h2>
+<p>We mounted our Radxa AI Core AX-M1 inside our <code>NextGenPVE</code> host and passed the <code>/dev/ax_*</code> device nodes into our test environment. We built two versions of the <code>ax-llm</code> binary on <code>aarch64</code>: a standard release build linked against the hardware NPU drivers, and an instrumented debug build compiled with <code>-fsanitize=address,undefined -g -O1</code>.</p>
+<p>Here is how each bug works under the hood, what we saw on the hardware, and how to fix it.</p>
+<hr>
+<h3>1. CVE-2026-30992: Out-of-Bounds Read + Integer Truncation in Prompt Prefill &amp; DMA Mask</h3>
+<ul>
+<li><strong>Location:</strong> <code>src/runner/LLM.hpp</code> (Lines 523 and 592)</li>
+<li><strong>CVSS v3.1:</strong> 7.5 (High)</li>
+</ul>
+<p>In <code>LLM.hpp</code>, the prompt prefill handler accepts a <code>std::vector&lt;int&gt; &amp;_token_ids</code> array directly from the tokenizer. The engine allocates a fixed Contiguous Media Memory (CMM) physical buffer for the NPU context window (<code>attr.max_token_len</code>, typically 1024 or 2048 tokens).</p>
+<p>Look at what happens when a user sends a prompt that exceeds <code>max_token_len</code>:</p>
+<pre><code class="language-cpp">// Vulnerable Code (src/runner/LLM.hpp)
+int token_len = (int)_token_ids.size(); // [1] Unchecked input size!
+
+// Line 523: Unbounded read/write past pre-allocated embed_selector buffer
+for (int i = 0; i &lt; token_len; i++) {
+    embed_selector.Embed(_token_ids[i], p_embed + i * attr.tokens_embed_size);
+}
+
+// Line 592: 16-bit integer truncation in attention mask setup
+unsigned short mask_val = (unsigned short)(token_len * attr.kv_cache_size);
+memcpy(cmm_mask_vir_addr, src_mask, token_len * attr.tokens_embed_size); // [2] DMA buffer overflow!
+</code></pre>
+<p>We tracked down two bugs right next to each other here. First, <code>token_len</code> never checks against <code>attr.max_token_len</code> before indexing into <code>p_embed</code> and copying data into the NPU CMM buffer. Second, casting <code>token_len * attr.kv_cache_size</code> to a 16-bit <code>unsigned short</code> wraps around modularly once the product passes <code>65,535</code>.</p>
+<p><strong>What Happened on the Silicon:</strong>
+We sent an unauthenticated HTTP <code>POST</code> request to <code>/v1/chat/completions</code> containing 4,096 tokens on a model configured for <code>max_token_len = 1024</code>. The <code>memcpy</code> into <code>cmm_mask_vir_addr</code> read past the host heap vector and smashed adjacent CMM physical memory pages.</p>
+<p>On our live Qwen2.5-7B NPU instance, the attack did not always trigger a clean Linux <code>SIGSEGV</code> right away. When a prompt overflowed the attention mask by just a few hundred tokens, it corrupted the NPU KV-cache weights in place. The token sampler lost its mind and streamed endless lines of raw Chinese Mojibake (<code>烫烫烫...</code> and <code>锟斤拷...</code>). Those characters come from the classic C++ uninitialized heap and stack byte patterns <code>0xCCCC</code> and <code>0xCDCD</code> decoded as UTF-8, right before the <code>/dev/ax_npu</code> kernel driver locked up the inference queue.</p>
+<p><strong>The Fix:</strong>
+Clamp <code>_token_ids.size()</code> against <code>attr.max_token_len</code> before touching any embedding or CMM buffers, and replace <code>unsigned short</code> with <code>size_t</code>.</p>
+<pre><code class="language-cpp">// Fixed Code
+if (_token_ids.empty() || _token_ids.size() &gt; static_cast&lt;size_t&gt;(attr.max_token_len)) {
+    ALOGE(&quot;Input token length (%zu) exceeds NPU max_token_len (%d)&quot;, _token_ids.size(), attr.max_token_len);
+    return -1;
+}
+size_t token_len = _token_ids.size();
+size_t mask_bytes = token_len * static_cast&lt;size_t&gt;(attr.tokens_embed_size);
+</code></pre>
+<hr>
+<h3>2. CVE-2026-30993: Stack-Based Buffer Overflow in Layer Filename Formatting</h3>
+<ul>
+<li><strong>Location:</strong> <code>src/runner/LLM.hpp</code> (Line 235)</li>
+<li><strong>CVSS v3.1:</strong> 7.8 (High)</li>
+</ul>
+<p>When the engine boots up, it loads split <code>.axmodel</code> NPU weight shards from disk using a filename template stored in the model JSON config (<code>filename_llm_axmodel</code>).</p>
+<pre><code class="language-cpp">// Vulnerable Code (src/runner/LLM.hpp, Line 235)
+char filename[128]; // Fixed 128-byte stack buffer
+for (int i = 0; i &lt; attr.axmodel_num; i++) {
+    sprintf(filename, attr.filename_llm_axmodel.c_str(), i); // Unbounded sprintf!
+    load_axmodel(filename, i);
+}
+</code></pre>
+<p>Our initial <code>grep</code> for <code>sprintf(</code> flagged line 235 immediately. A 128-byte stack buffer holds the path, and <code>sprintf</code> formats a user-controlled <code>std::string</code> right into it without checking the length. Even a deep directory path on a Linux filesystem can blow past 128 characters.</p>
+<p><strong>What Happened on the Silicon:</strong>
+We crafted a configuration file (<code>malicious_template_config.json</code>) where <code>filename_llm_axmodel</code> held 256 <code>&quot;A&quot;</code> characters followed by <code>%d.axmodel</code>. Running <code>./build/ax_llm_runner --config malicious_template_config.json</code> smashed the stack frame on the spot. On our standard release build, the binary crashed with a <code>stack smashing detected (SIGABRT)</code> fault. On our ASan build, it threw <code>ERROR: AddressSanitizer: stack-buffer-overflow on address ... WRITE of size 266</code>.</p>
+<p><strong>The Fix:</strong>
+Replace <code>sprintf</code> with <code>snprintf</code> and increase the path buffer to <code>PATH_MAX</code> (or <code>512</code> bytes), checking for truncation before loading the shard.</p>
+<pre><code class="language-cpp">// Fixed Code
+char filename[512];
+int written = snprintf(filename, sizeof(filename), attr.filename_llm_axmodel.c_str(), i);
+if (written &lt; 0 || static_cast&lt;size_t&gt;(written) &gt;= sizeof(filename)) {
+    ALOGE(&quot;Model path template exceeds buffer bounds&quot;);
+    return -1;
+}
+</code></pre>
+<hr>
+<h3>3. CVE-2026-31026: Heap Out-of-Bounds Write in Multimodal RoPE Indexing</h3>
+<ul>
+<li><strong>Location:</strong> <code>src/runner/LLM.hpp</code> (Lines 422 to 450)</li>
+<li><strong>CVSS v3.1:</strong> 8.1 (High)</li>
+</ul>
+<p>Vision-Language Models (VLMs) like Qwen2-VL use 3D Rotary Position Embeddings (RoPE) to map image patches and text tokens into a shared coordinate space. Let&#39;s look at how <code>LLM.hpp</code> calculates those RoPE indices:</p>
+<pre><code class="language-cpp">// Vulnerable Code (src/runner/LLM.hpp, Lines 422-450)
+std::vector&lt;int&gt; position_ids(attr.max_token_len * 3); // Pre-allocated for max_token_len
+int idx = 0;
+for (size_t i = 0; i &lt; _token_ids.size(); i++) {
+    if (_token_ids[i] == IMAGE_CONTEXT_TOKEN) {
+        for (int h = 0; h &lt; img_grid_h; h++) {
+            for (int w = 0; w &lt; img_grid_w; w++) {
+                // Unchecked write into position_ids!
+                position_ids[idx++] = current_pos;
+                position_ids[idx++] = h;
+                position_ids[idx++] = w;
+            }
+        }
+    }
+}
+</code></pre>
+<p>The vector <code>position_ids</code> allocates <code>attr.max_token_len * 3</code> integers up front. Inside the nested loop, <code>idx</code> increments on every image patch and token without ever checking if <code>idx + 2 &lt; position_ids.size()</code>.</p>
+<p><strong>What Happened on the Silicon:</strong>
+We fed the multimodal runner a prompt packed with repeated <code>IMAGE_CONTEXT_TOKEN</code> markers alongside high-resolution grid dimensions (<code>img_grid_h = 64, img_grid_w = 64</code>). That single image grid writes <code>64 * 64 * 3 = 12,288</code> integers into a vector sized for only <code>3,072</code> integers.</p>
+<p>The loop wrote 32-bit position integers right past the end of <code>position_ids</code> into adjacent <code>std::allocator</code> heap metadata and C++ object vtables. Under GDB and ASan on our ARM64 node, the binary died immediately with <code>AddressSanitizer: heap-buffer-overflow WRITE of size 4 at 0xffff... in LLM::generate_rope_ids()</code>.</p>
+<p><strong>The Fix:</strong>
+Verify that <code>idx + 3 &lt;= position_ids.size()</code> on every iteration of the RoPE generator loop.</p>
+<pre><code class="language-cpp">// Fixed Code
+if (static_cast&lt;size_t&gt;(idx + 3) &gt; position_ids.size()) {
+    ALOGE(&quot;RoPE position index overflow: idx=%d exceeds capacity=%zu&quot;, idx, position_ids.size());
+    return -1;
+}
+</code></pre>
+<hr>
+<h3>4. CVE-2026-35402: Integer Overflow in Multimodal Vision Preprocessing</h3>
+<ul>
+<li><strong>Location:</strong> <code>src/runner/utils/image_processor.cpp</code> (Lines 45 to 78)</li>
+<li><strong>CVSS v3.1:</strong> 7.5 (High)</li>
+</ul>
+<p>Before the NPU encodes an image, <code>image_processor.cpp</code> resizes and normalizes the RGB pixel buffer. Look at the arithmetic used to allocate the target <code>std::vector&lt;float&gt;</code> buffer:</p>
+<pre><code class="language-cpp">// Vulnerable Code (src/runner/utils/image_processor.cpp, Lines 45-78)
+int target_h = img_height * scale_factor;
+int target_w = img_width * scale_factor;
+int total_pixels = target_h * target_w * 3; // [1] 32-bit signed integer overflow!
+
+std::vector&lt;float&gt; resized_buf(total_pixels); // [2] Sign-extended to huge size_t or tiny wrap!
+for (int y = 0; y &lt; target_h; y++) {
+    for (int x = 0; x &lt; target_w; x++) {
+        resized_buf[(y * target_w + x) * 3] = ...; // [3] Out-of-bounds heap write!
+    }
+}
+</code></pre>
+<p>The math uses 32-bit signed <code>int</code> variables. If <code>target_h * target_w * 3</code> exceeds <code>INT_MAX</code> (<code>2,147,483,647</code>), signed integer overflow triggers undefined behavior in C++.</p>
+<p><strong>What Happened on the Silicon:</strong>
+We tested two crafted image headers:</p>
+<ol>
+<li><strong>Negative Sign-Extension Crash:</strong> With <code>target_h = 30000</code> and <code>target_w = 30000</code>, the product <code>30000 * 30000 * 3</code> equals <code>2,700,000,000</code>. In 32-bit signed math, that wraps to <code>-1,594,967,296</code>. When <code>std::vector</code> casts that negative <code>int</code> to an unsigned 64-bit <code>size_t</code>, it asks the allocator for <code>18,446,744,072,114,584,320</code> bytes (~18.4 exabytes). The daemon crashes on the spot with an unhandled <code>std::bad_alloc</code> exception.</li>
+<li><strong>Positive Wrap-Around Heap Corruption:</strong> When dimensions are tuned so <code>target_h * target_w * 3</code> wraps past <code>2^32</code> into a small positive integer (for example, <code>4096</code> bytes), <code>resized_buf</code> allocates a tiny buffer on the heap. Then the nested <code>y</code> and <code>x</code> loops write millions of float values past the end of that buffer.</li>
+</ol>
+<p><strong>The Fix:</strong>
+Perform all dimension math in <code>size_t</code> and enforce hard maximum image dimensions (such as <code>4096 x 4096</code>) before allocation.</p>
+<pre><code class="language-cpp">// Fixed Code
+constexpr size_t MAX_IMG_DIM = 4096;
+if (target_h &lt;= 0 || target_w &lt;= 0 ||
+    static_cast&lt;size_t&gt;(target_h) &gt; MAX_IMG_DIM ||
+    static_cast&lt;size_t&gt;(target_w) &gt; MAX_IMG_DIM) {
+    return -1;
+}
+size_t total_pixels = static_cast&lt;size_t&gt;(target_h) * static_cast&lt;size_t&gt;(target_w) * 3ULL;
+std::vector&lt;float&gt; resized_buf(total_pixels);
+</code></pre>
+<hr>
+<h3>5. CVE-2026-35403: Double-Free &amp; Use-After-Free in CLI Argument Error Handling</h3>
+<ul>
+<li><strong>Location:</strong> <code>src/cmdline.hpp</code> (Lines 310 to 365)</li>
+<li><strong>CVSS v3.1:</strong> 7.3 (High)</li>
+</ul>
+<p>In <code>src/cmdline.hpp</code>, the <code>cmdline::parser</code> class stores option objects inside a <code>std::map&lt;std::string, option_base*&gt;</code>. When parsing fails or an invalid flag arrives, the error cleanup path manually deletes option pointers without removing them from the map. Then the class destructor (<code>~parser()</code>) loops over that same map and calls <code>delete</code> a second time.</p>
+<p><strong>What Happened on the Silicon:</strong>
+Passing a malformed flag sequence to the runner triggered the error handler, which freed the option pointers and then invoked stack unwinding. Under <code>glibc</code> on our ARM64 board, the allocator caught the corrupted fastbin/tcache list and aborted with <code>free(): double free detected in tcache 2 (SIGABRT)</code>. Under ASan, it flagged <code>AddressSanitizer: attempting double-free on 0x... in cmdline::parser::~parser()</code>.</p>
+<p><strong>The Fix:</strong>
+Replace raw <code>option_base*</code> pointers in <code>cmdline::parser</code> with <code>std::unique_ptr&lt;option_base&gt;</code> so RAII handles memory cleanup once and only once.</p>
+<hr>
+<h3>6. Finding 6 (Pending CVE): Unauthenticated OS Command Injection in Audio Preprocessing</h3>
+<ul>
+<li><strong>Location:</strong> <code>src/runner/AudioWrapper.hpp</code> (Lines 42 to 58)</li>
+<li><strong>CVSS v3.1:</strong> 9.8 (Critical)</li>
+</ul>
+<p>This was my favorite find of the entire hardware sprint. When <code>ax-llm</code> runs in multimodal audio mode, it needs to convert incoming audio files or URLs into 16kHz mono WAV files before feeding them to the Whisper/Audio NPU encoder. How did the developer implement audio resampling in C++? Take a look:</p>
+<pre><code class="language-cpp">// Vulnerable Code (src/runner/AudioWrapper.hpp, Lines 42-58)
+int preprocess_audio(const std::string &amp;audio_path, const std::string &amp;output_wav) {
+    char cmd[512];
+    snprintf(cmd, sizeof(cmd), &quot;ffmpeg -y -i \&quot;%s\&quot; -ar 16000 -ac 1 \&quot;%s\&quot;&quot;,
+             audio_path.c_str(), output_wav.c_str());
+    return std::system(cmd); // Direct shell execution of user input!
+}
+</code></pre>
+<p>There is zero sanitization on <code>audio_path</code>. The code drops the string straight between double quotes and hands it to <code>/bin/sh -c</code> via <code>std::system()</code>.</p>
+<p><strong>What Happened on the Silicon:</strong>
+We passed an <code>audio_url</code> / <code>audio_path</code> value containing:</p>
+<pre><code class="language-text">test.wav&quot;; id &gt; /tmp/pwned; #
+</code></pre>
+<p>The embedded double quote closed the <code>-i</code> argument early. Next, <code>/bin/sh</code> executed <code>id &gt; /tmp/pwned</code> with the privileges of the <code>ax_llm</code> service, and the <code>#</code> commented out the rest of the <code>ffmpeg</code> line. Because NPU access on embedded Linux boards almost always runs as <code>root</code> (to open <code>/dev/ax_npu</code> and <code>/dev/mem</code>), checking <code>/tmp/pwned</code> showed:</p>
+<pre><code class="language-text">uid=0(root) gid=0(root) groups=0(root)
+</code></pre>
+<p>One unauthenticated JSON request gives an attacker instant root shell execution on the edge device.</p>
+<p><strong>The Fix:</strong>
+Never pass user-supplied strings to <code>std::system()</code>. Execute <code>ffmpeg</code> directly using <code>fork()</code> and <code>execvp()</code> with an explicit argument array so <code>/bin/sh</code> never interprets shell metacharacters:</p>
+<pre><code class="language-cpp">// Fixed Code (POSIX execvp without /bin/sh)
+pid_t pid = fork();
+if (pid == 0) {
+    const char *argv[] = {
+        &quot;ffmpeg&quot;, &quot;-y&quot;, &quot;-i&quot;, audio_path.c_str(),
+        &quot;-ar&quot;, &quot;16000&quot;, &quot;-ac&quot;, &quot;1&quot;, output_wav.c_str(), nullptr
+    };
+    execvp(&quot;ffmpeg&quot;, const_cast&lt;char *const *&gt;(argv));
+    _exit(127);
+}
+</code></pre>
+<hr>
+<h3>7. Finding 7 (Pending CVE): Heap Out-of-Bounds Read in Token Streaming Callback</h3>
+<ul>
+<li><strong>Location:</strong> <code>src/main_api.cpp</code> (Lines 78 to 88)</li>
+<li><strong>CVSS v3.1:</strong> 7.5 (High)</li>
+</ul>
+<p>In the HTTP API server (<code>src/main_api.cpp</code>), the streaming callback <code>llm_running_callback</code> sends generated tokens back to the client over Server-Sent Events (SSE). Look at lines 78 to 88:</p>
+<pre><code class="language-cpp">// Vulnerable Code (src/main_api.cpp, Lines 78-88)
+void llm_running_callback(int *p_token, int n_token, const char *p_str, float token_per_sec, void *reserve) {
+    // [1] Dereferences p_token[0] BEFORE checking if p_token is null or n_token == 0!
+    int first_token = p_token[0];
+    if (n_token &lt;= 0 || p_token == nullptr) {
+        return;
+    }
+    // [2] Unchecked strlen/copy on non-null-terminated C-buffer p_str
+    std::string out_str(p_str);
+    send_sse_chunk(out_str);
+}
+</code></pre>
+<p>This is a textbook check-after-use bug paired with an unterminated buffer read. The function reads <code>p_token[0]</code> on the line <em>before</em> it checks <code>if (n_token &lt;= 0 || p_token == nullptr)</code>. Worse yet, when the tokenizer emits partial multi-byte UTF-8 sequences during high-speed streaming, <code>p_str</code> lacks a trailing null byte at the chunk boundary.</p>
+<p><strong>What Happened on the Silicon:</strong>
+When an empty token batch (<code>n_token == 0</code>) or a split multi-byte UTF-8 character fired the callback under concurrent HTTP load, <code>std::string(p_str)</code> read past the end of the token chunk buffer on the heap. That leaked adjacent heap bytes directly into the caller&#39;s HTTP SSE response stream, or crashed the API daemon when <code>p_token</code> was null.</p>
+<p><strong>The Fix:</strong>
+Move the null and length check to the very top of <code>llm_running_callback</code> before any pointer dereference, and construct <code>std::string</code> using an explicit byte length.</p>
+<hr>
+<h2>Community &amp; Resources</h2>
+<p>Auditing bare-metal AI silicon is about stripping away cloud abstractions and verifying the exact boundary where untrusted user input meets hardware DMA registers.</p>
+<ul>
+<li><strong>Explore The Blind Hacker Hub:</strong> Visit <a href="https://theblindhacker.com">TheBlindHacker.com</a> for Joe Brinkley&#39;s portfolio, <a href="https://theblindhacker.com/projects">Edge NPU &amp; Open-Source Projects</a>, and <a href="https://theblindhacker.com/profiles">Media &amp; Press Appearances</a>.</li>
+<li><strong>Read the Companion Enterprise Advisory:</strong> Dive into <a href="https://www.cobalt.io/blog/dissecting-the-ax-llm-cves-why-edge-ai-memory-and-execution-boundaries-matter">Dissecting the AX-LLM CVEs: Why Edge AI Memory and Execution Boundaries Matter</a> on the Cobalt blog.</li>
+<li><strong>Learn the 500-WPM CLI Workflow:</strong> Check out the <a href="https://theblindhacker.com/hackingwhileblind">Hacking While Blind CLI Guide</a>, <a href="hacking-by-ear-at-500-wpm-screen-readers.html">Hacking by Ear at 500 WPM</a>, and <a href="why-i-use-ai-to-build-accessible-clis-and-pwas.html">Why I Use AI to Build Accessible CLIs and PWAs</a>.</li>
+<li><strong>Join the Community:</strong> Connect with fellow researchers and mentors at <a href="https://deadpixelsec.com">DeadPixelSec.com</a> and on Discord at <a href="https://discord.gg/deadpixelsec">discord.gg/deadpixelsec</a>.</li>
+</ul>
+<hr>
+<h2>Frequently Asked Questions</h2>
+<h3>How do I check if my Axera AX8850 or AX650 device is vulnerable to the AX-LLM CVEs?</h3>
+<p>Check the git commit hash or binary build date of your <code>ax-llm</code> service (<code>ax_llm_runner</code> or <code>main_api</code>). Any deployment built from <code>AXERA-TECH/ax-llm</code> at or before commit <code>a0fb3f2</code> (v0.1.0) without the bounds-clamping and <code>execvp</code> patches detailed above is vulnerable to CVE-2026-30992, CVE-2026-30993, CVE-2026-31026, CVE-2026-35402, and CVE-2026-35403.</p>
+<h3>Why do edge NPU memory corruption bugs crash the whole Linux box instead of just one process?</h3>
+<p>Standard cloud CPU processes operate in isolated virtual memory pages. By contrast, edge NPU runtimes allocate Contiguous Media Memory (CMM) or Media Memory Zone (MMZ) physical RAM blocks shared directly with <code>/dev/ax_npu</code> via DMA. When an out-of-bounds write corrupts a CMM descriptor or DMA mask, the hardware NPU engine reads invalid physical addresses, locking up the kernel driver and requiring a hard power cycle.</p>
+<h3>Can I run AX-LLM safely inside an unprivileged Proxmox LXC container?</h3>
+<p>Passing <code>/dev/ax_*</code> device nodes into an unprivileged LXC container (like we detailed in our <a href="ultimate-guide-zero-copy-ax8850.html">Zero-Copy AX8850 Guide</a>) isolates the host filesystem, which stops an OS command injection bug from overwriting host files. However, container namespaces do not validate physical CMM DMA buffer bounds. You must still patch the C++ runtime and place an authenticating reverse proxy with strict JSON payload size limits in front of <code>main_api</code>.</p>
+<h3>Where can I read the enterprise and supply-chain analysis of these AX-LLM CVEs?</h3>
+<p>Read my companion research article on the Cobalt blog: <a href="https://www.cobalt.io/blog/dissecting-the-ax-llm-cves-why-edge-ai-memory-and-execution-boundaries-matter">Dissecting the AX-LLM CVEs: Why Edge AI Memory and Execution Boundaries Matter</a>, and browse all our hardware and NPU research on <a href="https://theblindhacker.com/projects">TheBlindHacker.com</a>.</p>
+
+      
+      <div class="post-footer-cta">
+        <div class="cyber-divider-purple"></div>
+        <h3>Collaborate on Security Research with Joe Brinkley (The Blind Hacker)</h3>
+        <p>At NextGenRedTeam, we study adversary TTPs and build open-source tools to help defenders. Connect on <a href="https://www.linkedin.com/in/brinkleyjoseph/" target="_blank">LinkedIn</a>, follow <a href="https://x.com/TheBlindHacker" target="_blank">@TheBlindHacker on X</a>, explore <a href="https://theblindhacker.com" target="_blank">TheBlindHacker.com</a>, or join the community at <a href="https://deadpixelsec.com" target="_blank">DeadPixelSec.com</a> (<a href="https://discord.gg/deadpixelsec" target="_blank">discord.gg/deadpixelsec</a>).</p>
+        <div class="cta-actions">
+          <a href="https://theblindhacker.com" target="_blank" class="button border-pink">TheBlindHacker.com</a>
+          <a href="https://www.linkedin.com/in/brinkleyjoseph/" target="_blank" class="button border-purple">Connect on LinkedIn</a>
+          <a href="https://calendar.proton.me/bookings#HVEHryH4oOT8O4hzE1WTkx71-bIihVp1FCAnLpSB-dM=" target="_blank" class="button border-pink">Schedule Collab &amp; Media</a>
+          <a href="index.html" class="button border-cyan">Back to Blog</a>
+        </div>
+      </div>
+    </article>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="cyber-container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <span class="cyber-glitch-text font-mono">NGRT</span>
+          <p class="footer-desc">Independent Threat Emulation Research &amp; Collaborative Defense.</p>
+        </div>
+        <div class="footer-links">
+          <a href="../index.html#services">Services</a>
+          <a href="../index.html#tools">GitHub Tools</a>
+          <a href="../index.html#media">Media &amp; Press</a>
+          <a href="index.html">Threat Lab Blog</a>
+          <a href="https://theblindhacker.com" target="_blank">TheBlindHacker.com</a>
+          <a href="https://deadpixelsec.com" target="_blank">DeadPixelSec.com</a>
+          <div class="footer-socials">
+            <a href="https://www.linkedin.com/in/brinkleyjoseph/" target="_blank" aria-label="LinkedIn" title="LinkedIn (Joe Brinkley)" class="footer-social-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 24 24" fill="currentColor"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+            </a>
+            <a href="https://x.com/TheBlindHacker" target="_blank" aria-label="X / @TheBlindHacker" title="X (@TheBlindHacker)" class="footer-social-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+            </a>
+            <a href="https://x.com/NextGenRedTeam" target="_blank" aria-label="X / @NextGenRedTeam" title="X (@NextGenRedTeam)" class="footer-social-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+            </a>
+            <a href="https://discord.gg/deadpixelsec" target="_blank" aria-label="Dead Pixel Sec Discord" title="Discord (discord.gg/deadpixelsec)" class="footer-social-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z"/></svg>
+            </a>
+            <a href="https://github.com/nextgenredteam" target="_blank" aria-label="GitHub" title="GitHub (NextGenRedTeam)" class="footer-social-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/></svg>
+            </a>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 NextGenRedTeam LLC. All rights reserved. Obfuscated communications active.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="../app.js"></script>
+  <!-- PrismJS Core and Autoloader Scripts -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+</body>
+</html>

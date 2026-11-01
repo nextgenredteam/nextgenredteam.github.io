@@ -125,6 +125,14 @@
             "@type": "Answer",
             "text": "By default, ZFS ARC will claim up to 50% of total host RAM. On a 64GB machine hosting a 42GB virtual machine, this causes memory exhaustion. You must place options zfs zfsarcmax=2147483648 inside /etc/modprobe.d/zfs.conf and update your initramfs to hard-cap ARC usage to 2 GiB."
           }
+        },
+        {
+          "@type": "Question",
+          "name": "Where can I explore more of The Blind Hacker's offensive AI and hardware benchmarks?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Visit [TheBlindHacker.com](https://theblindhacker.com) and [TheBlindHacker.com/projects](https://theblindhacker.com/projects) for the full index of Joe Brinkley's local LLM shootouts, [Edge NPU CVE research](hunting-edge-ai-cves-from-demo-code-to-dma-memory-corruption.html), and [500-WPM accessible CLI engineering](why-i-use-ai-to-build-accessible-clis-and-pwas.html)."
+          }
         }
       ]
     }
@@ -513,6 +521,8 @@ options zfs zfs_arc_max=2147483648
 <p>The ZimaCube Pro uses an Intel hybrid processor containing 2 Performance cores and 8 Efficient cores. Assigning 10 or 12 virtual cores forces parallel tensor calculations across both high-speed and low-speed cores. Fast cores end up stalling at synchronization barriers while waiting for slow Efficient cores to finish. Limiting the virtual machine to 6 vCPUs eliminates this bottleneck and avoids DDR5 memory bus saturation.</p>
 <h3>How do we protect Proxmox from memory exhaustion with a 42GB guest?</h3>
 <p>By default, ZFS ARC will claim up to 50% of total host RAM. On a 64GB machine hosting a 42GB virtual machine, this causes memory exhaustion. You must place <code>options zfs zfs_arc_max=2147483648</code> inside <code>/etc/modprobe.d/zfs.conf</code> and update your initramfs to hard-cap ARC usage to 2 GiB.</p>
+<h3>Where can I explore more of The Blind Hacker&#39;s offensive AI and hardware benchmarks?</h3>
+<p>Visit <strong><a href="https://theblindhacker.com">TheBlindHacker.com</a></strong> and <strong><a href="https://theblindhacker.com/projects">TheBlindHacker.com/projects</a></strong> for the full index of Joe Brinkley&#39;s local LLM shootouts, <a href="hunting-edge-ai-cves-from-demo-code-to-dma-memory-corruption.html">Edge NPU CVE research</a>, and <a href="why-i-use-ai-to-build-accessible-clis-and-pwas.html">500-WPM accessible CLI engineering</a>.</p>
 
       
       <div class="post-footer-cta">

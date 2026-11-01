@@ -238,3 +238,6 @@ The ZimaCube Pro uses an Intel hybrid processor containing 2 Performance cores a
 
 ### How do we protect Proxmox from memory exhaustion with a 42GB guest?
 By default, ZFS ARC will claim up to 50% of total host RAM. On a 64GB machine hosting a 42GB virtual machine, this causes memory exhaustion. You must place `options zfs zfs_arc_max=2147483648` inside `/etc/modprobe.d/zfs.conf` and update your initramfs to hard-cap ARC usage to 2 GiB.
+
+### Where can I explore more of The Blind Hacker's offensive AI and hardware benchmarks?
+Visit **[TheBlindHacker.com](https://theblindhacker.com)** and **[TheBlindHacker.com/projects](https://theblindhacker.com/projects)** for the full index of Joe Brinkley's local LLM shootouts, [Edge NPU CVE research](hunting-edge-ai-cves-from-demo-code-to-dma-memory-corruption.html), and [500-WPM accessible CLI engineering](why-i-use-ai-to-build-accessible-clis-and-pwas.html).

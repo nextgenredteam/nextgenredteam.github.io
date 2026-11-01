@@ -97,4 +97,4 @@ The success of the JoeBro app shows that we don't have to accept the planned obs
 
 The JoeBro app code is fully open-source and hosted in our prominent repo spot. Check it out and run it yourself!
 
-*Get the code and scripts on the [NextGenRedTeam GitHub](https://github.com/nextgenredteam) or access the controller at [/tools/joebro/](file:///f:/OneDrive/NGRT/Website/tools/joebro/index.html).*
+*Get the code and scripts on the [NextGenRedTeam GitHub](https://github.com/nextgenredteam), launch the live controller at [/tools/joebro/](../tools/joebro/index.html), read how we architect accessible PWAs in [Why I Use AI to Build Accessible CLIs and PWAs](why-i-use-ai-to-build-accessible-clis-and-pwas.html), or explore all of Joe Brinkley's hardware rescues on [TheBlindHacker.com Projects](https://theblindhacker.com/projects).*

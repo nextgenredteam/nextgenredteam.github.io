@@ -42,7 +42,7 @@ You can read the broader industry context and why edge AI memory boundaries fail
 
 ## How I Hunt C++ Silicon Bugs by Ear at 500 WPM
 
-People ask how a blind hacker audits low-level C++ NPU drivers and memory allocators. Honestly, a screen reader running at 500 words per minute is an unfair advantage for source code auditing.
+People ask how a blind hacker audits low-level C++ NPU drivers and memory allocators. Honestly, as I broke down in [Hacking by Ear at 500 WPM](hacking-by-ear-at-500-wpm-screen-readers.html), [Why I Use AI to Build Accessible CLIs and PWAs](why-i-use-ai-to-build-accessible-clis-and-pwas.html), and my [Hacking While Blind CLI Survival Guide on TheBlindHacker.com](https://theblindhacker.com/hackingwhileblind), a screen reader running at 500 words per minute is an unfair advantage for source code auditing.
 
 Sighted engineers often skim C++ files visually. Their eyes jump over boilerplate `sprintf` calls, implicit `int` casts, or missing bounds checks because the code *looks* well-formatted. When you listen to code through a CLI pipeline using `ripgrep`, `awk`, and `sed`, every single type cast and pointer arithmetic operation hits your ears in strict sequence.
 
@@ -363,7 +363,18 @@ Move the null and length check to the very top of `llm_running_callback` before 
 
 ---
 
-## Frequently Asked Questions (Edge AI & NPU Security)
+## Community & Resources
+
+Auditing bare-metal AI silicon is about stripping away cloud abstractions and verifying the exact boundary where untrusted user input meets hardware DMA registers.
+
+* **Explore The Blind Hacker Hub:** Visit [TheBlindHacker.com](https://theblindhacker.com) for Joe Brinkley's portfolio, [Edge NPU & Open-Source Projects](https://theblindhacker.com/projects), and [Media & Press Appearances](https://theblindhacker.com/profiles).
+* **Read the Companion Enterprise Advisory:** Dive into [Dissecting the AX-LLM CVEs: Why Edge AI Memory and Execution Boundaries Matter](https://www.cobalt.io/blog/dissecting-the-ax-llm-cves-why-edge-ai-memory-and-execution-boundaries-matter) on the Cobalt blog.
+* **Learn the 500-WPM CLI Workflow:** Check out the [Hacking While Blind CLI Guide](https://theblindhacker.com/hackingwhileblind), [Hacking by Ear at 500 WPM](hacking-by-ear-at-500-wpm-screen-readers.html), and [Why I Use AI to Build Accessible CLIs and PWAs](why-i-use-ai-to-build-accessible-clis-and-pwas.html).
+* **Join the Community:** Connect with fellow researchers and mentors at [DeadPixelSec.com](https://deadpixelsec.com) and on Discord at [discord.gg/deadpixelsec](https://discord.gg/deadpixelsec).
+
+---
+
+## Frequently Asked Questions
 
 ### How do I check if my Axera AX8850 or AX650 device is vulnerable to the AX-LLM CVEs?
 Check the git commit hash or binary build date of your `ax-llm` service (`ax_llm_runner` or `main_api`). Any deployment built from `AXERA-TECH/ax-llm` at or before commit `a0fb3f2` (v0.1.0) without the bounds-clamping and `execvp` patches detailed above is vulnerable to CVE-2026-30992, CVE-2026-30993, CVE-2026-31026, CVE-2026-35402, and CVE-2026-35403.
@@ -375,4 +386,4 @@ Standard cloud CPU processes operate in isolated virtual memory pages. By contra
 Passing `/dev/ax_*` device nodes into an unprivileged LXC container (like we detailed in our [Zero-Copy AX8850 Guide](ultimate-guide-zero-copy-ax8850.html)) isolates the host filesystem, which stops an OS command injection bug from overwriting host files. However, container namespaces do not validate physical CMM DMA buffer bounds. You must still patch the C++ runtime and place an authenticating reverse proxy with strict JSON payload size limits in front of `main_api`.
 
 ### Where can I read the enterprise and supply-chain analysis of these AX-LLM CVEs?
-Read my companion research article on the Cobalt blog: [Dissecting the AX-LLM CVEs: Why Edge AI Memory and Execution Boundaries Matter](https://www.cobalt.io/blog/dissecting-the-ax-llm-cves-why-edge-ai-memory-and-execution-boundaries-matter).
+Read my companion research article on the Cobalt blog: [Dissecting the AX-LLM CVEs: Why Edge AI Memory and Execution Boundaries Matter](https://www.cobalt.io/blog/dissecting-the-ax-llm-cves-why-edge-ai-memory-and-execution-boundaries-matter), and browse all our hardware and NPU research on [TheBlindHacker.com](https://theblindhacker.com/projects).

@@ -264,4 +264,4 @@ By leveraging the AX650 cross-compatibility spoof, we successfully booted a **Ge
 
 Now, we've taken the next leap: bypassing broken vendor C++ HTTP APIs, designing a custom FastAPI orchestrator, and piping bare-metal telemetry directly into OpenAI-formatted API outputs.
 
-Check out the full story in **[Conquering the Silicon: Building a Custom 'Ollama' Orchestrator for the AX8850 NPU (Part II)](/blog/conquering-silicon-edge-npu.html)**.
+Check out the full story in **[Conquering the Silicon: Building a Custom 'Ollama' Orchestrator for the AX8850 NPU (Part II)](/blog/conquering-silicon-edge-npu.html)**, read our vulnerability research in **[Hunting Edge AI CVEs: From Demo Code to DMA Memory Corruption](/blog/hunting-edge-ai-cves-from-demo-code-to-dma-memory-corruption.html)**, and browse all of Joe Brinkley's hardware and AI projects on **[TheBlindHacker.com](https://theblindhacker.com/projects)**.

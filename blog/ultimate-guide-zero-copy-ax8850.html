@@ -305,6 +305,9 @@ python3 /path/to/ax-llm/third_party/tokenizer.axera/tests/convert_tokenizer.py \
 </tr>
 </tbody></table>
 <p>The native server handles back-to-back requests seamlessly. It automatically purges and resets the KV Cache matrices in CMM memory between discrete API calls, permanently neutralizing the context stall issues found in legacy software wrappers.</p>
+<hr>
+<h2>Next Up: Auditing the AX-LLM NPU Runtime for Zero-Day CVEs</h2>
+<p>Once we stabilized our zero-copy CMM memory pipeline on <code>NextGenPVE</code>, we turned our offensive lens onto the upstream <code>AXERA-TECH/ax-llm</code> C++ runtime itself. Read our follow-up hardware vulnerability walkthrough, <strong><a href="hunting-edge-ai-cves-from-demo-code-to-dma-memory-corruption.html">Hunting Edge AI CVEs: From Demo Code to DMA Memory Corruption</a></strong>, and explore our full edge NPU research index on <strong><a href="https://theblindhacker.com/projects">TheBlindHacker.com</a></strong>.</p>
 
       
       <div class="post-footer-cta">
