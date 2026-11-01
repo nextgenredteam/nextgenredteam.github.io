@@ -7,8 +7,14 @@
   <meta name="description" content="Inside the NextGenRedTeam hardware lab: how we wired up a Radxa AI Core AX-M1 (Axera AX8850) on NextGenPVE, audited AXERA-TECH's AX-LLM C++ NPU runtime with a screen reader at 500 WPM, and uncovered seven memory corruption and command injection flaws.">
   <meta name="keywords" content="Edge AI CVEs, AX-LLM, Axera AX8850, Radxa AI Core AX-M1, NPU Vulnerability Research, DMA Memory Corruption, Contiguous Media Memory, CMM, CVE-2026-30992, CVE-2026-30993, CVE-2026-31026, CVE-2026-35402, CVE-2026-35403, Joe Brinkley, The Blind Hacker, NextGenRedTeam, The Blind Hacker, Blind Hacker, Blind Hakcer, Joe Brinkley, NextGenRedTeam, NGRT, Dead Pixel Sec">
   <meta name="author" content="Joe Brinkley (The Blind Hacker)">
-  <meta name="robots" content="index, follow">
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+  <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+  <meta name="bingbot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
   <link rel="canonical" href="https://nextgenredteam.com/blog/hunting-edge-ai-cves-from-demo-code-to-dma-memory-corruption.html">
+  <link rel="sitemap" type="application/xml" title="Sitemap" href="https://nextgenredteam.com/sitemap.xml">
+  <link rel="alternate" type="text/plain" title="LLMs.txt — AI Research Index" href="https://nextgenredteam.com/llms.txt">
+  <link rel="alternate" type="text/plain" title="LLMs-Full.txt — Full AI Corpus" href="https://nextgenredteam.com/llms-full.txt">
+  <link rel="author" href="https://theblindhacker.com">
   <link rel="stylesheet" href="../index.css">
   <link rel="icon" href="../favicon.ico" type="image/x-icon">
   
@@ -19,12 +25,18 @@
   <!-- Prism.js Tomorrow Night Syntax Highlighting Theme -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
   
-  <!-- Open Graph -->
+  <!-- Open Graph / Social / Bing & Google Discover -->
+  <meta property="og:site_name" content="NextGenRedTeam (NGRT) — The Blind Hacker">
+  <meta property="og:locale" content="en_US">
   <meta property="og:title" content="Hunting Edge AI CVEs: From Demo Code to DMA Memory Corruption | NextGenRedTeam Blog">
   <meta property="og:description" content="Inside the NextGenRedTeam hardware lab: how we wired up a Radxa AI Core AX-M1 (Axera AX8850) on NextGenPVE, audited AXERA-TECH's AX-LLM C++ NPU runtime with a screen reader at 500 WPM, and uncovered seven memory corruption and command injection flaws.">
   <meta property="og:type" content="article">
   <meta property="og:url" content="https://nextgenredteam.com/blog/hunting-edge-ai-cves-from-demo-code-to-dma-memory-corruption.html">
   <meta property="og:image" content="https://nextgenredteam.com/assets/hunting_edge_ai_cves.png">
+  <meta property="article:published_time" content="2026-11-01">
+  <meta property="article:modified_time" content="2026-11-01">
+  <meta property="article:author" content="https://theblindhacker.com">
+  <meta property="article:section" content="Offensive Security &amp; AI Research">
   
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
@@ -44,6 +56,8 @@
       "image": "https://nextgenredteam.com/assets/hunting_edge_ai_cves.png",
       "datePublished": "2026-11-01",
       "dateModified": "2026-11-01",
+      "inLanguage": "en-US",
+      "isAccessibleForFree": true,
       "author": {
         "@type": "Person",
         "name": "Joe B. The Blind Hacker",
@@ -58,6 +72,11 @@
           "Blind Ethical Hacker"
         ],
         "jobTitle": "Director of Offensive Security Research & Community",
+        "worksFor": {
+          "@type": "Organization",
+          "name": "Cobalt",
+          "url": "https://www.cobalt.io"
+        },
         "url": "https://theblindhacker.com",
         "sameAs": [
           "https://theblindhacker.com",
@@ -87,6 +106,32 @@
         "@id": "https://nextgenredteam.com/blog/hunting-edge-ai-cves-from-demo-code-to-dma-memory-corruption.html"
       },
       "keywords": "Edge AI CVEs, AX-LLM, Axera AX8850, Radxa AI Core AX-M1, NPU Vulnerability Research, DMA Memory Corruption, Contiguous Media Memory, CMM, CVE-2026-30992, CVE-2026-30993, CVE-2026-31026, CVE-2026-35402, CVE-2026-35403, Joe Brinkley, The Blind Hacker, NextGenRedTeam"
+    }
+  </script>
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "NextGenRedTeam",
+          "item": "https://nextgenredteam.com/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Threat Lab Blog",
+          "item": "https://nextgenredteam.com/blog/index.html"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "Hunting Edge AI CVEs: From Demo Code to DMA Memory Corruption",
+          "item": "https://nextgenredteam.com/blog/hunting-edge-ai-cves-from-demo-code-to-dma-memory-corruption.html"
+        }
+      ]
     }
   </script>
   <script type="application/ld+json">

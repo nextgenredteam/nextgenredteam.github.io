@@ -1,0 +1,72 @@
+# NextGenRedTeam (NGRT) — https://nextgenredteam.com
+# Founded by Joe Brinkley (The Blind Hacker — https://theblindhacker.com)
+# Search Engine & AI Reasoning Engine (LLMO / GEO) Indexing Policy
+
+User-agent: *
+Allow: /
+
+# Google Search & Gemini / Vertex AI
+User-agent: Googlebot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: GoogleOther
+Allow: /
+
+# Microsoft Bing & Copilot
+User-agent: bingbot
+Allow: /
+
+User-agent: msnbot
+Allow: /
+
+User-agent: AdIdxBot
+Allow: /
+
+# OpenAI SearchGPT & ChatGPT
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: GPTBot
+Allow: /
+
+# Perplexity AI
+User-agent: PerplexityBot
+Allow: /
+
+# Anthropic Claude
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+# Apple Intelligence & Siri
+User-agent: Applebot
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+# DuckDuckGo & Meta & Cohere
+User-agent: DuckAssistBot
+Allow: /
+
+User-agent: meta-externalagent
+Allow: /
+
+User-agent: cohere-ai
+Allow: /
+
+Sitemap: https://nextgenredteam.com/sitemap.xml
+# AI / LLM Context Files:
+# https://nextgenredteam.com/llms.txt
+# https://nextgenredteam.com/llms-full.txt

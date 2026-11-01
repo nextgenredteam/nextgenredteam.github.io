@@ -144,7 +144,7 @@ node $BuildScript
 
 if ($Push) {
     Write-Host "`n[+] Committing and pushing changes to GitHub Pages..." -ForegroundColor Yellow
-    git add blog/ llms.txt assets/
+    git add blog/ llms.txt llms-full.txt sitemap.xml robots.txt assets/
     git commit -m "feat(blog): publish $($PostsToPublish.Title -join ', ')"
     git push origin main
     Write-Host "`n[SUCCESS] Changes pushed to origin main! Site will update momentarily." -ForegroundColor Green

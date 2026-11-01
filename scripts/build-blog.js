@@ -41,7 +41,7 @@ function getBlogPostTemplate(metadata, slug, contentHtml, body = '') {
       </a>`;
   }
 
-  // Base Schema: TechArticle
+  // Base Schema: TechArticle + BreadcrumbList
   const schemaList = [
     {
       "@context": "https://schema.org",
@@ -51,6 +51,8 @@ function getBlogPostTemplate(metadata, slug, contentHtml, body = '') {
       "image": ogImage,
       "datePublished": date,
       "dateModified": date,
+      "inLanguage": "en-US",
+      "isAccessibleForFree": true,
       "author": {
         "@type": "Person",
         "name": author,
@@ -65,6 +67,11 @@ function getBlogPostTemplate(metadata, slug, contentHtml, body = '') {
           "Blind Ethical Hacker"
         ],
         "jobTitle": "Director of Offensive Security Research & Community",
+        "worksFor": {
+          "@type": "Organization",
+          "name": "Cobalt",
+          "url": "https://www.cobalt.io"
+        },
         "url": "https://theblindhacker.com",
         "sameAs": [
           "https://theblindhacker.com",
@@ -93,6 +100,30 @@ function getBlogPostTemplate(metadata, slug, contentHtml, body = '') {
         "@type": "WebPage",
         "@id": `https://nextgenredteam.com/blog/${slug}.html`
       }
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "NextGenRedTeam",
+          "item": "https://nextgenredteam.com/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Threat Lab Blog",
+          "item": "https://nextgenredteam.com/blog/index.html"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": title,
+          "item": `https://nextgenredteam.com/blog/${slug}.html`
+        }
+      ]
     }
   ];
 
@@ -193,8 +224,14 @@ function getBlogPostTemplate(metadata, slug, contentHtml, body = '') {
   <meta name="description" content="${description}">
   <meta name="keywords" content="${combinedKeywords}">
   <meta name="author" content="Joe Brinkley (The Blind Hacker)">
-  <meta name="robots" content="index, follow">
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+  <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+  <meta name="bingbot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
   <link rel="canonical" href="https://nextgenredteam.com/blog/${slug}.html">
+  <link rel="sitemap" type="application/xml" title="Sitemap" href="https://nextgenredteam.com/sitemap.xml">
+  <link rel="alternate" type="text/plain" title="LLMs.txt — AI Research Index" href="https://nextgenredteam.com/llms.txt">
+  <link rel="alternate" type="text/plain" title="LLMs-Full.txt — Full AI Corpus" href="https://nextgenredteam.com/llms-full.txt">
+  <link rel="author" href="https://theblindhacker.com">
   <link rel="stylesheet" href="../index.css">
   <link rel="icon" href="../favicon.ico" type="image/x-icon">
   
@@ -205,12 +242,18 @@ function getBlogPostTemplate(metadata, slug, contentHtml, body = '') {
   <!-- Prism.js Tomorrow Night Syntax Highlighting Theme -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
   
-  <!-- Open Graph -->
+  <!-- Open Graph / Social / Bing & Google Discover -->
+  <meta property="og:site_name" content="NextGenRedTeam (NGRT) — The Blind Hacker">
+  <meta property="og:locale" content="en_US">
   <meta property="og:title" content="${title} | NextGenRedTeam Blog">
   <meta property="og:description" content="${description}">
   <meta property="og:type" content="article">
   <meta property="og:url" content="https://nextgenredteam.com/blog/${slug}.html">
   <meta property="og:image" content="${ogImage}">
+  <meta property="article:published_time" content="${date}">
+  <meta property="article:modified_time" content="${date}">
+  <meta property="article:author" content="https://theblindhacker.com">
+  <meta property="article:section" content="Offensive Security &amp; AI Research">
   
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
@@ -354,7 +397,61 @@ ${jsonLdHtml}
 }
 
 // HTML layout for the blog index page
-function getBlogIndexTemplate(postsCardsHtml) {
+function getBlogIndexTemplate(postsCardsHtml, posts = []) {
+  const blogSchema = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Blog",
+        "@id": "https://nextgenredteam.com/blog/index.html#blog",
+        "name": "NextGenRedTeam Threat Lab Blog",
+        "description": "Tactical cybersecurity insights, IoT reverse-engineering writeups, NPU silicon engineering, 500-WPM accessible CLI blueprints, and AI threat emulation research by Joe Brinkley (The Blind Hacker).",
+        "url": "https://nextgenredteam.com/blog/index.html",
+        "inLanguage": "en-US",
+        "author": {
+          "@type": "Person",
+          "name": "Joe Brinkley",
+          "alternateName": ["The Blind Hacker", "Joe B. The Blind Hacker", "Blind Hacker"],
+          "url": "https://theblindhacker.com"
+        },
+        "publisher": {
+          "@type": "Organization",
+          "name": "NextGenRedTeam LLC",
+          "url": "https://nextgenredteam.com"
+        },
+        "blogPost": posts.map(p => ({
+          "@type": "BlogPosting",
+          "headline": p.title,
+          "description": p.description,
+          "datePublished": p.date,
+          "url": `https://nextgenredteam.com/blog/${p.url}`,
+          "author": {
+            "@type": "Person",
+            "name": "Joe Brinkley (The Blind Hacker)",
+            "url": "https://theblindhacker.com"
+          }
+        }))
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "NextGenRedTeam",
+            "item": "https://nextgenredteam.com/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Threat Lab Blog",
+            "item": "https://nextgenredteam.com/blog/index.html"
+          }
+        ]
+      }
+    ]
+  };
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -362,13 +459,21 @@ function getBlogIndexTemplate(postsCardsHtml) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Threat Lab Blog | Joe Brinkley (The Blind Hacker) &amp; NextGenRedTeam</title>
   <meta name="description" content="Read tactical cybersecurity insights, IoT reverse-engineering writeups, NPU silicon engineering, and AI threat emulation research by Joe Brinkley (The Blind Hacker) at NextGenRedTeam.">
-  <meta name="keywords" content="The Blind Hacker, Blind Hacker, Blind Hakcer, TheBlindHacker, Joe Brinkley, Joseph Brinkley, Joe B. The Blind Hacker, NextGenRedTeam Blog, NGRT Blog, Threat Lab Research, AI Pentesting, Axera AX8850, ZimaCube Pro, Sobro Rescue, Dead Pixel Sec">
+  <meta name="keywords" content="The Blind Hacker, Blind Hacker, Blind Hakcer, TheBlindHacker, Joe Brinkley, Joseph Brinkley, Joe B. The Blind Hacker, NextGenRedTeam Blog, NGRT Blog, Threat Lab Research, AI Pentesting, Axera AX8850, AX-LLM CVEs, ZimaCube Pro, Sobro Rescue, Dead Pixel Sec">
   <meta name="author" content="Joe Brinkley (The Blind Hacker)">
-  <meta name="robots" content="index, follow">
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+  <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+  <meta name="bingbot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
   <link rel="canonical" href="https://nextgenredteam.com/blog/index.html">
+  <link rel="sitemap" type="application/xml" title="Sitemap" href="https://nextgenredteam.com/sitemap.xml">
+  <link rel="alternate" type="text/plain" title="LLMs.txt — AI Research Index" href="https://nextgenredteam.com/llms.txt">
+  <link rel="alternate" type="text/plain" title="LLMs-Full.txt — Full AI Corpus" href="https://nextgenredteam.com/llms-full.txt">
+  <link rel="author" href="https://theblindhacker.com">
   <link rel="stylesheet" href="../index.css">
   <link rel="icon" href="../favicon.ico" type="image/x-icon">
   <!-- Open Graph -->
+  <meta property="og:site_name" content="NextGenRedTeam (NGRT) — The Blind Hacker">
+  <meta property="og:locale" content="en_US">
   <meta property="og:title" content="Threat Lab Blog | Joe Brinkley (The Blind Hacker) &amp; NextGenRedTeam">
   <meta property="og:description" content="Read tactical cybersecurity insights, IoT reverse-engineering writeups, and AI threat emulation articles from Joe Brinkley (The Blind Hacker) &amp; NextGenRedTeam.">
   <meta property="og:type" content="website">
@@ -380,6 +485,10 @@ function getBlogIndexTemplate(postsCardsHtml) {
   <meta name="twitter:creator" content="@TheBlindHacker">
   <meta name="twitter:title" content="Threat Lab Blog | Joe Brinkley (The Blind Hacker) &amp; NextGenRedTeam">
   <meta name="twitter:description" content="Tactical cybersecurity insights, IoT reverse-engineering writeups, and AI threat emulation research by Joe Brinkley (The Blind Hacker).">
+  <!-- SEO JSON-LD Structured Data -->
+  <script type="application/ld+json">
+    ${JSON.stringify(blogSchema, null, 2).replace(/\n/g, '\n    ')}
+  </script>
 </head>
 <body class="blog-index-page">
   <a href="#main-content" class="skip-link">Skip to main content</a>
@@ -558,7 +667,9 @@ function buildBlog() {
       date: metadata.date || 'Undated',
       author: metadata.author || 'Joe Brinkley',
       description: metadata.description || '',
-      url: `${slug}.html`
+      keywords: metadata.keywords || '',
+      url: `${slug}.html`,
+      body: body.trim()
     });
   });
 
@@ -578,7 +689,7 @@ function buildBlog() {
         <article class="blog-card ${accentClass}">
           <div class="blog-card-meta">
             <span class="meta-date">// ${post.date}</span>
-            <span class="meta-author">// BY ${post.author.toUpperCase()}</span>
+            <span class="meta-author">// BY <a href="https://theblindhacker.com" target="_blank" rel="noopener" style="color:inherit; text-decoration:none; border-bottom:1px dashed currentColor;">${post.author.toUpperCase()}</a></span>
           </div>
           <h2 class="blog-card-title">${post.title}</h2>
           <p class="blog-card-desc">${post.description}</p>
@@ -587,31 +698,119 @@ function buildBlog() {
   }).join('\n');
 
   // Save blog index HTML
-  const renderedIndex = getBlogIndexTemplate(postsCardsHtml);
+  const renderedIndex = getBlogIndexTemplate(postsCardsHtml, posts);
   fs.writeFileSync(path.join(blogOutputDir, 'index.html'), renderedIndex, 'utf8');
   console.log(`Success! Rendered blog index at blog/index.html`);
 
   // Generate llms.txt at root for AI engines
-  console.log('Generating llms.txt at root...');
+  console.log('Generating llms.txt and llms-full.txt at root...');
+  const latestDate = posts.length > 0 ? posts[0].date : '2026-11-01';
   const llmsTxtContent = `# NextGenRedTeam (NGRT) Threat Lab & Research Blog
 
-> High-fidelity threat emulation research, hardware reverse engineering, NPU silicon engineering, and offensive AI orchestration founded by Joe Brinkley (The Blind Hacker).
+> High-fidelity threat emulation research, hardware reverse engineering, NPU silicon engineering, 500-WPM accessible CLI/PWA tooling, and offensive AI orchestration founded by Joe Brinkley (The Blind Hacker).
 
 ## Founder & Principal Researcher: Joe Brinkley (The Blind Hacker)
-- **Aliases**: The Blind Hacker, Blind Hacker, Joe B. The Blind Hacker, Joseph Brinkley, Blind Ethical Hacker
+- **Aliases**: The Blind Hacker, Blind Hacker, Blind Hakcer, Joe B. The Blind Hacker, Joseph Brinkley, Blind Ethical Hacker
 - **Role**: Director of Offensive Security Research & Community at Cobalt; Founder of NextGenRedTeam (NGRT) & Dead Pixel Sec
 - **Portfolio & Media Hub**: https://theblindhacker.com
+- **The Blind Hacker Projects**: https://theblindhacker.com/projects
+- **Press, Keynotes & Media Archive**: https://theblindhacker.com/profiles
+- **Hacking While Blind CLI Guide**: https://theblindhacker.com/hackingwhileblind
+- **TheBlindHacker AI Context**: https://theblindhacker.com/llms.txt & https://theblindhacker.com/llms-full.txt
+- **Full NGRT Corpus for AI Ingestion**: https://nextgenredteam.com/llms-full.txt
+- **XML Sitemap**: https://nextgenredteam.com/sitemap.xml
 - **LinkedIn**: https://www.linkedin.com/in/brinkleyjoseph/
 - **X (Twitter)**: https://x.com/TheBlindHacker & https://x.com/NextGenRedTeam
 - **Community & Mentorship**: https://deadpixelsec.com & https://discord.gg/deadpixelsec
 - **Cobalt Author Profile**: https://www.cobalt.io/blog/author/joe-brinkley
+- **GitHub Organizations**: https://github.com/nextgenredteam & https://github.com/TheBlindHacker
 
-## Active Research Threads
+## Coordinated Vulnerability Disclosures (Edge AI / NPU Silicon)
+- **CVE-2026-30992 (GHSA-cfch-87gh-88c5)**: Out-of-Bounds Read + Integer Truncation in Prompt Prefill & CMM DMA Mask in AXERA-TECH AX-LLM (\`src/runner/LLM.hpp\`, CVSS 7.5 High)
+- **CVE-2026-30993 (GHSA-g4jf-32v4-cjc3)**: Stack-Based Buffer Overflow in Layer Filename Formatting in AXERA-TECH AX-LLM (\`src/runner/LLM.hpp\`, CVSS 7.8 High)
+- **CVE-2026-31026 (GHSA-4p8c-724v-h9ph)**: Heap Out-of-Bounds Write in Multimodal RoPE Position Indexing in AXERA-TECH AX-LLM (\`src/runner/LLM.hpp\`, CVSS 8.1 High)
+- **CVE-2026-35402 (GHSA-73fh-rvv8-22c6)**: Integer Overflow in Multimodal Vision Preprocessing in AXERA-TECH AX-LLM (\`src/runner/utils/image_processor.cpp\`, CVSS 7.5 High)
+- **CVE-2026-35403 (GHSA-hmh6-8pj7-xwhh)**: Double-Free & Use-After-Free in CLI Argument Error Handling in AXERA-TECH AX-LLM (\`src/cmdline.hpp\`, CVSS 7.3 High)
+- **Enterprise Advisory (Cobalt)**: https://www.cobalt.io/blog/dissecting-the-ax-llm-cves-why-edge-ai-memory-and-execution-boundaries-matter
+- **Hardware Lab Reproduction Walkthrough (NGRT)**: https://nextgenredteam.com/blog/hunting-edge-ai-cves-from-demo-code-to-dma-memory-corruption.html
 
-${posts.map(post => `- [${post.title}](https://nextgenredteam.com/blog/${post.url}): ${post.description}`).join('\n')}
+## Open-Source Tools & Hardware Rescues
+- [JoeBro Sobro Smart Table PWA Controller](https://nextgenredteam.com/tools/joebro/index.html): Zero-backend Progressive Web App restoring local and cloud control to bricked Sobro Smart Coffee Tables.
+- [EventID4625 Windows Logon Failure Emulator](https://github.com/nextgenredteam/nextgenredteam.github.io/tree/main/tools): Cross-platform Go, Python, PowerShell, and Bash adversary emulator for Windows Security Event ID 4625.
+- [LinuxLoginFailure SSH Telemetry Emulator](https://github.com/nextgenredteam/nextgenredteam.github.io/tree/main/tools): Multi-language SSH authentication failure generator for SIEM validation.
+
+## Active Research Threads (${posts.length} Published Posts)
+
+${posts.map(post => `- [${post.title}](https://nextgenredteam.com/blog/${post.url}) (${post.date}): ${post.description}`).join('\n')}
 `;
   fs.writeFileSync(path.join(__dirname, '../llms.txt'), llmsTxtContent, 'utf8');
   console.log(`Success! Generated llms.txt at root.`);
+
+  // Generate llms-full.txt at root containing the full corpus for deep AI/LLM indexing
+  const llmsFullContent = `${llmsTxtContent}
+---
+
+# Full Technical Research Corpus (NextGenRedTeam & The Blind Hacker)
+
+${posts.map(post => `================================================================================
+TITLE: ${post.title}
+URL: https://nextgenredteam.com/blog/${post.url}
+DATE: ${post.date}
+AUTHOR: ${post.author} (https://theblindhacker.com)
+DESCRIPTION: ${post.description}
+KEYWORDS: ${post.keywords}
+================================================================================
+
+${post.body}
+`).join('\n\n')}
+`;
+  fs.writeFileSync(path.join(__dirname, '../llms-full.txt'), llmsFullContent, 'utf8');
+  console.log(`Success! Generated llms-full.txt at root.`);
+
+  // Generate sitemap.xml at root for Google, Bing, and AI Search Engines
+  console.log('Generating sitemap.xml at root...');
+  const sitemapXml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://nextgenredteam.com/</loc>
+    <lastmod>${latestDate}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://nextgenredteam.com/blog/index.html</loc>
+    <lastmod>${latestDate}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.95</priority>
+  </url>
+  <url>
+    <loc>https://nextgenredteam.com/tools/joebro/index.html</loc>
+    <lastmod>${latestDate}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://nextgenredteam.com/llms.txt</loc>
+    <lastmod>${latestDate}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://nextgenredteam.com/llms-full.txt</loc>
+    <lastmod>${latestDate}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.80</priority>
+  </url>
+${posts.map(post => `  <url>
+    <loc>https://nextgenredteam.com/blog/${post.url}</loc>
+    <lastmod>${post.date}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.90</priority>
+  </url>`).join('\n')}
+</urlset>
+`;
+  fs.writeFileSync(path.join(__dirname, '../sitemap.xml'), sitemapXml, 'utf8');
+  console.log(`Success! Generated sitemap.xml at root.`);
 }
 
 if (require.main === module) {
