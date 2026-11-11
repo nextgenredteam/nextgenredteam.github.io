@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Hunting Edge AI CVEs: From Demo Code to DMA Memory Corruption | The Blind Hacker &amp; NextGenRedTeam Blog</title>
   <meta name="description" content="Inside the NextGenRedTeam hardware lab: how we wired up a Radxa AI Core AX-M1 (Axera AX8850) on NextGenPVE, audited AXERA-TECH's AX-LLM C++ NPU runtime with a screen reader at 500 WPM, and uncovered seven memory corruption and command injection flaws.">
-  <meta name="keywords" content="Edge AI CVEs, AX-LLM, Axera AX8850, Radxa AI Core AX-M1, NPU Vulnerability Research, DMA Memory Corruption, Contiguous Media Memory, CMM, CVE-2026-30992, CVE-2026-30993, CVE-2026-31026, CVE-2026-35402, CVE-2026-35403, Joe Brinkley, The Blind Hacker, NextGenRedTeam, The Blind Hacker, Blind Hacker, Blind Hakcer, Joe Brinkley, NextGenRedTeam, NGRT, Dead Pixel Sec">
+  <meta name="keywords" content="Edge AI CVEs, AX-LLM, Axera AX8850, Radxa AI Core AX-M1, NPU Vulnerability Research, DMA Memory Corruption, Contiguous Media Memory, CMM, CAN-2026-2038801, CAN-2026-2038776, CAN-2026-2038802, CAN-2026-2034987, CAN-2026-2038777, CAN-2026-2038778, CAN-2026-2038779, Joe Brinkley, The Blind Hacker, NextGenRedTeam, The Blind Hacker, Blind Hacker, Blind Hakcer, Joe Brinkley, NextGenRedTeam, NGRT, Dead Pixel Sec">
   <meta name="author" content="Joe Brinkley (The Blind Hacker)">
   <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
   <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
@@ -40,7 +40,7 @@
   
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:site" content="@NextGenRedTeam">
+  <meta name="twitter:site" content="@TheBlindHacker">
   <meta name="twitter:creator" content="@TheBlindHacker">
   <meta name="twitter:title" content="Hunting Edge AI CVEs: From Demo Code to DMA Memory Corruption | NextGenRedTeam Blog">
   <meta name="twitter:description" content="Inside the NextGenRedTeam hardware lab: how we wired up a Radxa AI Core AX-M1 (Axera AX8850) on NextGenPVE, audited AXERA-TECH's AX-LLM C++ NPU runtime with a screen reader at 500 WPM, and uncovered seven memory corruption and command injection flaws.">
@@ -82,7 +82,7 @@
           "https://theblindhacker.com",
           "https://www.linkedin.com/in/brinkleyjoseph/",
           "https://x.com/TheBlindHacker",
-          "https://x.com/NextGenRedTeam",
+          "https://www.youtube.com/@BlindHacker",
           "https://nextgenredteam.com",
           "https://deadpixelsec.com",
           "https://discord.gg/deadpixelsec",
@@ -105,7 +105,7 @@
         "@type": "WebPage",
         "@id": "https://nextgenredteam.com/blog/hunting-edge-ai-cves-from-demo-code-to-dma-memory-corruption.html"
       },
-      "keywords": "Edge AI CVEs, AX-LLM, Axera AX8850, Radxa AI Core AX-M1, NPU Vulnerability Research, DMA Memory Corruption, Contiguous Media Memory, CMM, CVE-2026-30992, CVE-2026-30993, CVE-2026-31026, CVE-2026-35402, CVE-2026-35403, Joe Brinkley, The Blind Hacker, NextGenRedTeam"
+      "keywords": "Edge AI CVEs, AX-LLM, Axera AX8850, Radxa AI Core AX-M1, NPU Vulnerability Research, DMA Memory Corruption, Contiguous Media Memory, CMM, CAN-2026-2038801, CAN-2026-2038776, CAN-2026-2038802, CAN-2026-2034987, CAN-2026-2038777, CAN-2026-2038778, CAN-2026-2038779, Joe Brinkley, The Blind Hacker, NextGenRedTeam"
     }
   </script>
   <script type="application/ld+json">
@@ -144,7 +144,7 @@
           "name": "How do I check if my Axera AX8850 or AX650 device is vulnerable to the AX-LLM CVEs?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Check the git commit hash or binary build date of your ax-llm service (axllmrunner or mainapi). Any deployment built from AXERA-TECH/ax-llm at or before commit a0fb3f2 (v0.1.0) without the bounds-clamping and execvp patches detailed above is vulnerable to CVE-2026-30992, CVE-2026-30993, CVE-2026-31026, CVE-2026-35402, and CVE-2026-35403."
+            "text": "Check the git commit hash or binary build date of your ax-llm service (axllmrunner or mainapi). Any deployment built from AXERA-TECH/ax-llm at or before commit a0fb3f2 (v0.1.0) without the bounds-clamping and execvp patches detailed above is vulnerable to CAN-2026-2038776, CAN-2026-2034987, CAN-2026-2038777, CAN-2026-2038778, CAN-2026-2038779, CAN-2026-2038801, and CAN-2026-2038802."
           }
         },
         {
@@ -258,58 +258,58 @@
 <p>If you read our earlier guides on <a href="taming-ax8850-edge-npu.html">Taming the Axera AX8850 Edge NPU</a> and <a href="ultimate-guide-zero-copy-ax8850.html">Zero-Copy NPU Memory Pipelines</a>, you know how we wired a 24 TOPS PCIe NPU card into <code>NextGenPVE</code>. Once we got Qwen2.5 and DeepSeek models screaming at the silicon layer inside <code>LXC 211</code>, my red team instincts kicked in.</p>
 <p>Everyone in offensive AI talks about prompt injection. Security conferences run endless tracks on jailbreaks, system prompt extraction, and guardrail bypasses. Those bugs matter, sure.</p>
 <p>Below the prompt sits a much nastier attack surface. On edge AI hardware, your JSON payload does not stay inside a memory-safe Python sandbox in a hyperscale cloud. A lightweight C++ HTTP wrapper parses that JSON and hands raw pointers straight to <code>/dev/ax_npu</code> over Contiguous Media Memory (CMM) Direct Memory Access (DMA) channels.</p>
-<p>We decided to audit the open-source <code>AXERA-TECH/ax-llm</code> C++ inference engine running on our physical <strong>Radxa AI Core AX-M1</strong> (<code>ax650_card_v1.0</code> / Axera AX8850) testbed. By pairing fast command-line source code triage with live AddressSanitizer (ASan) and hardware DMA fault checks, we uncovered <strong>seven distinct vulnerabilities</strong> across the runtime. Five of those flaws now carry official CVE identifiers, and two additional high-impact bugs sit in the upstream queue.</p>
+<p>We decided to audit the open-source <code>AXERA-TECH/ax-llm</code> C++ inference engine running on our physical <strong>Radxa AI Core AX-M1</strong> (<code>ax650_card_v1.0</code> / Axera AX8850) testbed. By pairing fast command-line source code triage with live AddressSanitizer (ASan) and hardware DMA fault checks, we uncovered <strong>seven distinct vulnerabilities</strong> across the runtime. All seven flaws have been cataloged with MITRE under official CVE Candidate (<code>CAN-2026-*</code>) identifiers while final CVE publication is pending.</p>
 <hr>
 <h2>The Vulnerability Scorecard</h2>
-<p>Before we walk through the terminal harnesses and GDB traces, here is the full breakdown of what we found inside <code>AXERA-TECH/ax-llm</code> (<code>commit a0fb3f2</code> / v0.1.0). All five assigned CVEs were reported and coordinated with <strong>AXERA-TECH</strong> and the <strong>GitHub Security Lab CNA</strong> (<code>GHSA</code>), alongside two additional unpatched findings tracked in the disclosure queue:</p>
+<p>Before we walk through the terminal harnesses and GDB traces, here is the full breakdown of what we found inside <code>AXERA-TECH/ax-llm</code> (<code>commit a0fb3f2</code> / v0.1.0). All seven vulnerabilities were reported to <strong>AXERA-TECH</strong> and assigned official <strong>MITRE CVE Candidate (<code>CAN</code>)</strong> identifiers pending final publication:</p>
 <table>
 <thead>
 <tr>
-<th align="left">ID / Tracking</th>
+<th align="left">MITRE Candidate / Tracking</th>
 <th align="left">Vulnerability Class</th>
 <th align="left">Location</th>
 <th align="left">Severity</th>
 </tr>
 </thead>
 <tbody><tr>
-<td align="left"><strong>CVE-2026-30992</strong> (<code>GHSA-cfch-87gh-88c5</code>)</td>
+<td align="left"><strong>CAN-2026-2038776</strong> (<a href="https://github.com/AXERA-TECH/ax-llm/issues/76">Issue #76</a>)</td>
 <td align="left">Out-of-Bounds Read + Integer Truncation in Prompt Prefill &amp; DMA Mask</td>
 <td align="left"><code>src/runner/LLM.hpp</code></td>
 <td align="left"><strong>7.5 (High)</strong></td>
 </tr>
 <tr>
-<td align="left"><strong>CVE-2026-30993</strong> (<code>GHSA-g4jf-32v4-cjc3</code>)</td>
+<td align="left"><strong>CAN-2026-2034987</strong> (<a href="https://github.com/AXERA-TECH/ax-llm/issues/80">Issue #80</a>)</td>
 <td align="left">Stack-Based Buffer Overflow in Layer Filename Formatting</td>
 <td align="left"><code>src/runner/LLM.hpp</code></td>
 <td align="left"><strong>7.8 (High)</strong></td>
 </tr>
 <tr>
-<td align="left"><strong>CVE-2026-31026</strong> (<code>GHSA-4p8c-724v-h9ph</code>)</td>
+<td align="left"><strong>CAN-2026-2038777</strong> (<a href="https://github.com/AXERA-TECH/ax-llm/issues/81">Issue #81</a>)</td>
 <td align="left">Heap Out-of-Bounds Write in Multimodal RoPE Position Indexing</td>
 <td align="left"><code>src/runner/LLM.hpp</code></td>
 <td align="left"><strong>8.1 (High)</strong></td>
 </tr>
 <tr>
-<td align="left"><strong>CVE-2026-35402</strong> (<code>GHSA-73fh-rvv8-22c6</code>)</td>
+<td align="left"><strong>CAN-2026-2038778</strong> (<a href="https://github.com/AXERA-TECH/ax-llm/issues/82">Issue #82</a>)</td>
 <td align="left">Integer Overflow in Multimodal Vision Preprocessing</td>
 <td align="left"><code>src/runner/utils/image_processor.cpp</code></td>
 <td align="left"><strong>7.5 (High)</strong></td>
 </tr>
 <tr>
-<td align="left"><strong>CVE-2026-35403</strong> (<code>GHSA-hmh6-8pj7-xwhh</code>)</td>
+<td align="left"><strong>CAN-2026-2038779</strong> (<code>NGZA-AX-LLM #7</code>)</td>
 <td align="left">Double-Free &amp; Use-After-Free in CLI Argument Error Handling</td>
 <td align="left"><code>src/cmdline.hpp</code></td>
 <td align="left"><strong>7.3 (High)</strong></td>
 </tr>
 <tr>
-<td align="left"><strong>Finding 6</strong> <em>(Pending CVE)</em></td>
+<td align="left"><strong>CAN-2026-2038801</strong> (<a href="https://github.com/AXERA-TECH/ax-llm/issues/75">Issue #75</a>)</td>
 <td align="left">Unauthenticated OS Command Injection in Audio Preprocessing</td>
 <td align="left"><code>src/runner/AudioWrapper.hpp</code></td>
-<td align="left"><strong>9.8 (Critical)</strong></td>
+<td align="left"><strong>8.4 / 9.8 (Critical)</strong></td>
 </tr>
 <tr>
-<td align="left"><strong>Finding 7</strong> <em>(Pending CVE)</em></td>
-<td align="left">Heap Out-of-Bounds Read in Token Streaming Callback</td>
+<td align="left"><strong>CAN-2026-2038802</strong> (<a href="https://github.com/AXERA-TECH/ax-llm/issues/77">Issue #77</a>)</td>
+<td align="left">Heap Out-of-Bounds Read &amp; NULL Dereference in Token Streaming Callback</td>
 <td align="left"><code>src/main_api.cpp</code></td>
 <td align="left"><strong>7.5 (High)</strong></td>
 </tr>
@@ -352,9 +352,9 @@ grep -rnE &quot;static_cast&lt;int&gt;|unsigned short|\.resize\(&quot; src/
 <p>We mounted our Radxa AI Core AX-M1 inside our <code>NextGenPVE</code> host and passed the <code>/dev/ax_*</code> device nodes into our test environment. We built two versions of the <code>ax-llm</code> binary on <code>aarch64</code>: a standard release build linked against the hardware NPU drivers, and an instrumented debug build compiled with <code>-fsanitize=address,undefined -g -O1</code>.</p>
 <p>Here is how each bug works under the hood, what we saw on the hardware, and how to fix it.</p>
 <hr>
-<h3>1. CVE-2026-30992: Out-of-Bounds Read + Integer Truncation in Prompt Prefill &amp; DMA Mask</h3>
+<h3>1. CAN-2026-2038776: Out-of-Bounds Read + Integer Truncation in Prompt Prefill &amp; DMA Mask</h3>
 <ul>
-<li><strong>Location:</strong> <code>src/runner/LLM.hpp</code> (Lines 523 and 592)</li>
+<li><strong>Location:</strong> <code>src/runner/LLM.hpp</code> (Lines 523 and 592) | <strong>GitHub Issue:</strong> <a href="https://github.com/AXERA-TECH/ax-llm/issues/76">#76</a></li>
 <li><strong>CVSS v3.1:</strong> 7.5 (High)</li>
 </ul>
 <p>In <code>LLM.hpp</code>, the prompt prefill handler accepts a <code>std::vector&lt;int&gt; &amp;_token_ids</code> array directly from the tokenizer. The engine allocates a fixed Contiguous Media Memory (CMM) physical buffer for the NPU context window (<code>attr.max_token_len</code>, typically 1024 or 2048 tokens).</p>
@@ -386,9 +386,9 @@ size_t token_len = _token_ids.size();
 size_t mask_bytes = token_len * static_cast&lt;size_t&gt;(attr.tokens_embed_size);
 </code></pre>
 <hr>
-<h3>2. CVE-2026-30993: Stack-Based Buffer Overflow in Layer Filename Formatting</h3>
+<h3>2. CAN-2026-2034987: Stack-Based Buffer Overflow in Layer Filename Formatting</h3>
 <ul>
-<li><strong>Location:</strong> <code>src/runner/LLM.hpp</code> (Line 235)</li>
+<li><strong>Location:</strong> <code>src/runner/LLM.hpp</code> (Line 235) | <strong>GitHub Issue:</strong> <a href="https://github.com/AXERA-TECH/ax-llm/issues/80">#80</a></li>
 <li><strong>CVSS v3.1:</strong> 7.8 (High)</li>
 </ul>
 <p>When the engine boots up, it loads split <code>.axmodel</code> NPU weight shards from disk using a filename template stored in the model JSON config (<code>filename_llm_axmodel</code>).</p>
@@ -413,9 +413,9 @@ if (written &lt; 0 || static_cast&lt;size_t&gt;(written) &gt;= sizeof(filename))
 }
 </code></pre>
 <hr>
-<h3>3. CVE-2026-31026: Heap Out-of-Bounds Write in Multimodal RoPE Indexing</h3>
+<h3>3. CAN-2026-2038777: Heap Out-of-Bounds Write in Multimodal RoPE Indexing</h3>
 <ul>
-<li><strong>Location:</strong> <code>src/runner/LLM.hpp</code> (Lines 422 to 450)</li>
+<li><strong>Location:</strong> <code>src/runner/LLM.hpp</code> (Lines 422 to 450) | <strong>GitHub Issue:</strong> <a href="https://github.com/AXERA-TECH/ax-llm/issues/81">#81</a></li>
 <li><strong>CVSS v3.1:</strong> 8.1 (High)</li>
 </ul>
 <p>Vision-Language Models (VLMs) like Qwen2-VL use 3D Rotary Position Embeddings (RoPE) to map image patches and text tokens into a shared coordinate space. Let&#39;s look at how <code>LLM.hpp</code> calculates those RoPE indices:</p>
@@ -448,9 +448,9 @@ if (static_cast&lt;size_t&gt;(idx + 3) &gt; position_ids.size()) {
 }
 </code></pre>
 <hr>
-<h3>4. CVE-2026-35402: Integer Overflow in Multimodal Vision Preprocessing</h3>
+<h3>4. CAN-2026-2038778: Integer Overflow in Multimodal Vision Preprocessing</h3>
 <ul>
-<li><strong>Location:</strong> <code>src/runner/utils/image_processor.cpp</code> (Lines 45 to 78)</li>
+<li><strong>Location:</strong> <code>src/runner/utils/image_processor.cpp</code> (Lines 45 to 78) | <strong>GitHub Issue:</strong> <a href="https://github.com/AXERA-TECH/ax-llm/issues/82">#82</a></li>
 <li><strong>CVSS v3.1:</strong> 7.5 (High)</li>
 </ul>
 <p>Before the NPU encodes an image, <code>image_processor.cpp</code> resizes and normalizes the RGB pixel buffer. Look at the arithmetic used to allocate the target <code>std::vector&lt;float&gt;</code> buffer:</p>
@@ -486,9 +486,9 @@ size_t total_pixels = static_cast&lt;size_t&gt;(target_h) * static_cast&lt;size_
 std::vector&lt;float&gt; resized_buf(total_pixels);
 </code></pre>
 <hr>
-<h3>5. CVE-2026-35403: Double-Free &amp; Use-After-Free in CLI Argument Error Handling</h3>
+<h3>5. CAN-2026-2038779: Double-Free &amp; Use-After-Free in CLI Argument Error Handling</h3>
 <ul>
-<li><strong>Location:</strong> <code>src/cmdline.hpp</code> (Lines 310 to 365)</li>
+<li><strong>Location:</strong> <code>src/cmdline.hpp</code> (Lines 310 to 365) | <strong>Tracking ID:</strong> <code>NGZA-AX-LLM #7</code></li>
 <li><strong>CVSS v3.1:</strong> 7.3 (High)</li>
 </ul>
 <p>In <code>src/cmdline.hpp</code>, the <code>cmdline::parser</code> class stores option objects inside a <code>std::map&lt;std::string, option_base*&gt;</code>. When parsing fails or an invalid flag arrives, the error cleanup path manually deletes option pointers without removing them from the map. Then the class destructor (<code>~parser()</code>) loops over that same map and calls <code>delete</code> a second time.</p>
@@ -497,10 +497,10 @@ Passing a malformed flag sequence to the runner triggered the error handler, whi
 <p><strong>The Fix:</strong>
 Replace raw <code>option_base*</code> pointers in <code>cmdline::parser</code> with <code>std::unique_ptr&lt;option_base&gt;</code> so RAII handles memory cleanup once and only once.</p>
 <hr>
-<h3>6. Finding 6 (Pending CVE): Unauthenticated OS Command Injection in Audio Preprocessing</h3>
+<h3>6. CAN-2026-2038801: Unauthenticated OS Command Injection in Audio Preprocessing</h3>
 <ul>
-<li><strong>Location:</strong> <code>src/runner/AudioWrapper.hpp</code> (Lines 42 to 58)</li>
-<li><strong>CVSS v3.1:</strong> 9.8 (Critical)</li>
+<li><strong>Location:</strong> <code>src/runner/AudioWrapper.hpp</code> (Lines 42 to 58) | <strong>GitHub Issue:</strong> <a href="https://github.com/AXERA-TECH/ax-llm/issues/75">#75</a></li>
+<li><strong>CVSS v3.1:</strong> 8.4 / 9.8 (Critical)</li>
 </ul>
 <p>This was my favorite find of the entire hardware sprint. When <code>ax-llm</code> runs in multimodal audio mode, it needs to convert incoming audio files or URLs into 16kHz mono WAV files before feeding them to the Whisper/Audio NPU encoder. How did the developer implement audio resampling in C++? Take a look:</p>
 <pre><code class="language-cpp">// Vulnerable Code (src/runner/AudioWrapper.hpp, Lines 42-58)
@@ -534,9 +534,9 @@ if (pid == 0) {
 }
 </code></pre>
 <hr>
-<h3>7. Finding 7 (Pending CVE): Heap Out-of-Bounds Read in Token Streaming Callback</h3>
+<h3>7. CAN-2026-2038802: Heap Out-of-Bounds Read &amp; NULL Dereference in Token Streaming Callback</h3>
 <ul>
-<li><strong>Location:</strong> <code>src/main_api.cpp</code> (Lines 78 to 88)</li>
+<li><strong>Location:</strong> <code>src/main_api.cpp</code> (Lines 78 to 88) | <strong>GitHub Issue:</strong> <a href="https://github.com/AXERA-TECH/ax-llm/issues/77">#77</a></li>
 <li><strong>CVSS v3.1:</strong> 7.5 (High)</li>
 </ul>
 <p>In the HTTP API server (<code>src/main_api.cpp</code>), the streaming callback <code>llm_running_callback</code> sends generated tokens back to the client over Server-Sent Events (SSE). Look at lines 78 to 88:</p>
@@ -569,7 +569,7 @@ Move the null and length check to the very top of <code>llm_running_callback</co
 <hr>
 <h2>Frequently Asked Questions</h2>
 <h3>How do I check if my Axera AX8850 or AX650 device is vulnerable to the AX-LLM CVEs?</h3>
-<p>Check the git commit hash or binary build date of your <code>ax-llm</code> service (<code>ax_llm_runner</code> or <code>main_api</code>). Any deployment built from <code>AXERA-TECH/ax-llm</code> at or before commit <code>a0fb3f2</code> (v0.1.0) without the bounds-clamping and <code>execvp</code> patches detailed above is vulnerable to CVE-2026-30992, CVE-2026-30993, CVE-2026-31026, CVE-2026-35402, and CVE-2026-35403.</p>
+<p>Check the git commit hash or binary build date of your <code>ax-llm</code> service (<code>ax_llm_runner</code> or <code>main_api</code>). Any deployment built from <code>AXERA-TECH/ax-llm</code> at or before commit <code>a0fb3f2</code> (v0.1.0) without the bounds-clamping and <code>execvp</code> patches detailed above is vulnerable to CAN-2026-2038776, CAN-2026-2034987, CAN-2026-2038777, CAN-2026-2038778, CAN-2026-2038779, CAN-2026-2038801, and CAN-2026-2038802.</p>
 <h3>Why do edge NPU memory corruption bugs crash the whole Linux box instead of just one process?</h3>
 <p>Standard cloud CPU processes operate in isolated virtual memory pages. By contrast, edge NPU runtimes allocate Contiguous Media Memory (CMM) or Media Memory Zone (MMZ) physical RAM blocks shared directly with <code>/dev/ax_npu</code> via DMA. When an out-of-bounds write corrupts a CMM descriptor or DMA mask, the hardware NPU engine reads invalid physical addresses, locking up the kernel driver and requiring a hard power cycle.</p>
 <h3>Can I run AX-LLM safely inside an unprivileged Proxmox LXC container?</h3>
@@ -614,8 +614,8 @@ Move the null and length check to the very top of <code>llm_running_callback</co
             <a href="https://x.com/TheBlindHacker" target="_blank" aria-label="X / @TheBlindHacker" title="X (@TheBlindHacker)" class="footer-social-icon">
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
             </a>
-            <a href="https://x.com/NextGenRedTeam" target="_blank" aria-label="X / @NextGenRedTeam" title="X (@NextGenRedTeam)" class="footer-social-icon">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+            <a href="https://www.youtube.com/@BlindHacker" target="_blank" aria-label="YouTube / @BlindHacker" title="YouTube (@BlindHacker)" class="footer-social-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
             </a>
             <a href="https://discord.gg/deadpixelsec" target="_blank" aria-label="Dead Pixel Sec Discord" title="Discord (discord.gg/deadpixelsec)" class="footer-social-icon">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z"/></svg>
