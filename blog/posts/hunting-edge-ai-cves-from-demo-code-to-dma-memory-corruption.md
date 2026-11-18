@@ -3,7 +3,7 @@ title: "Hunting Edge AI CVEs: From Demo Code to DMA Memory Corruption"
 date: "2026-11-01"
 author: "Joe B. The Blind Hacker"
 description: "Inside the NextGenRedTeam hardware lab: how we wired up a Radxa AI Core AX-M1 (Axera AX8850) on NextGenPVE, audited AXERA-TECH's AX-LLM C++ NPU runtime with a screen reader at 500 WPM, and uncovered seven memory corruption and command injection flaws."
-keywords: "Edge AI CVEs, AX-LLM, Axera AX8850, Radxa AI Core AX-M1, NPU Vulnerability Research, DMA Memory Corruption, Contiguous Media Memory, CMM, CVE-2026-30992, CVE-2026-30993, CVE-2026-31026, CVE-2026-35402, CVE-2026-35403, Joe Brinkley, The Blind Hacker, NextGenRedTeam"
+keywords: "Edge AI CVEs, AX-LLM, Axera AX8850, Radxa AI Core AX-M1, NPU Vulnerability Research, DMA Memory Corruption, Contiguous Media Memory, CMM, CAN-2026-2038801, CAN-2026-2038776, CAN-2026-2038802, CAN-2026-2034987, CAN-2026-2038777, CAN-2026-2038778, CAN-2026-2038779, Joe Brinkley, The Blind Hacker, NextGenRedTeam"
 ---
 
 ![Hunting Edge AI CVEs Banner](../assets/hunting_edge_ai_cves.png)
@@ -18,23 +18,23 @@ Everyone in offensive AI talks about prompt injection. Security conferences run 
 
 Below the prompt sits a much nastier attack surface. On edge AI hardware, your JSON payload does not stay inside a memory-safe Python sandbox in a hyperscale cloud. A lightweight C++ HTTP wrapper parses that JSON and hands raw pointers straight to `/dev/ax_npu` over Contiguous Media Memory (CMM) Direct Memory Access (DMA) channels.
 
-We decided to audit the open-source `AXERA-TECH/ax-llm` C++ inference engine running on our physical **Radxa AI Core AX-M1** (`ax650_card_v1.0` / Axera AX8850) testbed. By pairing fast command-line source code triage with live AddressSanitizer (ASan) and hardware DMA fault checks, we uncovered **seven distinct vulnerabilities** across the runtime. Five of those flaws now carry official CVE identifiers, and two additional high-impact bugs sit in the upstream queue.
+We decided to audit the open-source `AXERA-TECH/ax-llm` C++ inference engine running on our physical **Radxa AI Core AX-M1** (`ax650_card_v1.0` / Axera AX8850) testbed. By pairing fast command-line source code triage with live AddressSanitizer (ASan) and hardware DMA fault checks, we uncovered **seven distinct vulnerabilities** across the runtime. All seven flaws have been cataloged with MITRE under official CVE Candidate (`CAN-2026-*`) identifiers while final CVE publication is pending.
 
 ---
 
 ## The Vulnerability Scorecard
 
-Before we walk through the terminal harnesses and GDB traces, here is the full breakdown of what we found inside `AXERA-TECH/ax-llm` (`commit a0fb3f2` / v0.1.0). All five assigned CVEs were reported and coordinated with **AXERA-TECH** and the **GitHub Security Lab CNA** (`GHSA`), alongside two additional unpatched findings tracked in the disclosure queue:
+Before we walk through the terminal harnesses and GDB traces, here is the full breakdown of what we found inside `AXERA-TECH/ax-llm` (`commit a0fb3f2` / v0.1.0). All seven vulnerabilities were reported to **AXERA-TECH** and assigned official **MITRE CVE Candidate (`CAN`)** identifiers pending final publication:
 
-| ID / Tracking | Vulnerability Class | Location | Severity |
-| :--- | :--- | :--- | :--- |
-| **CVE-2026-30992** (`GHSA-cfch-87gh-88c5`) | Out-of-Bounds Read + Integer Truncation in Prompt Prefill & DMA Mask | `src/runner/LLM.hpp` | **7.5 (High)** |
-| **CVE-2026-30993** (`GHSA-g4jf-32v4-cjc3`) | Stack-Based Buffer Overflow in Layer Filename Formatting | `src/runner/LLM.hpp` | **7.8 (High)** |
-| **CVE-2026-31026** (`GHSA-4p8c-724v-h9ph`) | Heap Out-of-Bounds Write in Multimodal RoPE Position Indexing | `src/runner/LLM.hpp` | **8.1 (High)** |
-| **CVE-2026-35402** (`GHSA-73fh-rvv8-22c6`) | Integer Overflow in Multimodal Vision Preprocessing | `src/runner/utils/image_processor.cpp` | **7.5 (High)** |
-| **CVE-2026-35403** (`GHSA-hmh6-8pj7-xwhh`) | Double-Free & Use-After-Free in CLI Argument Error Handling | `src/cmdline.hpp` | **7.3 (High)** |
-| **Finding 6** *(Pending CVE)* | Unauthenticated OS Command Injection in Audio Preprocessing | `src/runner/AudioWrapper.hpp` | **9.8 (Critical)** |
-| **Finding 7** *(Pending CVE)* | Heap Out-of-Bounds Read in Token Streaming Callback | `src/main_api.cpp` | **7.5 (High)** |
+| MITRE Candidate / Tracking | Vulnerability Class | Location | Severity |
+| :-- | :-- | :-- | :-- |
+| **CAN-2026-2038776** ([Issue #76](https://github.com/AXERA-TECH/ax-llm/issues/76)) | Out-of-Bounds Read + Integer Truncation in Prompt Prefill & DMA Mask | `src/runner/LLM.hpp` | **7.5 (High)** |
+| **CAN-2026-2034987** ([Issue #80](https://github.com/AXERA-TECH/ax-llm/issues/80)) | Stack-Based Buffer Overflow in Layer Filename Formatting | `src/runner/LLM.hpp` | **7.8 (High)** |
+| **CAN-2026-2038777** ([Issue #81](https://github.com/AXERA-TECH/ax-llm/issues/81)) | Heap Out-of-Bounds Write in Multimodal RoPE Position Indexing | `src/runner/LLM.hpp` | **8.1 (High)** |
+| **CAN-2026-2038778** ([Issue #82](https://github.com/AXERA-TECH/ax-llm/issues/82)) | Integer Overflow in Multimodal Vision Preprocessing | `src/runner/utils/image_processor.cpp` | **7.5 (High)** |
+| **CAN-2026-2038779** (`NGZA-AX-LLM #7`) | Double-Free & Use-After-Free in CLI Argument Error Handling | `src/cmdline.hpp` | **7.3 (High)** |
+| **CAN-2026-2038801** ([Issue #75](https://github.com/AXERA-TECH/ax-llm/issues/75)) | Unauthenticated OS Command Injection in Audio Preprocessing | `src/runner/AudioWrapper.hpp` | **8.4 / 9.8 (Critical)** |
+| **CAN-2026-2038802** ([Issue #77](https://github.com/AXERA-TECH/ax-llm/issues/77)) | Heap Out-of-Bounds Read & NULL Dereference in Token Streaming Callback | `src/main_api.cpp` | **7.5 (High)** |
 
 You can read the broader industry context and why edge AI memory boundaries fail in my companion piece on Cobalt: [Dissecting the AX-LLM CVEs: Why Edge AI Memory and Execution Boundaries Matter](https://www.cobalt.io/blog/dissecting-the-ax-llm-cves-why-edge-ai-memory-and-execution-boundaries-matter). Down below, we are going straight into the lab methodology and the exact C++ code paths.
 
@@ -42,7 +42,7 @@ You can read the broader industry context and why edge AI memory boundaries fail
 
 ## How I Hunt C++ Silicon Bugs by Ear at 500 WPM
 
-People ask how a blind hacker audits low-level C++ NPU drivers and memory allocators. Honestly, as I broke down in [Hacking by Ear at 500 WPM](hacking-by-ear-at-500-wpm-screen-readers.html), [Why I Use AI to Build Accessible CLIs and PWAs](why-i-use-ai-to-build-accessible-clis-and-pwas.html), and my [Hacking While Blind CLI Survival Guide on TheBlindHacker.com](https://theblindhacker.com/hackingwhileblind), a screen reader running at 500 words per minute is an unfair advantage for source code auditing.
+People ask how a blind hacker audits low-level C++ NPU drivers and memory allocators. Honestly, a screen reader running at 500 words per minute is an unfair advantage for source code auditing. I broke down that exact setup in [Hacking by Ear at 500 WPM](hacking-by-ear-at-500-wpm-screen-readers.html), [Why I Use AI to Build Accessible CLIs and PWAs](why-i-use-ai-to-build-accessible-clis-and-pwas.html), and my [Hacking While Blind CLI Survival Guide on TheBlindHacker.com](https://theblindhacker.com/hackingwhileblind).
 
 Sighted engineers often skim C++ files visually. Their eyes jump over boilerplate `sprintf` calls, implicit `int` casts, or missing bounds checks because the code *looks* well-formatted. When you listen to code through a CLI pipeline using `ripgrep`, `awk`, and `sed`, every single type cast and pointer arithmetic operation hits your ears in strict sequence.
 
@@ -94,9 +94,9 @@ Here is how each bug works under the hood, what we saw on the hardware, and how 
 
 ---
 
-### 1. CVE-2026-30992: Out-of-Bounds Read + Integer Truncation in Prompt Prefill & DMA Mask
+### 1. CAN-2026-2038776: Out-of-Bounds Read + Integer Truncation in Prompt Prefill & DMA Mask
 
-* **Location:** `src/runner/LLM.hpp` (Lines 523 and 592)
+* **Location:** `src/runner/LLM.hpp` (Lines 523 and 592) | **GitHub Issue:** [#76](https://github.com/AXERA-TECH/ax-llm/issues/76)
 * **CVSS v3.1:** 7.5 (High)
 
 In `LLM.hpp`, the prompt prefill handler accepts a `std::vector<int> &_token_ids` array directly from the tokenizer. The engine allocates a fixed Contiguous Media Memory (CMM) physical buffer for the NPU context window (`attr.max_token_len`, typically 1024 or 2048 tokens).
@@ -139,9 +139,9 @@ size_t mask_bytes = token_len * static_cast<size_t>(attr.tokens_embed_size);
 
 ---
 
-### 2. CVE-2026-30993: Stack-Based Buffer Overflow in Layer Filename Formatting
+### 2. CAN-2026-2034987: Stack-Based Buffer Overflow in Layer Filename Formatting
 
-* **Location:** `src/runner/LLM.hpp` (Line 235)
+* **Location:** `src/runner/LLM.hpp` (Line 235) | **GitHub Issue:** [#80](https://github.com/AXERA-TECH/ax-llm/issues/80)
 * **CVSS v3.1:** 7.8 (High)
 
 When the engine boots up, it loads split `.axmodel` NPU weight shards from disk using a filename template stored in the model JSON config (`filename_llm_axmodel`).
@@ -175,9 +175,9 @@ if (written < 0 || static_cast<size_t>(written) >= sizeof(filename)) {
 
 ---
 
-### 3. CVE-2026-31026: Heap Out-of-Bounds Write in Multimodal RoPE Indexing
+### 3. CAN-2026-2038777: Heap Out-of-Bounds Write in Multimodal RoPE Indexing
 
-* **Location:** `src/runner/LLM.hpp` (Lines 422 to 450)
+* **Location:** `src/runner/LLM.hpp` (Lines 422 to 450) | **GitHub Issue:** [#81](https://github.com/AXERA-TECH/ax-llm/issues/81)
 * **CVSS v3.1:** 8.1 (High)
 
 Vision-Language Models (VLMs) like Qwen2-VL use 3D Rotary Position Embeddings (RoPE) to map image patches and text tokens into a shared coordinate space. Let's look at how `LLM.hpp` calculates those RoPE indices:
@@ -220,9 +220,9 @@ if (static_cast<size_t>(idx + 3) > position_ids.size()) {
 
 ---
 
-### 4. CVE-2026-35402: Integer Overflow in Multimodal Vision Preprocessing
+### 4. CAN-2026-2038778: Integer Overflow in Multimodal Vision Preprocessing
 
-* **Location:** `src/runner/utils/image_processor.cpp` (Lines 45 to 78)
+* **Location:** `src/runner/utils/image_processor.cpp` (Lines 45 to 78) | **GitHub Issue:** [#82](https://github.com/AXERA-TECH/ax-llm/issues/82)
 * **CVSS v3.1:** 7.5 (High)
 
 Before the NPU encodes an image, `image_processor.cpp` resizes and normalizes the RGB pixel buffer. Look at the arithmetic used to allocate the target `std::vector<float>` buffer:
@@ -265,9 +265,9 @@ std::vector<float> resized_buf(total_pixels);
 
 ---
 
-### 5. CVE-2026-35403: Double-Free & Use-After-Free in CLI Argument Error Handling
+### 5. CAN-2026-2038779: Double-Free & Use-After-Free in CLI Argument Error Handling
 
-* **Location:** `src/cmdline.hpp` (Lines 310 to 365)
+* **Location:** `src/cmdline.hpp` (Lines 310 to 365) | **Tracking ID:** `NGZA-AX-LLM #7`
 * **CVSS v3.1:** 7.3 (High)
 
 In `src/cmdline.hpp`, the `cmdline::parser` class stores option objects inside a `std::map<std::string, option_base*>`. When parsing fails or an invalid flag arrives, the error cleanup path manually deletes option pointers without removing them from the map. Then the class destructor (`~parser()`) loops over that same map and calls `delete` a second time.
@@ -280,10 +280,10 @@ Replace raw `option_base*` pointers in `cmdline::parser` with `std::unique_ptr<o
 
 ---
 
-### 6. Finding 6 (Pending CVE): Unauthenticated OS Command Injection in Audio Preprocessing
+### 6. CAN-2026-2038801: Unauthenticated OS Command Injection in Audio Preprocessing
 
-* **Location:** `src/runner/AudioWrapper.hpp` (Lines 42 to 58)
-* **CVSS v3.1:** 9.8 (Critical)
+* **Location:** `src/runner/AudioWrapper.hpp` (Lines 42 to 58) | **GitHub Issue:** [#75](https://github.com/AXERA-TECH/ax-llm/issues/75)
+* **CVSS v3.1:** 8.4 / 9.8 (Critical)
 
 This was my favorite find of the entire hardware sprint. When `ax-llm` runs in multimodal audio mode, it needs to convert incoming audio files or URLs into 16kHz mono WAV files before feeding them to the Whisper/Audio NPU encoder. How did the developer implement audio resampling in C++? Take a look:
 
@@ -332,9 +332,9 @@ if (pid == 0) {
 
 ---
 
-### 7. Finding 7 (Pending CVE): Heap Out-of-Bounds Read in Token Streaming Callback
+### 7. CAN-2026-2038802: Heap Out-of-Bounds Read & NULL Dereference in Token Streaming Callback
 
-* **Location:** `src/main_api.cpp` (Lines 78 to 88)
+* **Location:** `src/main_api.cpp` (Lines 78 to 88) | **GitHub Issue:** [#77](https://github.com/AXERA-TECH/ax-llm/issues/77)
 * **CVSS v3.1:** 7.5 (High)
 
 In the HTTP API server (`src/main_api.cpp`), the streaming callback `llm_running_callback` sends generated tokens back to the client over Server-Sent Events (SSE). Look at lines 78 to 88:
@@ -377,7 +377,7 @@ Auditing bare-metal AI silicon is about stripping away cloud abstractions and ve
 ## Frequently Asked Questions
 
 ### How do I check if my Axera AX8850 or AX650 device is vulnerable to the AX-LLM CVEs?
-Check the git commit hash or binary build date of your `ax-llm` service (`ax_llm_runner` or `main_api`). Any deployment built from `AXERA-TECH/ax-llm` at or before commit `a0fb3f2` (v0.1.0) without the bounds-clamping and `execvp` patches detailed above is vulnerable to CVE-2026-30992, CVE-2026-30993, CVE-2026-31026, CVE-2026-35402, and CVE-2026-35403.
+Check the git commit hash or binary build date of your `ax-llm` service (`ax_llm_runner` or `main_api`). Any deployment built from `AXERA-TECH/ax-llm` at or before commit `a0fb3f2` (v0.1.0) without the bounds-clamping and `execvp` patches detailed above is vulnerable to CAN-2026-2038776, CAN-2026-2034987, CAN-2026-2038777, CAN-2026-2038778, CAN-2026-2038779, CAN-2026-2038801, and CAN-2026-2038802.
 
 ### Why do edge NPU memory corruption bugs crash the whole Linux box instead of just one process?
 Standard cloud CPU processes operate in isolated virtual memory pages. By contrast, edge NPU runtimes allocate Contiguous Media Memory (CMM) or Media Memory Zone (MMZ) physical RAM blocks shared directly with `/dev/ax_npu` via DMA. When an out-of-bounds write corrupts a CMM descriptor or DMA mask, the hardware NPU engine reads invalid physical addresses, locking up the kernel driver and requiring a hard power cycle.

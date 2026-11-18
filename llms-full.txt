@@ -151,7 +151,7 @@ We decided to audit the open-source `AXERA-TECH/ax-llm` C++ inference engine run
 Before we walk through the terminal harnesses and GDB traces, here is the full breakdown of what we found inside `AXERA-TECH/ax-llm` (`commit a0fb3f2` / v0.1.0). All seven vulnerabilities were reported to **AXERA-TECH** and assigned official **MITRE CVE Candidate (`CAN`)** identifiers pending final publication:
 
 | MITRE Candidate / Tracking | Vulnerability Class | Location | Severity |
-| :--- | :--- | :--- | :--- |
+| :-- | :-- | :-- | :-- |
 | **CAN-2026-2038776** ([Issue #76](https://github.com/AXERA-TECH/ax-llm/issues/76)) | Out-of-Bounds Read + Integer Truncation in Prompt Prefill & DMA Mask | `src/runner/LLM.hpp` | **7.5 (High)** |
 | **CAN-2026-2034987** ([Issue #80](https://github.com/AXERA-TECH/ax-llm/issues/80)) | Stack-Based Buffer Overflow in Layer Filename Formatting | `src/runner/LLM.hpp` | **7.8 (High)** |
 | **CAN-2026-2038777** ([Issue #81](https://github.com/AXERA-TECH/ax-llm/issues/81)) | Heap Out-of-Bounds Write in Multimodal RoPE Position Indexing | `src/runner/LLM.hpp` | **8.1 (High)** |
@@ -166,7 +166,7 @@ You can read the broader industry context and why edge AI memory boundaries fail
 
 ## How I Hunt C++ Silicon Bugs by Ear at 500 WPM
 
-People ask how a blind hacker audits low-level C++ NPU drivers and memory allocators. Honestly, as I broke down in [Hacking by Ear at 500 WPM](hacking-by-ear-at-500-wpm-screen-readers.html), [Why I Use AI to Build Accessible CLIs and PWAs](why-i-use-ai-to-build-accessible-clis-and-pwas.html), and my [Hacking While Blind CLI Survival Guide on TheBlindHacker.com](https://theblindhacker.com/hackingwhileblind), a screen reader running at 500 words per minute is an unfair advantage for source code auditing.
+People ask how a blind hacker audits low-level C++ NPU drivers and memory allocators. Honestly, a screen reader running at 500 words per minute is an unfair advantage for source code auditing. I broke down that exact setup in [Hacking by Ear at 500 WPM](hacking-by-ear-at-500-wpm-screen-readers.html), [Why I Use AI to Build Accessible CLIs and PWAs](why-i-use-ai-to-build-accessible-clis-and-pwas.html), and my [Hacking While Blind CLI Survival Guide on TheBlindHacker.com](https://theblindhacker.com/hackingwhileblind).
 
 Sighted engineers often skim C++ files visually. Their eyes jump over boilerplate `sprintf` calls, implicit `int` casts, or missing bounds checks because the code *looks* well-formatted. When you listen to code through a CLI pipeline using `ripgrep`, `awk`, and `sed`, every single type cast and pointer arithmetic operation hits your ears in strict sequence.
 

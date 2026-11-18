@@ -28,9 +28,9 @@ Cloudflare Pages provides global CDN routing, automated deployments on git push,
 4. Click **Begin setup**.
 5. Configure the Build Settings:
    * **Framework preset**: None (Static site)
-   * **Build command**: `npm run build`
-   * **Build output directory**: `./`
-   * *Note: Cloudflare will run the Node script to compile your blog automatically on every push!*
+   * **Build command**: `npm run build:cf`
+   * **Build output directory**: `dist`
+   * *Note: Cloudflare runs `build-blog.js` and `stage-dist.js` on every push, outputting only compiled public site files into `dist` so drafts, queued posts, scripts, and `node_modules` are never exposed!*
 6. Click **Save and Deploy**.
 
 ### Step 3: Configure Custom Domain (NextGenRedTeam.com)

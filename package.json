@@ -5,6 +5,8 @@
   "main": "index.html",
   "scripts": {
     "build": "node scripts/build-blog.js",
+    "stage": "node scripts/stage-dist.js",
+    "build:cf": "node scripts/build-blog.js && node scripts/stage-dist.js",
     "new-post": "node scripts/new-post.js",
     "sync": "node scripts/sync-repos.js",
     "test": "node --test"
