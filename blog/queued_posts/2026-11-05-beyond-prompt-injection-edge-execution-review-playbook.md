@@ -3,7 +3,7 @@ title: "Beyond Prompt Injection: The Edge Execution Review (EER) Playbook for AI
 date: "2026-11-05"
 author: "Joe B. The Blind Hacker"
 description: "Why red teams must evolve beyond Layer 7 prompt fuzzing to audit low-level inference runtimes. A comprehensive offensive playbook combining Edge Execution Review (EER) and Source Code Review (SRC) on physical NPU silicon."
-keywords: "Edge Execution Review, EER, Source Code Review, AI Silicon Security, NPU Vulnerability Research, Axera AX8850, AX-LLM CVEs, CVE-2026-30992, CVE-2026-30993, CVE-2026-31026, CVE-2026-35402, CVE-2026-35403, Joe Brinkley, The Blind Hacker"
+keywords: "Edge Execution Review, EER, Source Code Review, AI Silicon Security, NPU Vulnerability Research, Axera AX8850, AX-LLM CVEs, CAN-2026-2038801, CAN-2026-2038776, CAN-2026-2038802, CAN-2026-2034987, CAN-2026-2038777, CAN-2026-2038778, CAN-2026-2038779, Joe Brinkley, The Blind Hacker"
 ---
 
 # Beyond Prompt Injection: The Edge Execution Review (EER) Playbook for AI Silicon
@@ -13,10 +13,31 @@ keywords: "Edge Execution Review, EER, Source Code Review, AI Silicon Security, 
 > **Companion Research:** Read my Cobalt advisory: **[Dissecting the AX-LLM CVEs: Why Edge AI Memory and Execution Boundaries Matter](https://www.cobalt.io/blog/dissecting-the-ax-llm-cves-why-edge-ai-memory-and-execution-boundaries-matter)**. Pair it with our lab walkthrough: **[Hunting Edge AI CVEs: From Demo Code to DMA Memory Corruption](hunting-edge-ai-cves-from-demo-code-to-dma-memory-corruption.html)**.
 
 * **Author:** Joe Brinkley (The Blind Hacker)
-* **Project:** NextGen Red Team Independent Research
+* **Project:** NextGen Red Team & Cobalt Labs Research
 * **Target Platforms:** Axera AX8850, Rockchip RK3588, Hailo-8, Qualcomm QNN
 * **Published Date:** November 5, 2026
 * **Category:** Offensive Hardware & AI Runtime Tradecraft
+
+---
+
+## Conference CFP & Cobalt Submission Kit
+
+Use this turnkey submission block when applying to security conferences (Black Hat, DEF CON, RSA, Hardware.io, OWASP Global AppSec, BSides) or briefing Cobalt enterprise customers.
+
+* **Talk Title:** Beyond Prompt Injection: The Edge Execution Review (EER) Playbook for AI Silicon
+* **Target Tracks:** AI / ML Security, Embedded & Hardware Exploitation, Vulnerability Research, Red Teaming
+* **Format:** 45-Minute Technical Briefing (or 25-Minute Fast Track)
+* **50-Word Short Abstract:**
+  Most AI red teams stop at Layer 7 prompt fuzzing. On physical edge NPU silicon, C++ inference engines bypass virtual memory protection and write directly into Contiguous Media Memory (CMM) over DMA. This talk introduces Edge Execution Review (EER) and walks through seven real NPU vulnerabilities (`CAN-2026-2038776` through `CAN-2026-2038802`).
+* **200-Word Full Conference Abstract:**
+  For two years, offensive AI security focused almost exclusively on cloud chatbots, jailbreaks, and prompt injection. That threat model collapses the moment machine learning leaves hyperscale cloud sandboxes and runs on physical edge silicon. On Neural Processing Units (NPUs) like the Axera AX8850, Rockchip RK3588, and Hailo-8, there is no memory-safe Python layer or Kubernetes hypervisor guarding the host. Lightweight C and C++ runtimes parse untrusted network inputs and pass raw pointers directly to `/dev/ax_npu` over Contiguous Media Memory (CMM) and Direct Memory Access (DMA) channels. In this talk, blind hacker and Cobalt Offensive Security Research Director Joe Brinkley demonstrates how he audits C++ NPU silicon by ear at 500 words per minute. Attendees will learn the **Edge Execution Review (EER) + Source Code Review (SRC)** methodology. We used that workflow to uncover seven memory corruption and command injection flaws in `AXERA-TECH/ax-llm` (`CAN-2026-2038776` through `CAN-2026-2038802`). We will walk through live AddressSanitizer stack traces, hardware DMA bus lockups, and a five-part defensive engineering playbook for securing edge AI firmware.
+
+### 45-Minute Stage Outline & Reviewer Takeaways
+
+* **[00:00 - 08:00] Part 1 (The Layer 7 Plateau vs. Physical NPU Silicon):** Why cloud prompt fuzzing misses the real attack surface on embedded ARM64 boards, smart cameras, and robotics.
+* **[08:00 - 20:00] Part 2 (Inside MMZ/CMM & The 5 C++ Vulnerability Seams):** How Contiguous Media Memory bypasses CPU MMU page faults. We show how to hunt integer downcasts, unclamped `memcpy` calls, and `std::system` sinks at 500 WPM.
+* **[20:00 - 35:00] Part 3 (Live Silicon Triage & The 7 AX-LLM Candidates):** Instrumenting an Axera AX8850 PCIe card with ASan and UBSan. We walk through the exact C++ code paths for `CAN-2026-2038776` through `CAN-2026-2038802`.
+* **[35:00 - 45:00] Part 4 (Defensive Firmware Engineering & Q&A):** Implementing 64-bit stride checks, `std::min` DMA clamps, `execvp` argument arrays, and non-root capability sandboxes on edge Linux devices.
 
 ---
 
@@ -73,15 +94,16 @@ These memory pools are mapped directly into user space via `/dev/ax_npu` charact
 
 ## The "Demo Code to Production" Vulnerability Engine
 
-Why do these runtimes contain so many vulnerabilities? 
+Why do these runtimes contain so many vulnerabilities? Look at the supply chain.
 
-It boils down to the software supply chain of edge hardware:
+It boils down to four systemic shortcuts in edge hardware development:
 
-1. **The Silicon Manufacturer Goal:** Chip vendors publish reference code repositories (such as `ax-llm`) to give hardware developers working examples of how to compile models using their proprietary toolchains (such as Axera Pulsar2). Their engineering priority is tensor quantization efficiency and hardware compute saturation, not defensive input validation.
-2. **The Hardware Integrator Shortcut:** Third-party vendors building physical appliances (smart security cameras, facial recognition door controllers, automated optical inspection cameras, delivery robotics) rarely write custom inference runtimes. They pull the vendor reference repository, wrap an HTTP or WebSocket listener around `main()`, compile it into their Linux Board Support Package (BSP), and ship the product.
-3. **Ambient Root Privileges:** Because the inference engine must issue low-level `ioctl` commands, configure NPU clocks, and manage camera sensor pipelines, the daemon almost universally runs as `root`.
+1. **The Silicon Manufacturer Goal:** Chip vendors publish reference code repositories (such as `ax-llm`) so hardware engineers can test proprietary compilers like Axera Pulsar2. Their engineering priority is tensor quantization speed and hardware compute saturation, not defensive input validation.
+2. **The Hardware Integrator Shortcut:** Third-party vendors building smart cameras, biometric door controllers, and inspection robots rarely write custom inference runtimes. They clone the vendor demo repo, wrap an HTTP listener around `main()`, and bake it straight into production firmware.
+3. **Ambient Root Privileges:** Because the inference engine issues raw `ioctl` calls, tunes NPU clocks, and opens hardware video pipelines, the daemon almost always runs as `root`.
+4. **Zero Upstream Auto-Update:** Once an OEM burns a Linux Board Support Package (BSP) onto millions of field appliances, upstream GitHub commits never reach those deployed devices automatically.
 
-A vulnerability that appears minor in a standalone developer demo becomes a critical remote root compromise once that demo is baked into production firmware.
+A bug that looks minor in a developer demo becomes a critical remote root compromise in production firmware. That gap is huge.
 
 ---
 
@@ -189,27 +211,28 @@ Address 0x7fff5c290140 is located in global variable 't_mask' defined in 'src/ru
 
 Here is how our EER + SRC workflow uncovered 7 flaws in `ax-llm`. Read **[Dissecting the AX-LLM CVEs](https://www.cobalt.io/blog/dissecting-the-ax-llm-cves-why-edge-ai-memory-and-execution-boundaries-matter)** on the Cobalt blog for the full advisory:
 
-| CVE / Tracking ID | GitHub Advisory / Issue | Vulnerability Class | Flaw Mechanism | Physical Impact on Device |
-| :--- | :--- | :--- | :--- | :--- |
-| **`CVE-2026-30992`** | `GHSA-cfch-87gh-88c5` (Issue #76) | CWE-125 / CWE-190 | `size_t` downcast to `int`; unclamped `memcpy` into CMM mask | Corrupts physical NPU CMM device memory; freezes hardware bus |
-| **`CVE-2026-30993`** | `GHSA-g4jf-32v4-cjc3` (Issue #80) | CWE-120 / CWE-134 | Unbounded `sprintf` of shard paths into 128-byte stack array | Stack frame return address corruption; segmentation fault |
-| **`CVE-2026-31026`** | `GHSA-4p8c-724v-h9ph` (Issue #81) | CWE-787 | Position indices loop missing check against `position_ids` capacity | Out-of-bounds pointer write into heap RoPE buffers |
-| **`CVE-2026-35402`** | `GHSA-73fh-rvv8-22c6` (Issue #82) | CWE-190 / CWE-122 | Signed 32-bit stride multiplication overflows `INT_MAX` | Heap memory under-allocation or bad allocation crash (`std::bad_alloc`) |
-| **`CVE-2026-35403`** | `GHSA-hmh6-8pj7-xwhh` (`cmdline.hpp`) | CWE-415 / CWE-416 | Manual pointer deletion in error handler + destructor double-free | Duplicate heap frees trigger `tcache` abort or heap corruption |
-| **Finding 6 *(Pending)*** | Issue #75 (`AudioWrapper.hpp`) | CWE-78 | Unsanitized audio filename passed to `std::system("ffmpeg ...")` | Remote OS command execution with root process privileges |
-| **Finding 7 *(Pending)*** | Issue #77 (`main_api.cpp`) | CWE-476 / CWE-125 | Check-after-use null dereference + unterminated `p_str` read | Heap out-of-bounds read into SSE stream or daemon crash |
+| MITRE Candidate ID | GitHub Issue / Tracking | Vulnerability Class | Flaw Mechanism | Physical Impact on Device |
+| :-- | :-- | :-- | :-- | :-- |
+| **`CAN-2026-2038776`** | Issue #76 (`NGZA-AX-LLM #2`) | CWE-125 / CWE-190 | `size_t` downcast to `int`; unclamped `memcpy` into CMM mask | Corrupts physical NPU CMM device memory; freezes hardware bus |
+| **`CAN-2026-2034987`** | Issue #80 (`NGZA-AX-LLM #4`) | CWE-120 / CWE-134 | Unbounded `sprintf` of shard paths into 128-byte stack array | Stack frame return address corruption; segmentation fault |
+| **`CAN-2026-2038777`** | Issue #81 (`NGZA-AX-LLM #5`) | CWE-787 | Position indices loop missing check against `position_ids` capacity | Out-of-bounds pointer write into heap RoPE buffers |
+| **`CAN-2026-2038778`** | Issue #82 (`NGZA-AX-LLM #6`) | CWE-190 / CWE-122 | Signed 32-bit stride multiplication overflows `INT_MAX` | Heap memory under-allocation or bad allocation crash (`std::bad_alloc`) |
+| **`CAN-2026-2038779`** | `NGZA-AX-LLM #7` (`cmdline.hpp`) | CWE-415 / CWE-416 | Manual pointer deletion in error handler + destructor double-free | Duplicate heap frees trigger `tcache` abort or heap corruption |
+| **`CAN-2026-2038801`** | Issue #75 (`AudioWrapper.hpp`) | CWE-78 | Unsanitized audio filename passed to `std::system("ffmpeg ...")` | Remote OS command execution with root process privileges |
+| **`CAN-2026-2038802`** | Issue #77 (`main_api.cpp`) | CWE-476 / CWE-125 | Check-after-use null dereference + unterminated `p_str` read | Heap out-of-bounds read into SSE stream or daemon crash |
 
 ---
 
 ## How This Affects Real Devices in the Field
 
-When discussing edge AI vulnerabilities, a common misconception is: *"These are just developer sample scripts. Do they really matter to an enterprise?"*
+When discussing edge AI vulnerabilities, a common question comes up: *"These are developer sample scripts. Do they really matter to an enterprise?"*
 
-Here is what happens when these vulnerabilities land in production hardware:
+Yes, they do. Here is what happens when these bugs land inside four categories of production hardware:
 
-1. **Smart Video Surveillance:** Many enterprise IP cameras use edge vision models to detect perimeter breaches, track license plates, or recognize faces. A malformed image dimension or oversized frame sent to the inference endpoint triggers `CVE-2026-35402` (integer/heap overflow) or `CVE-2026-30992` (NPU CMM bus lockup). The camera stops processing video streams, blinding the surveillance grid until a technician physically power-cycles the camera.
-2. **Industrial Robotics and Inspection:** In manufacturing lines, edge NPUs inspect manufactured parts for defects in real time. Forcing a physical MMZ/CMM memory lockup halts the quality assurance pipeline, stopping factory production.
-3. **Voice-Enabled Gateways:** Intercoms, conference room transcribers, and voice-assisted kiosks running Whisper models are vulnerable to our Audio Command Injection finding (`AudioWrapper.hpp`). An attacker supplying a crafted audio filename over the network gains an interactive root shell on the physical appliance, establishing a persistent foothold on the internal network.
+1. **Smart Video Surveillance:** Enterprise IP cameras run edge vision models to detect perimeter breaches, read license plates, and match faces. A malformed image dimension triggers `CAN-2026-2038778` (integer overflow) or `CAN-2026-2038776` (CMM bus lockup), blinding the camera until a technician physically cycles power.
+2. **Industrial Robotics and Inspection:** On factory floors, edge NPUs inspect assembly parts for micro-defects in real time. Forcing a physical MMZ/CMM memory lockup halts the quality assurance pipeline and stops physical production.
+3. **Voice-Enabled Gateways and Kiosks:** Smart intercoms, meeting room transcribers, and voice kiosks running Whisper models expose our Audio Command Injection flaw (`CAN-2026-2038801` in `AudioWrapper.hpp`). An attacker sending a crafted audio filename over the network pops an immediate root shell on the appliance.
+4. **Medical and Automotive Edge Boxes:** Point-of-care diagnostic scanners and fleet cabin monitors rely on uninterrupted local NPU inference. A single null dereference (`CAN-2026-2038802`) crashes the local inference daemon and drops critical telemetry across the unit.
 
 ---
 
@@ -241,6 +264,21 @@ To protect edge inference runtimes from these vulnerability patterns, implement 
 
 ## Conclusion: Securing the Seams
 
-The future of offensive security in artificial intelligence is not just about prompt engineering. As models shrink and edge chips get faster, the attack surface is moving down the stack to the code that directly drives the silicon.
+Offensive AI security goes far beyond prompt engineering. As models shrink and edge chips get faster, the real attack surface moves down the stack to the C++ code driving the silicon.
 
-By combining Source Code Review with physical Edge Execution Review, red teams can identify real, exploitable vulnerabilities in physical devices long before threat actors weaponize them.
+Combine Source Code Review with physical Edge Execution Review. That pairing lets your red team uncover real, exploitable bugs in physical devices before threat actors find them.
+
+---
+
+## Pocket Speaker Notes & Stage Cue Card
+
+Keep these rapid-fire cues on your phone during live delivery or Q&A:
+
+* **[00:00] Opening Hook:** Start with the contrast between cloud chatbots and bare-metal edge silicon. Say: *"In the cloud, a bad prompt gets you a polite refusal. On an edge NPU, a bad tensor size locks up the physical PCIe bus."*
+* **[08:00] The 500-WPM Blind Audit Advantage:** Explain how sighted engineers skim past boilerplate `sprintf` and `(int)` casts visually, whereas listening at 500 WPM via `ripgrep` forces every type conversion into sequential focus.
+* **[18:00] Key Hardware Numbers to Call Out:**
+  * Chip: **Axera AX8850** (`ax650_card_v1.0` / Radxa AI Core AX-M1, 24 TOPS INT8) inside `LXC 211` on `NextGenPVE`.
+  * Device nodes: `/dev/ax_npu`, `/dev/ax_cmm`, `/dev/ax_mmb`.
+  * Primary Candidates: `CAN-2026-2038801` (Issue #75, Audio RCE), `CAN-2026-2038776` (Issue #76, CMM DMA OOB write), `CAN-2026-2038802` (Issue #77, SSE crash), and `CAN-2026-2034987` (Issue #80, `sprintf` overflow).
+  * Secondary Candidates: `CAN-2026-2038777` (Issue #81, RoPE OOB write), `CAN-2026-2038778` (Issue #82, vision stride integer overflow), and `CAN-2026-2038779` (`cmdline.hpp` double-free).
+* **[35:00] Top Q&A Defense (Why not just run it in Docker?):** Docker and unprivileged LXC namespaces isolate the host filesystem, which stops `CAN-2026-2038801` from overwriting host files. However, containers pass `/dev/ax_npu` and physical CMM DMA addresses straight to the kernel driver, so you must still clamp C++ memory bounds.

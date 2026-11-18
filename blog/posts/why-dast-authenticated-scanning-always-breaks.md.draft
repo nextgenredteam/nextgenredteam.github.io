@@ -24,6 +24,27 @@ We got tired of babysitting scans and burning cloud compute on ghost runs. Here 
 
 ---
 
+## Conference CFP & Cobalt Submission Kit
+
+Use this turnkey submission block when applying to security conferences (OWASP Global AppSec, Black Hat, RSA Conference, SecTor, BSides) or briefing Cobalt enterprise customers.
+
+* **Talk Title:** Why DAST Authenticated Scanning Always Breaks (And How to Build Real Session Keepalives)
+* **Target Tracks:** Application Security, DevSecOps & Automation, Offensive Tooling, Penetration Testing
+* **Format:** 45-Minute Technical Briefing
+* **50-Word Short Abstract:**
+  In enterprise benchmarks, 80% of automated authenticated DAST scans silently lose their session within 15 minutes and spend hours fuzzing login redirects. This talk presents an Active Session Chaperone architecture using pre-flight JWT lifespan decoders, headless Playwright extractors, 60-second canary probes, and local proxy header injection.
+* **200-Word Full Conference Abstract:**
+  Here is the dirty secret of dynamic application security testing: roughly 80% of automated authenticated scans are theater. You paste a Bearer token or record a login macro, hit start, and walk away. Fifteen minutes later, the short-lived OAuth2 JWT expires, an anti-CSRF nonce rotates, or a single-session concurrency rule evicts the scanner. The DAST engine does not crash; it quietly spends the next three hours fuzzing `401 Unauthorized` pages and `/login` redirects before outputting a clean PDF report with zero findings. In this session, blind hacker and Cobalt Offensive Security Research Director Joe Brinkley demonstrates how to solve credential rot permanently without rewriting your existing scanners (Nuclei, Katana, ZAP, or Burp). Attendees will walk through a complete Python implementation of an **Active Session Chaperone** running inside `LXC 211` on `NextGenPVE`. We cover a 15-second pre-flight JWT lifespan analyzer, a headless Playwright SSO extractor, and a 60-second canary heartbeat worker. Finally, we build a transparent `127.0.0.1:8080` intercepting proxy that rewrites outbound scanner headers in memory with zero dropped requests.
+
+### 45-Minute Stage Outline & Reviewer Takeaways
+
+* **[00:00 - 10:00] Part 1 (The 15-Minute Cliff & The Anatomy of Credential Rot):** Why 80% of authenticated DAST runs degrade into unauthenticated crawls. We examine short-lived JWTs, SPA memory state, and CSRF rotation.
+* **[10:00 - 22:00] Part 2 (Pre-Flight JWT Diagnostics & Headless Playwright SSO Extraction):** Decoding `exp` claims without private keys and capturing full OAuth2/SAML storage states from browser memory.
+* **[22:00 - 34:00] Part 3 (The 60-Second Canary Keepalive Sidecar):** Building a thread-safe supervisor that probes `/api/v1/users/me` and triggers background re-authentication before crawler threads fail.
+* **[34:00 - 45:00] Part 4 (Transparent Proxy Header Injection & Log Redaction):** Decoupling Katana, Nuclei, and ZAP via `127.0.0.1:8080` header rewriting and scrubbing session tokens from SARIF logs.
+
+---
+
 ## 1. The Anatomy of Credential Rot
 
 Why does authenticated DAST fail so reliably? Because the tools we use were designed in an era when web sessions meant a single static `PHPSESSID` cookie that lived for two weeks. 
@@ -51,11 +72,12 @@ Without an active chaperone monitoring the session state, your scanning engine b
 
 ## 2. The Cost of Blind Crawling
 
-When dynamic scanning degrades silently, the operational damage hits three separate layers:
+When dynamic scanning degrades silently, the operational damage hits four separate layers:
 
-1. **Wasted Cloud Compute:** A standard scan running Nuclei, Katana, or ZAP can consume significant CPU and memory. On NextGenPVE, running a full crawl container in `LXC 211` for four hours when the credentials rotted at minute fourteen means burning three hours and forty-six minutes of compute on useless traffic.
-2. **Critical False Negatives:** If the scanner never reaches the billing settings, administrative role toggles, or user export endpoints, it cannot detect Broken Object Level Authorization (BOLA), SQL injection, or server-side request forgery (SSRF).
+1. **Wasted Cloud Compute:** A standard scan running Nuclei, Katana, or ZAP consumes significant CPU and memory. Running a crawl container in `LXC 211` for four hours after credentials die at minute fourteen burns three hours of compute on useless traffic.
+2. **Critical False Negatives:** When the scanner never reaches billing settings, admin role toggles, or user export routes, it misses Broken Object Level Authorization (BOLA), SQL injection, and SSRF.
 3. **Triager Exhaustion:** Security engineers spend entire mornings parsing scan diffs, trying to figure out why an automated tool found zero issues on a branch that human researchers tore apart in thirty minutes.
+4. **Compliance Audit Blind Spots:** Green DAST reports lull leadership into signing off on releases where zero authenticated business logic routes were actually exercised.
 
 We needed a system that treats authentication as a dynamic, living service rather than a static configuration string.
 
@@ -95,13 +117,13 @@ Our architecture relies on four coordinated components:
 Before launching a four-hour scanning pod, a lightweight diagnostic script runs in under fifteen seconds. It decodes the JWT without verification keys, parses cookie flags, executes a live login inside headless Chromium, and hits an authenticated probe URL. If the token expires in under thirty minutes, it raises an amber warning before any scanner pod is scheduled.
 
 ### 2. Headless Browser Pool Orchestration
-When authenticating modern SPAs, we do not rely on raw HTTP POST requests. We spin up a headless Playwright instance that executes real browser interactions, executes client-side JavaScript, handles redirect flows through identity providers, and captures both the Authorization headers and the full cookie jar directly from browser memory.
+When authenticating modern SPAs, we do not rely on raw HTTP POST requests. We spin up a headless Playwright instance that runs client-side JavaScript and follows SSO redirect flows. It then captures both `Authorization` headers and the full cookie jar directly from browser memory.
 
 ### 3. Active Canary Token Validation Probes
 Running concurrently alongside the crawler threads, a background worker sends periodic heartbeat requests (every 60 seconds) to a designated protected canary endpoint (such as `/api/v1/users/me` or `/dashboard`). If this probe ever receives a `401`, a `403`, or a redirect to `/login`, the chaperone knows the scan has lost its authenticated state.
 
 ### 4. Zero-State Re-Authentication and Header Injection
-When the canary probe detects session death, it does not kill the crawler or discard discovered URLs. Instead, the chaperone triggers a background browser re-authentication, acquires a fresh JWT and cookie set, and updates an intercepting local proxy. The scanner threads continue crawling uninterrupted, with all subsequent outbound requests transparently rewritten with the new credentials.
+When the canary probe detects session death, it does not kill the crawler or discard discovered URLs. Instead, the chaperone triggers a background browser re-authentication, acquires a fresh JWT and cookie set, and updates an intercepting local proxy. The scanner threads continue crawling uninterrupted, and the proxy rewrites all later outbound requests with the fresh credentials.
 
 ---
 
@@ -420,3 +442,18 @@ Before you launch your next dynamic scan, put this checklist into your pipeline:
 * [ ] **Monitor Telemetry in Real Time:** Set an alert on your crawler container if the ratio of 401, 403, or 302 responses exceeds 15% of total scanned traffic. If that threshold triggers, abort the run early rather than wasting hours of compute.
 
 Stop trusting green checkmarks on scans that lost their authentication fifteen minutes after launch. Treat session health as an active engineering discipline, and your dynamic testing will actually find the flaws hiding in your protected code.
+
+---
+
+## Pocket Speaker Notes & Stage Cue Card
+
+Keep these rapid-fire cues on your phone during live delivery or Q&A:
+
+* **[00:00] Opening Hook:** Start with the 3-hour "clean PDF report" illusion. Say: *"Roughly 80% of automated authenticated scans spend two hours and forty-five minutes fuzzing the login page redirect while leadership celebrates zero findings."*
+* **[10:00] Key DAST Keepalive Numbers to Call Out:**
+  * Silent drop rate: **80% of automated authenticated crawls** fall back to unauthenticated pages within **15 minutes**.
+  * Pre-flight threshold: **< 15 seconds** diagnostic check; raises `SHORT_LIVED_WARNING` if JWT `ttl < 1800` seconds (30 minutes).
+  * Canary heartbeat interval: **60 seconds** default (or **30 seconds** when single-session eviction is active) probing `/api/v1/users/me`.
+  * Early-abort circuit breaker: Abort or pause the run if `401` + `403` + `302` responses exceed **15% of total scanned traffic**, or if `> 70%` of `200 OK` responses return identical `Content-Length` login shells.
+* **[25:00] The 4 Chaperone Modules:** `TokenLifespanAnalyzer` (unverified Base64 JWT `exp` check), `BrowserSessionExtractor` (Playwright `page.on("request")` header interceptor + `context.cookies()`), `SessionKeepaliveSidecar` (`threading.Lock()` + 60s canary probe), and Local Proxy on `127.0.0.1:8080`.
+* **[38:00] Top Q&A Defense (What about MFA / TOTP on staging accounts?):** Pass the TOTP shared secret seed into the Playwright authenticator container via vault memory. The container generates the 6-digit RFC 6238 code dynamically during each headless browser re-auth loop.

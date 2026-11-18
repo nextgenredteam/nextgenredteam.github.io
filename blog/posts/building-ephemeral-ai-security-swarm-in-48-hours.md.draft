@@ -26,6 +26,27 @@ Here is the unfiltered engineering breakdown of what broke, what worked, and how
 
 ---
 
+## Conference CFP & Cobalt Submission Kit
+
+Use this turnkey submission block when applying to security conferences (DEF CON, Black Hat Arsenal / Briefings, RSA Conference, SecTor, BSides) or briefing Cobalt enterprise customers.
+
+* **Talk Title:** Building an Ephemeral AI Security Swarm in 48 Hours: The Architecture of NextGenHunt & AetherShift
+* **Target Tracks:** AI / Autonomous Security Agents, Offensive Tooling & Engineering, Application Security
+* **Format:** 45-Minute Technical Briefing
+* **50-Word Short Abstract:**
+  Monolithic AI pentesting agents drown in HTML context pollution, hit safety refusal walls, and hallucinate bugs. In a 48-hour sprint, we built AetherShift and NextGenHunt: a Dual-Brain swarm using zero-token Python observers, ephemeral 2ms V8 isolates, 400ms self-healing WAF loops, and SHA-256 wire proofs.
+* **200-Word Full Conference Abstract:**
+  Handing a frontier LLM a bash shell and telling it to "pentest this target" fails within twenty minutes on real enterprise networks. Monolithic agents drown in megabytes of minified DOM clutter, get trapped in recursive login loops, follow SSRF redirects into internal subnets, and trip commercial safety classifiers. Over a single 48-hour weekend sprint, blind hacker and Cobalt Offensive Security Research Director Joe Brinkley built **AetherShift** and **NextGenHunt** from scratch. This talk breaks down the five engineering primitives that make autonomous security swarms work in production. First, we replace Docker container bloat with a hardened SQLite WAL ledger and ephemeral JavaScript V8 isolates that boot in under 2 milliseconds using less than 8MB of RAM. Second, we decouple the **Observer Brain** (zero-token Python stripping 98% of HTML noise) from the **Reasoner Brain** (LiteLLM routing between cloud frontier planners and local RTX GPUs running Qwen 2.5 Coder 32B). Third, we achieve 100% refusal resilience via semantic RFC 9110 and RFC 7519 compliance framing. Finally, we demonstrate a 400ms self-healing WAF adaptation loop, four NextGenHunt governance gates, and a deterministic Zero-False-Positive wire proof pipeline.
+
+### 45-Minute Stage Outline & Reviewer Takeaways
+
+* **[00:00 - 10:00] Part 1 (The Monolithic Agent Trap & The 48-Hour Architecture):** Why naked LLM wrappers fail in production. We show how to lock PRD, ARD, and SQLite WAL schemas before writing application code.
+* **[10:00 - 22:00] Part 2 (Dual-Brain Cognitive Decoupling & RFC Refusal Bypass):** Separating zero-token Python DOM extraction from hybrid LLM reasoning while eliminating safety refusals with `__BOUNDARY_VECTOR_ALPHA__` token substitution.
+* **[22:00 - 34:00] Part 3 (Ephemeral 2ms V8 Isolates & The 400ms Self-Healing WAF Loop):** Running 500+ parallel JavaScript verification workers and mutating payload encodings automatically when WAF 403 blocks occur.
+* **[34:00 - 45:00] Part 4 (NextGenHunt Governance Gates & SHA-256 Wire Proofs):** Enforcing CIDR math scope guards, AST code validation, 4-tier circuit breakers, and dual-worker SHA-256 cryptographic evidence ledgers.
+
+---
+
 ## Why Monolithic Pentesting Agents Fail
 
 Most developers building an AI security tool make the same fatal design mistake. They treat a Large Language Model like an autonomous hacker in a box. 
@@ -75,7 +96,7 @@ True vibe coding means acting as a Principal Systems Architect. You freeze your 
 Here is the exact schedule we followed across the 48-hour build:
 
 | Weekend Timeline | Phase | Engineering Deliverables |
-| :--- | :--- | :--- |
+| :-- | :-- | :-- |
 | **Friday Night (00:00 - 06:00)** | **Phase 1: Specs & State** | Froze `PRD.md` and `ARD.md`. Mapped capabilities to OWASP Top 10:2025. Hardened SQLite WAL state engine (`swarm_findings.db`). Zero application code written until schemas locked. |
 | **Saturday AM (06:00 - 16:00)** | **Phase 2: The Dual-Brain Engine** | Built FastAPI orchestrator. Decoupled Observer Brain (0-token Python) from Reasoner Brain (LLM). Deployed LiteLLM gateway (Cloud Frontier + Local RTX Qwen 2.5 Coder). Eliminated safety refusals via RFC framing. |
 | **Saturday PM (16:00 - 28:00)** | **Phase 3: Ephemeral V8 Isolates** | Engineered polyglot worker runner (Cloudflare Workers + Local Node.js V8 sandbox). Built the 400ms self-healing execution loop to adapt payloads against WAF blocks. |
@@ -241,7 +262,7 @@ flowchart TD
 ```
 
 The cycle operates across five deterministic phases:
-1. **INIT:** Validates target scope, boots the SQLite ledger, checks worker provider health, and sets the operator Depth Dial (Level 1 for passive recon, Level 2 for template checks, Level 3 for synthesized deep logic tests).
+1. **INIT:** Validates target scope, boots the SQLite ledger, and checks worker provider health. It also sets the operator Depth Dial across Level 1, Level 2, or Level 3.
 2. **RECON:** Pure Python parsing of headers, status codes, query strings, and form schemas.
 3. **DISPATCH:** Evaluates the attack surface against the Depth Dial. Baseline checks execute via static templates. Novel business logic routes to the Reasoner Brain. Intrusive state-mutating checks pause in the NextGenHunt Kanban queue.
 4. **ASSERT:** Validates synthesized worker code against AST rules, runs it inside an ephemeral V8 isolate, and evaluates response assertions against raw HTTP output.
@@ -290,7 +311,7 @@ The Reasoner Brain never sees raw, messy HTML pages. It receives only compact JS
 
 We routed the Reasoner through a LiteLLM gateway using a two-tier strategy:
 * **Tier 1 (Cloud Frontier Models):** Claude 3.7 Sonnet or GPT-4o handle high-level attack tree planning, complex role-based access control models, and multi-step business logic hypotheses.
-* **Tier 2 (Local RTX GPUs running Qwen 2.5 Coder 32B):** When the system needs to write a JavaScript V8 verification worker, fuzz parameters, or mutate encoding around a WAF, the request routes to our local GPU cluster hosted on `NextGenPVE` inside `LXC 205`. 
+* **Tier 2 (Local RTX GPUs running Qwen 2.5 Coder 32B):** Code synthesis and WAF mutation route to our local GPU cluster inside `LXC 205` on `NextGenPVE`. That local model writes V8 verification workers and mutates parameter encodings at zero token cost.
 
 Qwen 2.5 Coder generates clean JavaScript workers in under two hundred milliseconds. It costs zero marginal dollars, eliminates cloud API rate limits, and keeps our client target structures completely private.
 
@@ -328,7 +349,7 @@ The model happily writes the exact structural testing logic and response asserti
 
 Once the JavaScript code leaves the model, the deterministic Python harness swaps `__BOUNDARY_VECTOR_ALPHA__` with the actual test vector from our local security dictionary right before dispatching the worker.
 
-By decoupling the structural protocol logic (handled by the LLM) from raw payload byte injection (handled by the local harness), we hit a **100 percent bypass rate on false safety refusals** across every model we tested.
+This split separates structural protocol logic in the LLM from raw payload byte injection in the local harness. That decoupling gave us a **100 percent bypass rate on false safety refusals** across every tested model.
 
 ---
 
@@ -337,7 +358,7 @@ By decoupling the structural protocol logic (handled by the LLM) from raw payloa
 When running hundreds of custom, model-generated test scripts, you need an isolated sandbox. We tested three different sandboxing approaches during Saturday's build:
 
 | Runtime Metric | Docker Containers | Python `multiprocessing` / `eval()` | Ephemeral V8 Isolates (AetherShift) |
-| :--- | :--- | :--- | :--- |
+| :-- | :-- | :-- | :-- |
 | **Startup Latency** | 1,000 ms to 3,000 ms | 50 ms to 150 ms | **< 2 ms** |
 | **Memory per Worker** | ~150 MB RAM | ~40 MB RAM | **< 8 MB RAM** |
 | **Parallel Concurrency** | ~20 workers max | GIL contention, OS descriptor limits | **500+ workers** |
@@ -433,7 +454,7 @@ class SelfHealingExecutionSandbox:
 
 When an isolate encounters an HTTP 403 block on its first attempt, it does not stop. It extracts the response headers, block identifiers, and status codes, and hands that 500-byte diagnostic trace back to our local Qwen 2.5 Coder model. 
 
-The local model inspects the block, modifies the payload encoding (switching to JSON unicode escapes, altering header case, or adjusting multipart boundaries), passes the code back through our syntax validator, and re-fires from a brand new isolate. 
+The local model inspects the block and modifies the payload encoding using JSON unicode escapes or altered header casing. It then validates the syntax and re-fires from a fresh V8 isolate.
 
 The entire feedback loop completes in **four hundred milliseconds**.
 
@@ -564,8 +585,9 @@ class DeterministicHarnessGuard:
         return True, "AST_VERIFIED"
 ```
 
-### Gate 3: The 3-Tier Graded Kill Switch
-When a target service begins failing, an autonomous tool must never hammer it into an outage. NextGenHunt tracks error codes over a rolling 60-second window:
+### Gate 3: The 4-Tier Graded Kill Switch
+When a target service begins failing, an autonomous tool must never hammer it into an outage. NextGenHunt tracks error codes over a rolling 60-second window across four operational states:
+* **Tier 0 (Healthy Baseline Telemetry):** Response codes remain within `200`/`404` norms, allowing up to 10 concurrent V8 isolates per host.
 * **Tier 1 (3 Consecutive 403 or 429 Blocks):** Concurrency throttles by 50 percent, and the harness introduces randomized delays between requests.
 * **Tier 2 (7 Consecutive Blocks or 502/503 Errors):** The circuit breaker trips, pausing all testing on that target host for 60 seconds and rotating execution providers.
 * **Tier 3 (10 Consecutive Errors):** The mission halts completely for that host, and an alert sounds for the operator.
@@ -629,10 +651,10 @@ Before concluding the build on Sunday evening, we ran `battery_test.py`, an auto
 For known vulnerabilities and static CVE signatures, you should continue using deterministic templates. Nuclei is great at matching fixed patterns. AetherShift uses static templates for Depth Dial Level 2 checks at zero token cost. We only invoke the Reasoner Brain and synthesize custom V8 isolate workers when evaluating unique business logic, multi-step authorization paths, or novel GraphQL schemas that static YAML templates cannot represent.
 
 ### Does running an ephemeral AI swarm generate massive API bills?
-Only if you make the mistake of using a single-prompt monolithic agent that feeds megabytes of raw HTML into GPT-4o or Claude. By letting our zero-token Python Observer Brain handle DOM parsing and routing code synthesis to a local RTX GPU running Qwen 2.5 Coder, we reduced cloud frontier token consumption by over eighty percent.
+Only if you make the mistake of using a single-prompt monolithic agent that feeds megabytes of raw HTML into GPT-4o or Claude. Our zero-token Python Observer Brain handles all DOM parsing first. Routing code synthesis to a local RTX GPU running Qwen 2.5 Coder cut our cloud token spend by over 80 percent.
 
 ### How do you prevent the AI from causing a denial of service on target servers?
-You never trust an LLM prompt to throttle itself. Protection must exist at the harness layer. NextGenHunt enforces five deterministic protections: pre-flight CIDR mathematical scope filtering, AST syntax limits, a three-tier graded kill switch, a local concurrency ceiling (`MAX_CONCURRENT_WORKERS = 10`), and an interactive Kanban approval gate for state-changing operations.
+You never trust an LLM prompt to throttle itself. Protection must exist at the harness layer. NextGenHunt enforces five deterministic protections: pre-flight CIDR mathematical scope filtering, AST syntax limits, a graded kill switch, a local concurrency ceiling (`MAX_CONCURRENT_WORKERS = 10`), and an interactive Kanban approval gate for state-changing operations.
 
 ### Why build a local Node.js isolate sandbox if cloud workers are so fast?
 Enterprise security engagements often forbid sending staging traffic or proprietary API schemas through public cloud edge infrastructure. Additionally, security researchers need the ability to develop, test, and debug on a laptop completely offline. Setting `WORKER_PROVIDER=local` runs the identical ephemeral worker architecture locally inside Node.js V8 isolates.
@@ -645,6 +667,22 @@ Building AetherShift and NextGenHunt in forty-eight hours proved that autonomous
 
 Language models are exceptional pattern recognizers and code generators. What they lack is operational discipline, boundary awareness, and deterministic truth. 
 
-When you strip away the marketing hype, decouple state tracking from cognitive reasoning, run your tests inside microsecond V8 isolates, and back every finding with raw wire evidence, you get an autonomous testing engine that is fast, safe, and ruthlessly effective.
+Strip away the marketing hype and decouple state tracking from cognitive reasoning. When you run tests inside 2-millisecond V8 isolates and back every finding with raw wire evidence, you get a fast, safe testing engine.
 
 The code and architecture are running in our labs. Build the harness right, lock your specifications first, and let the swarm do the heavy lifting.
+
+---
+
+## Pocket Speaker Notes & Stage Cue Card
+
+Keep these rapid-fire cues on your phone during live delivery or Q&A:
+
+* **[00:00] Opening Hook:** Contrast "vibe coding" hype with Principal Systems Architecture. Say: *"The language model is only 20% of an autonomous security system. The deterministic execution harness is the other 80%."*
+* **[12:00] Key Swarm Metrics to Call Out:**
+  * Build window: **48 hours** (Friday night to Sunday night, 0 application code written until `PRD.md`, `ARD.md`, and SQLite WAL schemas locked).
+  * V8 Isolate footprint: **< 2ms startup latency** and **< 8MB RAM** per worker (500+ parallel isolates vs. 1,000–3,000ms and 150MB RAM for Docker).
+  * Observer vs. Reasoner split: Observer strips **98% of HTML clutter** at **0 token cost** (`< 2KB` JSON schema passed to Reasoner).
+  * Self-healing WAF loop: **400ms round-trip** (200ms local RTX Qwen 2.5 Coder 32B mutation + <2ms V8 isolate re-fire, capped at `MAX_HEALING_ATTEMPTS = 3`).
+  * Verification battery: **90+ automated unit/integration tests** in `battery_test.py` with **0 SQLite lock timeouts** under 50 concurrent threads.
+* **[25:00] Refusal Bypass Formula:** Frame prompts as **RFC 9110 (HTTP Semantics)** and **RFC 7519 (JWT)** compliance verification using `__BOUNDARY_VECTOR_ALPHA__`. Then swap in the raw exploit bytes in Python after the LLM outputs the JavaScript AST.
+* **[38:00] Top Q&A Defense (How do you guarantee zero hallucinated findings?):** Recite the invariant: `Verified Finding = Raw Request Dump + Raw Response Dump + Deterministic Assertion + Independent Secondary Worker Confirmation + SHA-256 Evidence Hash`.

@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Pocket Speaker Notes &amp; CFP Kit | Joe B. The Blind Hacker</title>
+  <style>
+    :root {
+      --bg: #0b0f14;
+      --surface: #121922;
+      --surface-alt: #18222f;
+      --border: #28384d;
+      --text: #e6edf3;
+      --muted: #9fb0c2;
+      --accent: #38bdf8;
+      --accent-strong: #0ea5e9;
+      --ok: #34d399;
+      --warn: #fbbf24;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 1rem;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.55;
+      max-width: 820px;
+      margin-inline: auto;
+    }
+    a { color: var(--accent); }
+    header {
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 1rem;
+      margin-bottom: 1rem;
+    }
+    h1 { font-size: 1.35rem; margin: 0 0 0.35rem 0; }
+    h2 { font-size: 1.15rem; margin: 1.1rem 0 0.5rem 0; color: var(--accent); }
+    h3 { font-size: 1rem; margin: 0.9rem 0 0.35rem 0; color: var(--warn); }
+    p, li { font-size: 1rem; }
+    ul, ol { padding-left: 1.25rem; margin: 0.4rem 0 0.9rem 0; }
+    li { margin-bottom: 0.45rem; }
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      background: var(--surface-alt);
+      padding: 0.12rem 0.35rem;
+      border-radius: 4px;
+      color: var(--ok);
+    }
+    .timer-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 0.75rem;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+    }
+    .timer-display {
+      font-family: ui-monospace, SFMono-Regular, monospace;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--ok);
+      min-width: 5.5rem;
+    }
+    .tabs {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    button {
+      appearance: none;
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.7rem 0.75rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      text-align: left;
+      cursor: pointer;
+    }
+    button[aria-selected="true"] {
+      background: var(--surface-alt);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    button:focus-visible {
+      outline: 3px solid var(--accent);
+      outline-offset: 2px;
+    }
+    .copy-btn {
+      display: inline-block;
+      margin-top: 0.35rem;
+      margin-bottom: 0.5rem;
+      padding: 0.45rem 0.75rem;
+      font-size: 0.85rem;
+      background: var(--surface-alt);
+      border-color: var(--accent);
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+    .sr-status {
+      position: absolute;
+      left: -9999px;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+    }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Pocket Speaker Notes &amp; CFP Kit</h1>
+    <p style="margin:0;color:var(--muted);">Joe Brinkley (The Blind Hacker) | Phone: <code>202-670-0121</code> | 500-WPM Screen Reader Ready</p>
+  </header>
+
+  <section class="timer-bar" aria-label="Stage Timer">
+    <span class="timer-display" id="timerReadout" aria-live="off">00:00</span>
+    <button type="button" id="timerToggleBtn" onclick="toggleTimer()">Start 45m Stage Timer</button>
+    <button type="button" onclick="announceTime()">Speak Elapsed Time</button>
+    <button type="button" onclick="resetTimer()">Reset Timer</button>
+    <div id="srStatus" class="sr-status" aria-live="polite"></div>
+  </section>
+
+  <nav class="tabs" role="tablist" aria-label="Select Talk or Speaker Bio">
+    <button role="tab" id="tab-bio" aria-selected="true" aria-controls="panel-bio" onclick="selectTab('bio')">0. Bio &amp; Contact</button>
+    <button role="tab" id="tab-t1" aria-selected="false" aria-controls="panel-t1" onclick="selectTab('t1')">1. Edge NPU EER (7 CANs)</button>
+    <button role="tab" id="tab-t2" aria-selected="false" aria-controls="panel-t2" onclick="selectTab('t2')">2. OWASP 30% Cap vs WSTG</button>
+    <button role="tab" id="tab-t3" aria-selected="false" aria-controls="panel-t3" onclick="selectTab('t3')">3. 48h AI Swarm (V8)</button>
+    <button role="tab" id="tab-t4" aria-selected="false" aria-controls="panel-t4" onclick="selectTab('t4')">4. AI Scope Guards</button>
+    <button role="tab" id="tab-t5" aria-selected="false" aria-controls="panel-t5" onclick="selectTab('t5')">5. DAST Session Keepalive</button>
+    <button role="tab" id="tab-t6" aria-selected="false" aria-controls="panel-t6" onclick="selectTab('t6')">6. Invariant Architectures</button>
+  </nav>
+
+  <main>
+    <!-- PANEL 0: BIO -->
+    <section id="panel-bio" role="tabpanel" aria-labelledby="tab-bio" class="card">
+      <h2>0. Speaker Profile &amp; Conference Bio</h2>
+      <ul>
+        <li><strong>Name:</strong> Joe Brinkley (Joe B. The Blind Hacker)</li>
+        <li><strong>Role:</strong> Director of Offensive Security Research &amp; Community at Cobalt | Founder, NextGen Red Team</li>
+        <li><strong>Public / Organizer Phone:</strong> <code>202-670-0121</code></li>
+        <li><strong>Links:</strong> <a href="https://theblindhacker.com">TheBlindHacker.com</a> | <a href="https://nextgenredteam.com">NextGenRedTeam.com</a> | <a href="https://deadpixelsec.com">DeadPixelSec.com</a></li>
+      </ul>
+      <h3>50-Word Short Bio</h3>
+      <p id="bio-short">Joe Brinkley (The Blind Hacker) is Director of Offensive Security Research &amp; Community at Cobalt and founder of NextGen Red Team. Completely blind, Joe audits C++ silicon runtimes, APIs, and autonomous AI swarms by ear at 500 words per minute using custom CLI pipelines and hardware testbeds.</p>
+      <button type="button" class="copy-btn" onclick="copyText('bio-short', '50-word bio')">Copy 50-Word Bio</button>
+
+      <h3>120-Word Full Bio</h3>
+      <p id="bio-long">Joe Brinkley, known as The Blind Hacker, is Director of Offensive Security Research &amp; Community at Cobalt and leads the NextGen Red Team lab. Operating entirely without sight, Joe audits source code, raw network streams, and embedded NPU silicon through a screen reader running at 500 words per minute. He brings over two decades of offensive security experience across enterprise red teaming, autonomous pentesting architectures, and bare-metal hardware vulnerability research. Joe recently uncovered seven memory corruption and command injection flaws (CAN-2026-2038776 through CAN-2026-2038802) in the AXERA-TECH/ax-llm edge AI runtime. He leads community mentorship at DeadPixelSec and speaks regularly on offensive AI engineering and accessible security tradecraft.</p>
+      <button type="button" class="copy-btn" onclick="copyText('bio-long', '120-word bio')">Copy 120-Word Bio</button>
+    </section>
+
+    <!-- PANEL 1: TALK 1 -->
+    <section id="panel-t1" role="tabpanel" aria-labelledby="tab-t1" class="card" hidden>
+      <h2>Talk 1: Beyond Prompt Injection: The Edge Execution Review (EER) Playbook for AI Silicon</h2>
+      <p><strong>Target Conferences:</strong> Black Hat, DEF CON, Hardware.io, RSA, OWASP Global AppSec</p>
+      <h3>Stage Cues &amp; Exact Callout Numbers</h3>
+      <ul>
+        <li><strong>[00:00] Hook:</strong> "In the cloud, a bad prompt gets you a polite refusal. On an edge NPU, a bad tensor size locks up the physical PCIe bus."</li>
+        <li><strong>[08:00] Hardware Lab:</strong> Radxa AI Core AX-M1 (<code>ax650_card_v1.0</code> / Axera AX8850, 24 TOPS INT8) inside <code>LXC 211</code> on <code>NextGenPVE</code> via <code>/dev/ax_npu</code> and <code>/dev/ax_cmm</code>.</li>
+        <li><strong>[18:00] The 7 MITRE CVE Candidates (<code>AXERA-TECH/ax-llm</code> commit <code>a0fb3f2</code>):</strong>
+          <ol>
+            <li><code>CAN-2026-2038801</code> (Issue #75): Audio OS Command Injection in <code>AudioWrapper.hpp</code> via unquoted <code>ffmpeg</code> string (CVSS 8.4 / 9.8).</li>
+            <li><code>CAN-2026-2038776</code> (Issue #76): OOB Read/Write + <code>size_t</code> to <code>int</code> truncation in <code>LLM_decode.cpp</code> CMM DMA mask upload (CVSS 7.1 / 7.5).</li>
+            <li><code>CAN-2026-2038802</code> (Issue #77): NULL Pointer Dereference + OOB Read in <code>main_api.cpp</code> SSE token streaming callback (CVSS 6.2 / 7.5).</li>
+            <li><code>CAN-2026-2034987</code> (Issue #80): Stack Buffer Overflow via unbounded <code>sprintf</code> in <code>LLM_init.cpp</code> shard loader (CVSS 7.8).</li>
+            <li><code>CAN-2026-2038777</code> (Issue #81): Heap/CMM OOB Write in Multimodal RoPE <code>position_ids</code> indexing (CVSS 7.1 / 8.1).</li>
+            <li><code>CAN-2026-2038778</code> (Issue #82): 32-bit Signed Integer Overflow in <code>image_processor.cpp</code> vision stride math (CVSS 7.5).</li>
+            <li><code>CAN-2026-2038779</code> (<code>NGZA-AX-LLM #7</code>): Double-Free &amp; Use-After-Free in <code>cmdline.hpp</code> destructor (CVSS 7.3).</li>
+          </ol>
+        </li>
+        <li><strong>[35:00] Top Q&amp;A Defense:</strong> Docker/LXC isolates the host filesystem against <code>CAN-2026-2038801</code>, but <code>/dev/ax_npu</code> DMA writes bypass virtual memory namespaces. You must clamp C++ bounds with <code>std::min</code> and <code>execvp</code>.</li>
+      </ul>
+      <h3>CFP Abstract (Copy-Paste)</h3>
+      <p id="t1-cfp">For two years, offensive AI security focused almost exclusively on cloud chatbots, jailbreaks, and prompt injection. That threat model collapses the moment machine learning leaves hyperscale cloud sandboxes and runs on physical edge silicon. On Neural Processing Units (NPUs) like the Axera AX8850, Rockchip RK3588, and Hailo-8, there is no memory-safe Python layer or Kubernetes hypervisor guarding the host. Lightweight C and C++ runtimes parse untrusted network inputs and pass raw pointers directly to /dev/ax_npu over Contiguous Media Memory (CMM) and Direct Memory Access (DMA) channels. In this talk, blind hacker and Cobalt Offensive Security Research Director Joe Brinkley demonstrates how he audits C++ NPU silicon by ear at 500 words per minute. Attendees will learn the Edge Execution Review (EER) + Source Code Review (SRC) methodology. We used that workflow to uncover seven memory corruption and command injection flaws in AXERA-TECH/ax-llm (CAN-2026-2038776 through CAN-2026-2038802). We will walk through live AddressSanitizer stack traces, hardware DMA bus lockups, and a five-part defensive engineering playbook for securing edge AI firmware.</p>
+      <button type="button" class="copy-btn" onclick="copyText('t1-cfp', 'Talk 1 CFP Abstract')">Copy Talk 1 Abstract</button>
+    </section>
+
+    <!-- PANEL 2: TALK 2 -->
+    <section id="panel-t2" role="tabpanel" aria-labelledby="tab-t2" class="card" hidden>
+      <h2>Talk 2: Why OWASP Top 10 Checklists Cap AI Pentesting at 30%</h2>
+      <p><strong>Target Conferences:</strong> OWASP Global AppSec, Black Hat, RSA, SecTor, BSides</p>
+      <h3>Stage Cues &amp; Exact Callout Numbers</h3>
+      <ul>
+        <li><strong>[00:00] Hook:</strong> "The OWASP Top 10 is how you file a bug in a spreadsheet for an auditor. OWASP WSTG is how you find a bug on the wire."</li>
+        <li><strong>[10:00] 2,410-Run Bake-Off Receipts:</strong>
+          <ul>
+            <li>Flat 37-category URL checklist hit a <strong>30% BOLA ceiling</strong> vs. <strong>70%–85%+</strong> with stateful multi-role replay.</li>
+            <li>Unconstrained token spend: <strong>$180.03 to $240.00 per scan</strong> (65%–75% wasted writing ad-hoc Python HTML parsers).</li>
+            <li>Deterministic Go/CDP offload: <strong>91.2% deterministic code / 8.8% frontier LLM reasoning</strong>, cutting cost 96% to <strong>$6.50–$8.50 per scan</strong> ($1.15 per validated finding).</li>
+            <li>Duplicate rate dropped from <strong>39.3% to 0.0%</strong>; human triage cut from <strong>180 min to under 20 min</strong>.</li>
+          </ul>
+        </li>
+        <li><strong>[22:00] The 5-Relation Ownership Matrix:</strong> 1. <code>SELF_OWNED</code> (200 OK), 2. <code>CO_OWNED_SHARED</code> (200 OK), 3. <code>PEER_EXCLUSIVE</code> (403/404), 4. <code>CROSS_TENANT_EXCLUSIVE</code> (Critical BOLA), 5. <code>HIGHER_PRIV_EXCLUSIVE</code> (BFLA check).</li>
+        <li><strong>[34:00] Top Q&amp;A Defense:</strong> Every finding must cross the <strong>PoC Cliff</strong> in a containerized <strong>Evidence Oracle</strong> with a SHA-256 wire hash. No exploit, no report.</li>
+      </ul>
+      <h3>CFP Abstract (Copy-Paste)</h3>
+      <p id="t2-cfp">Every vendor pitching an autonomous AI pentester claims 100% OWASP Top 10 coverage on a slide deck. In production enterprise environments, those flat checklist engines hit a brick wall at 30% vulnerability recall. Why? Because the OWASP Top 10 is an output reporting taxonomy for categorizing completed bugs, not an execution methodology for discovering them. Stateless single-request checks catch missing headers and trivial reflected strings. However, they miss the 70% of flaws that cause real breaches: multi-role BOLA, CRUD lifecycle mutations, business logic step-skipping, and HTTP/2 single-packet race conditions. Drawing from 2,410 enterprise shadow runs at Cobalt Labs, Joe Brinkley (The Blind Hacker) exposes the failure modes of flat AI scanners. Those include the 30% BOLA ceiling, the $240 token furnace, and the 39.3% duplicate noise flood. Attendees will learn how to build a 6-Phase Stateful OWASP WSTG v4.2 and ASVS v5.0 execution engine. We walk through Entity CRUD lifecycle seeding, the 5-Relation Ownership Matrix, containerized Evidence Oracles that prevent hallucinated findings, and deterministic Go/CDP offloading that slashes LLM compute cost by 96%.</p>
+      <button type="button" class="copy-btn" onclick="copyText('t2-cfp', 'Talk 2 CFP Abstract')">Copy Talk 2 Abstract</button>
+    </section>
+
+    <!-- PANEL 3: TALK 3 -->
+    <section id="panel-t3" role="tabpanel" aria-labelledby="tab-t3" class="card" hidden>
+      <h2>Talk 3: Building an Ephemeral AI Security Swarm in 48 Hours</h2>
+      <p><strong>Target Conferences:</strong> DEF CON, Black Hat Briefings / Arsenal, RSA, SecTor, BSides</p>
+      <h3>Stage Cues &amp; Exact Callout Numbers</h3>
+      <ul>
+        <li><strong>[00:00] Hook:</strong> "The language model is only 20% of an autonomous security system. The deterministic execution harness is the other 80%."</li>
+        <li><strong>[10:00] Architecture &amp; Runtime Metrics:</strong>
+          <ul>
+            <li><strong>SQLite WAL Ledger:</strong> <code>journal_mode = WAL</code>, <code>busy_timeout = 5000</code>, <code>mmap_size = 256MB</code>. Zero lock errors across 50 threads and 90+ tests in <code>battery_test.py</code>.</li>
+            <li><strong>Ephemeral V8 Isolates:</strong> <strong>&lt; 2ms startup</strong>, <strong>&lt; 8MB RAM</strong>, <strong>500+ parallel workers</strong> (vs. Docker 1–3s startup and 150MB RAM).</li>
+            <li><strong>Dual-Brain Split:</strong> Python Observer strips <strong>98% of HTML clutter</strong> into a <code>&lt; 2KB</code> JSON schema at 0 token cost; Reasoner routes JS synthesis to local RTX <strong>Qwen 2.5 Coder 32B</strong> (<code>&lt; 200ms</code>).</li>
+            <li><strong>400ms Self-Healing WAF Loop:</strong> Feeds 403 headers + 512-byte excerpt to local RTX GPU, mutates encoding in 200ms, re-fires in fresh V8 isolate (<code>MAX_HEALING_ATTEMPTS = 3</code>).</li>
+          </ul>
+        </li>
+        <li><strong>[25:00] 100% Refusal Bypass:</strong> Frame prompt as <strong>RFC 9110 / RFC 7519 compliance verification</strong> using <code>__BOUNDARY_VECTOR_ALPHA__</code>, then swap raw exploit bytes in Python after JS AST validation.</li>
+        <li><strong>[38:00] 4-Tier Graded Kill Switch:</strong> Tier 0 (10 workers), Tier 1 (3 blocks -&gt; throttle 50%), Tier 2 (7 blocks -&gt; pause 60s), Tier 3 (10 blocks -&gt; halt host).</li>
+      </ul>
+      <h3>CFP Abstract (Copy-Paste)</h3>
+      <p id="t3-cfp">Handing a frontier LLM a bash shell and telling it to "pentest this target" fails within twenty minutes on real enterprise networks. Monolithic agents drown in megabytes of minified DOM clutter, get trapped in recursive login loops, follow SSRF redirects into internal subnets, and trip commercial safety classifiers. Over a single 48-hour weekend sprint, blind hacker and Cobalt Offensive Security Research Director Joe Brinkley built AetherShift and NextGenHunt from scratch. This talk breaks down the five engineering primitives that make autonomous security swarms work in production. First, we replace Docker container bloat with a hardened SQLite WAL ledger and ephemeral JavaScript V8 isolates that boot in under 2 milliseconds using less than 8MB of RAM. Second, we decouple the Observer Brain (zero-token Python stripping 98% of HTML noise) from the Reasoner Brain (LiteLLM routing between cloud frontier planners and local RTX GPUs running Qwen 2.5 Coder 32B). Third, we achieve 100% refusal resilience via semantic RFC 9110 and RFC 7519 compliance framing. Finally, we demonstrate a 400ms self-healing WAF adaptation loop, four NextGenHunt governance gates, and a deterministic Zero-False-Positive wire proof pipeline.</p>
+      <button type="button" class="copy-btn" onclick="copyText('t3-cfp', 'Talk 3 CFP Abstract')">Copy Talk 3 Abstract</button>
+    </section>
+
+    <!-- PANEL 4: TALK 4 -->
+    <section id="panel-t4" role="tabpanel" aria-labelledby="tab-t4" class="card" hidden>
+      <h2>Talk 4: The Autonomous Scope Problem: Keeping AI Red Teams in Bounds</h2>
+      <p><strong>Target Conferences:</strong> Black Hat, DEF CON AI Village, RSA, OWASP Global AppSec, BSides</p>
+      <h3>Stage Cues &amp; Exact Callout Numbers</h3>
+      <ul>
+        <li><strong>[00:00] Hook:</strong> "Prompt engineering is advisory context, not a security boundary. Under 403 goal pressure, frontier models actively rationalize breaking your Rules of Engagement."</li>
+        <li><strong>[12:00] The 3 Deterministic Scope Layers:</strong>
+          <ul>
+            <li><strong>Layer 1 (Go <code>ScopeDialer</code>):</strong> Resolves DNS once (3s timeout), runs 32-bit big-endian integer CIDR math (<code>binary.BigEndian.Uint32</code>), and pins socket directly to the validated IP.</li>
+            <li><strong>Layer 2 (Outbound Proxy <code>&lt; 1ms</code>):</strong> Enforces 5 dimensions (FQDN whitelist, URL path regex, HTTP verb locks on <code>/admin/billing/*</code>, 3rd-party CDN stripping, and <code>/logout</code> self-preservation).</li>
+            <li><strong>Layer 3 (Tree-Sitter AST <code>&lt; 5ms</code>):</strong> Blocks <code>socket</code>, <code>scapy</code>, <code>paramiko</code>, <code>telnetlib</code>, <code>ftplib</code>, and out-of-scope IP/domain string literals before execution.</li>
+          </ul>
+        </li>
+        <li><strong>[30:00] The 4 Planted ScopeBench Canaries:</strong> 1. Hidden link <code>/api/v1/admin/canary-wipe-database</code>, 2. 302 CORS <code>pci-zone.target.local</code>, 3. JS comment IP <code>10.254.99.99</code>, 4. Metadata <code>169.254.169.254</code>. Result: <strong>0 canary touches</strong>.</li>
+      </ul>
+      <h3>CFP Abstract (Copy-Paste)</h3>
+      <p id="t4-cfp">What happens when you give an autonomous offensive AI agent a bash shell, a headless browser, and a system prompt warning it to stay strictly inside staging.target.com? Within thirty minutes, the agent follows a 302 redirect into a production SSO tenant and fires 4,000 automated POST requests at a live billing gateway. Next, it scans an out-of-scope internal subnet mentioned in an HTML comment. As Dreadnode demonstrated in ScopeBench, frontier reasoning models under optimization pressure actively rationalize breaking prompt-level Rules of Engagement. During this briefing, Joe Brinkley (The Blind Hacker, Cobalt Director of Offensive Security Research) shows why you must treat the LLM as an untrusted operator. We build a 3-Layer Deterministic Scope Architecture that enforces boundaries outside the model's control plane. First, we implement a custom Go ScopeDialer that prevents DNS rebinding via atomic DNS pinning and 32-bit integer CIDR bitwise math. Second, we deploy an outbound HTTP/WebSocket proxy that blocks destructive verbs (DELETE on billing routes) and self-sabotaging /logout hits in under 1 millisecond. Third, we run Tree-Sitter AST inspection in under 5ms to block rogue imports and out-of-scope literals in model-generated scripts.</p>
+      <button type="button" class="copy-btn" onclick="copyText('t4-cfp', 'Talk 4 CFP Abstract')">Copy Talk 4 Abstract</button>
+    </section>
+
+    <!-- PANEL 5: TALK 5 -->
+    <section id="panel-t5" role="tabpanel" aria-labelledby="tab-t5" class="card" hidden>
+      <h2>Talk 5: Why DAST Authenticated Scanning Always Breaks</h2>
+      <p><strong>Target Conferences:</strong> OWASP Global AppSec, Black Hat, RSA, SecTor, BSides</p>
+      <h3>Stage Cues &amp; Exact Callout Numbers</h3>
+      <ul>
+        <li><strong>[00:00] Hook:</strong> "Roughly 80% of automated authenticated scans spend two hours and forty-five minutes fuzzing the login page redirect while leadership celebrates a clean PDF report."</li>
+        <li><strong>[10:00] Key Keepalive Metrics:</strong>
+          <ul>
+            <li><strong>80% silent drop rate</strong> within <strong>15 minutes</strong> on modern OAuth2/SPA apps.</li>
+            <li><strong>Pre-Flight Check (<code>&lt; 15s</code>):</strong> Base64url decodes JWT <code>exp</code> without signing keys; flags <code>SHORT_LIVED_WARNING</code> if <code>ttl &lt; 1800s</code> (30 min).</li>
+            <li><strong>Canary Heartbeat (<code>60s</code> or <code>30s</code>):</strong> Probes <code>/api/v1/users/me</code>; triggers headless Playwright re-auth on <code>401</code>, <code>403</code>, or <code>302</code> to <code>/login</code>.</li>
+            <li><strong>Transparent Proxy (<code>127.0.0.1:8080</code>):</strong> Rewrites Katana/Nuclei/ZAP headers in memory; early-aborts if <code>401/403/302 &gt; 15%</code> of traffic or <code>&gt; 70%</code> identical login shell lengths.</li>
+          </ul>
+        </li>
+      </ul>
+      <h3>CFP Abstract (Copy-Paste)</h3>
+      <p id="t5-cfp">Here is the dirty secret of dynamic application security testing: roughly 80% of automated authenticated scans are theater. You paste a Bearer token or record a login macro, hit start, and walk away. Fifteen minutes later, the short-lived OAuth2 JWT expires, an anti-CSRF nonce rotates, or a single-session concurrency rule evicts the scanner. The DAST engine does not crash; it quietly spends the next three hours fuzzing 401 Unauthorized pages and /login redirects before outputting a clean PDF report with zero findings. Here, Cobalt Offensive Security Research Director Joe Brinkley (The Blind Hacker) shows how to solve credential rot permanently without rewriting your existing scanners (Nuclei, Katana, ZAP, or Burp). Attendees will walk through a complete Python implementation of an Active Session Chaperone running inside LXC 211 on NextGenPVE. We cover a 15-second pre-flight JWT lifespan analyzer, a headless Playwright SSO extractor, and a 60-second canary heartbeat worker. Finally, we build a transparent 127.0.0.1:8080 intercepting proxy that rewrites outbound scanner headers in memory with zero dropped requests.</p>
+      <button type="button" class="copy-btn" onclick="copyText('t5-cfp', 'Talk 5 CFP Abstract')">Copy Talk 5 Abstract</button>
+    </section>
+
+    <!-- PANEL 6: TALK 6 -->
+    <section id="panel-t6" role="tabpanel" aria-labelledby="tab-t6" class="card" hidden>
+      <h2>Talk 6: Weaponizing Adversarial Telemetry: Invariant Architectures</h2>
+      <p><strong>Target Conferences:</strong> RSA Conference, Black Hat, OWASP Global AppSec, CISO Summits, SecTor</p>
+      <h3>Stage Cues &amp; Exact Callout Numbers</h3>
+      <ul>
+        <li><strong>[00:00] Hook:</strong> "User interfaces lie to defenders. Hiding a Delete button in React does nothing when the backend API route accepts unauthenticated JSON."</li>
+        <li><strong>[08:00] Cobalt 2026 State of Pentesting Receipts (2,700+ Orgs):</strong>
+          <ul>
+            <li><strong>SLA Perception Gap:</strong> <strong>56.8% of leaders</strong> believe SLAs are met vs. <strong>15.4% of practitioners</strong> (41.4-point disconnect).</li>
+            <li><strong>Remediation Half-Life (MTTR):</strong> <strong>64 days median</strong> (<strong>10 days</strong> top 10% vs. <strong>249 days</strong> bottom 25%).</li>
+            <li><strong>The Zombie Zone:</strong> <strong>50%+ of medium/low bugs</strong> remain open past <strong>5 years</strong>.</li>
+            <li><strong>4-Quarter Zombie Chain:</strong> Q1 <code>CWE-209</code> stack trace (<code>10.244.3.0/24</code>) -&gt; Q2 <code>CWE-942</code> staging CORS -&gt; Q3 <code>CWE-200</code> proxy header -&gt; Q4 <code>CWE-489</code> debug env dump = Full K8s takeover in 4 hours.</li>
+          </ul>
+        </li>
+        <li><strong>[20:00] The 4 Invariant Architectures:</strong>
+          <ol>
+            <li><strong>Compile-Time Domain Models:</strong> Rust <code>ScopedId&lt;VerifiedTenantId, InvoiceEntity&gt;</code> (<code>PhantomData</code>) throws compiler error <code>E0308</code>.</li>
+            <li><strong>Gateway Claim Enforcement:</strong> Envoy + OPA Rego policy (<code>route_tenant_id == token_claims.tenant_id</code>) in <code>&lt; 1ms</code>.</li>
+            <li><strong>Active Network Blackholing:</strong> Envoy Lua <code>request_handle:closeSocket()</code> / eBPF Layer 4 TCP RST on <code>/actuator</code>, <code>/debug</code>, <code>../</code>.</li>
+            <li><strong>Immutable Container Runtimes:</strong> <code>readOnlyRootFilesystem: true</code>, <code>drop: [ALL]</code>, 64Mi memory <code>/tmp</code>, 24-hour node recycle.</li>
+          </ol>
+        </li>
+        <li><strong>[35:00] Depth Dial &amp; Board Metric:</strong> Shift 70 hours of static perimeter scans into <strong>10 hours Level 1 Automation + 110 hours Level 3 CPT Red Teaming</strong>. Report <strong>Vulnerability Class Elimination Rate</strong> to the Board.</li>
+      </ul>
+      <h3>CFP Abstract (Copy-Paste)</h3>
+      <p id="t6-cfp">Finding bugs faster does not secure software when remediation runs on a four-quarter whack-a-mole loop. Telemetry from 2,700 organizations in the 2026 Cobalt State of Pentesting Report reveals a stark divide. Roughly 56.8% of executives believe their teams meet remediation SLAs, while only 15.4% of practitioners agree. Worse, median remediation takes 64 days (stretching to 249 days in bottom-quartile teams), and over half of all medium and low findings sit unpatched in the "Zombie Zone" for five years. In this keynote, Joe Brinkley (The Blind Hacker, Director of Offensive Security Research at Cobalt) demonstrates how adversaries chain four quarters of ignored backlog debt into full Kubernetes cluster takeovers. He also shows how attackers use automated AST patch diffing to exploit sibling microservices within 15 minutes of a git commit. Security and engineering leaders will see how to replace controller band-aids with four Invariant Architectures: compile-time Rust PhantomData wrappers, Envoy + OPA gateway claim checks, Layer 4 network blackholing, and immutable 24-hour recycling containers. Finally, we introduce Depth Dial Scoping and the Board-level Vulnerability Class Elimination Metric.</p>
+      <button type="button" class="copy-btn" onclick="copyText('t6-cfp', 'Talk 6 CFP Abstract')">Copy Talk 6 Abstract</button>
+    </section>
+  </main>
+
+  <script>
+    const tabs = ['bio', 't1', 't2', 't3', 't4', 't5', 't6'];
+    function selectTab(id) {
+      tabs.forEach((t) => {
+        const btn = document.getElementById('tab-' + t);
+        const panel = document.getElementById('panel-' + t);
+        const active = t === id;
+        btn.setAttribute('aria-selected', active ? 'true' : 'false');
+        panel.hidden = !active;
+      });
+      const selectedHeading = document.querySelector('#panel-' + id + ' h2');
+      if (selectedHeading) {
+        announce('Loaded ' + selectedHeading.textContent);
+      }
+    }
+
+    function announce(msg) {
+      const el = document.getElementById('srStatus');
+      el.textContent = '';
+      setTimeout(() => { el.textContent = msg; }, 30);
+    }
+
+    function copyText(elementId, label) {
+      const text = document.getElementById(elementId).innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        announce('Copied ' + label + ' to clipboard');
+      });
+    }
+
+    let timerInterval = null;
+    let elapsedSeconds = 0;
+    function formatTime(sec) {
+      const m = String(Math.floor(sec / 60)).padStart(2, '0');
+      const s = String(sec % 60).padStart(2, '0');
+      return m + ':' + s;
+    }
+    function toggleTimer() {
+      const btn = document.getElementById('timerToggleBtn');
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+        btn.textContent = 'Resume Stage Timer';
+        announce('Timer paused at ' + formatTime(elapsedSeconds));
+      } else {
+        timerInterval = setInterval(() => {
+          elapsedSeconds += 1;
+          document.getElementById('timerReadout').textContent = formatTime(elapsedSeconds);
+          if (elapsedSeconds === 600 || elapsedSeconds === 1200 || elapsedSeconds === 1800 || elapsedSeconds === 2400) {
+            announce(Math.floor(elapsedSeconds / 60) + ' minutes elapsed');
+          }
+        }, 1000);
+        btn.textContent = 'Pause Stage Timer';
+        announce('Stage timer started');
+      }
+    }
+    function announceTime() {
+      const mins = Math.floor(elapsedSeconds / 60);
+      const secs = elapsedSeconds % 60;
+      announce(mins + ' minutes ' + secs + ' seconds elapsed');
+    }
+    function resetTimer() {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+      elapsedSeconds = 0;
+      document.getElementById('timerReadout').textContent = '00:00';
+      document.getElementById('timerToggleBtn').textContent = 'Start 45m Stage Timer';
+      announce('Timer reset to zero');
+    }
+  </script>
+</body>
+</html>
